@@ -590,114 +590,153 @@ function MobileApp() {
       return;
     }
 
-    // Submit Booking to Backend (with 24/7 Cloud & Offline Resilient Fallback)
+    // Submit Booking to Backend & Firebase Cloud Bridge (Immediate Hour Deduction & 24/7 Sync)
     setBookingSubmitting(true);
-    const bookPayload = {
+
+    // Calculate 12-Hour Time Range
+    const durVal = parseFloat(bookingForm.duration) || 1;
+    const parts = (bookingForm.time || '12:00').split(':');
+    const h = parseInt(toStandardDigits(parts[0])) || 12;
+    const m = parseInt(toStandardDigits(parts[1] || '0')) || 0;
+    const endH = (h + Math.floor(durVal)) % 24;
+    const endM = m;
+    const to12h = (hour, minute) => {
+      const period = hour >= 12 ? 'م' : 'ص';
+      const h12 = hour % 12 === 0 ? 12 : hour % 12;
+      const minStr = String(minute).padStart(2, '0');
+      const hStr = String(h12).padStart(2, '0');
+      return `${hStr}:${minStr} ${period}`;
+    };
+    const start12h = to12h(h, m);
+    const end12h = to12h(endH, endM);
+    const timeRangeStr = `من ${start12h} إلى ${end12h}`;
+    const durStr = String(Math.floor(durVal));
+    const nowIso = new Date().toISOString();
+    const bookingId = `b-mob-${Date.now()}`;
+    const targetRoom = bookingForm.room || settings.rooms && settings.rooms[0] || 'Master VIP Room';
+
+    // Immediate hour deduction
+    const oldBalNum = parseFloat(client.currentBalance || 0);
+    const newBalNum = Math.max(0, oldBalNum - durVal);
+    const newBalStr = newBalNum % 1 === 0 ? String(newBalNum) : String(newBalNum.toFixed(1));
+    const updatedClient = {
+      ...client,
+      currentBalance: newBalStr
+    };
+    const fullBookingObj = {
+      id: bookingId,
+      clientId: client.id,
+      clientName: client.name,
+      clientPhone: client.phone,
+      username: client.username,
+      date: bookingForm.date,
+      time: bookingForm.time,
+      startTime: start12h,
+      endTime: end12h,
+      timeRange: timeRangeStr,
+      duration: durStr,
+      durationHours: durStr,
+      serviceType: bookingForm.serviceType || 'حجز ذاتي من الجوال',
+      room: targetRoom,
+      status: 'scheduled',
+      bookedVia: 'mobile_app',
+      isAutoDeducted: true,
+      hoursDeducted: durStr,
+      newBalanceAfterBooking: newBalStr,
+      notes: bookingForm.notes || 'حجز تم بواسطة العميل عبر تطبيق الجوال',
+      createdAt: nowIso
+    };
+    const attItem = {
+      id: `att-mob-${Date.now()}`,
       clientId: client.id,
       clientName: client.name,
       clientPhone: client.phone,
       date: bookingForm.date,
       time: bookingForm.time,
-      duration: bookingForm.duration,
-      room: bookingForm.room || settings.rooms && settings.rooms[0] || 'Master VIP Room',
-      serviceType: bookingForm.serviceType || 'حجز ذاتي من الجوال',
-      notes: bookingForm.notes || 'حجز تم بواسطة العميل عبر تطبيق الجوال'
+      startTime: start12h,
+      endTime: end12h,
+      timeRange: timeRangeStr,
+      hoursConsumed: durStr,
+      oldBalance: String(oldBalNum),
+      newBalance: newBalStr,
+      serviceType: `حجز قاعة (${targetRoom})`,
+      notes: `خصم فوري لحجز ${targetRoom} (${timeRangeStr}) - المدة: ${durStr} ساعات`,
+      source: 'mobile_app',
+      createdAt: nowIso
     };
+
+    // 1. Direct Firebase Realtime Cloud Sync (Google Cloud 0.05s Sync)
+    const fbBase = 'https://alkayan-group-default-rtdb.europe-west1.firebasedatabase.app';
     try {
-      const res = await fetch('/api/client/book', {
+      // Push booking to Firebase
+      fetch(`${fbBase}/alkayan_db/bookings/${bookingId}.json`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(fullBookingObj)
+      }).catch(() => {});
+
+      // Update client balance in Firebase
+      fetch(`${fbBase}/alkayan_db/clients.json`).then(r => r.json()).then(fbClients => {
+        if (Array.isArray(fbClients)) {
+          const idx = fbClients.findIndex(c => c && (c.id === client.id || c.username === client.username));
+          if (idx !== -1) {
+            fbClients[idx] = updatedClient;
+            fetch(`${fbBase}/alkayan_db/clients.json`, {
+              method: 'PUT',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify(fbClients)
+            }).catch(() => {});
+          }
+        }
+      }).catch(() => {});
+    } catch (fbErr) {
+      console.warn('Firebase direct booking warning:', fbErr);
+    }
+
+    // 2. Also send to Backend API
+    try {
+      fetch('/api/client/book', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify(bookPayload)
-      });
-      const json = await res.json();
-      if (json && json.success) {
-        // 1. Immediately update client balance and consumed stats in state
-        let updatedClient = null;
-        if (json.client) {
-          updatedClient = json.client;
-        } else {
-          const durVal = parseFloat(bookingForm.duration) || 0;
-          const newBal = Math.max(0, (parseFloat(client.currentBalance) || 0) - durVal);
-          updatedClient = {
-            ...client,
-            currentBalance: newBal % 1 === 0 ? String(newBal) : String(newBal.toFixed(1))
-          };
-        }
-        setClient(updatedClient);
+        body: JSON.stringify(fullBookingObj)
+      }).catch(() => {});
+    } catch (e) {}
 
-        // 2. Update myBookings list immediately
-        if (json.booking) {
-          setMyBookings(prev => [json.booking, ...prev.filter(b => b.id !== json.booking.id)]);
-        }
-
-        // 3. Add to Attendance History immediately
-        const attItem = {
-          id: 'att-mob-' + Date.now(),
-          serviceType: `حجز قاعة (${json.booking?.room || bookingForm.room})`,
-          date: bookingForm.date,
-          time: bookingForm.time,
-          timeRange: json.booking?.timeRange || '',
-          hoursConsumed: String(bookingForm.duration),
-          newBalance: updatedClient.currentBalance,
-          createdAt: new Date().toISOString()
-        };
-        setMyAttendance(prev => [attItem, ...prev]);
-
-        // 4. Update session storage for instant 0ms offline/reload display
-        try {
-          const cached = JSON.parse(localStorage.getItem('al_kayan_client_session') || '{}');
-          cached.client = updatedClient;
-          cached.myBookings = [json.booking, ...(cached.myBookings || [])];
-          cached.myAttendance = [attItem, ...(cached.myAttendance || [])];
-          localStorage.setItem('al_kayan_client_session', JSON.stringify(cached));
-        } catch (e) {}
-        setBookingSuccessModal(json.booking);
-        fetchClientData(updatedClient);
-        triggerToast('تم الحجز وخصم الساعات 🎉', `تم حجز ${bookingForm.room} وخصم (${bookingForm.duration}س) فورياً من رصيدك.`, 'success');
-        return;
-      } else if (json && !json.success) {
-        alert(json.message || 'تعذر إتمام الحجز، يرجى مراجعة الشروط.');
-        return;
+    // 3. Immediately Update UI State & Local Storage
+    setClient(updatedClient);
+    setMyBookings(prev => [fullBookingObj, ...prev.filter(b => b.id !== fullBookingObj.id)]);
+    setAllBookings(prev => [fullBookingObj, ...prev.filter(b => b.id !== fullBookingObj.id)]);
+    setMyAttendance(prev => [attItem, ...prev]);
+    try {
+      const sessionObj = {
+        client: updatedClient,
+        myBookings: [fullBookingObj, ...myBookings],
+        myAttendance: [attItem, ...myAttendance],
+        notifications: notifications || [],
+        settings: settings || {},
+        credentials: {
+          username: client.username,
+          password: client.password
+        },
+        savedAt: nowIso
+      };
+      localStorage.setItem('al_kayan_client_session', JSON.stringify(sessionObj));
+      const registry = JSON.parse(localStorage.getItem('al_kayan_client_registry') || '{}');
+      if (client.username) {
+        registry[client.username.toLowerCase()] = sessionObj;
+        localStorage.setItem('al_kayan_client_registry', JSON.stringify(registry));
       }
-    } catch (netErr) {
-      // 24/7 Smart Offline/Cloud Booking Engine (when desktop is off or connection drops)
-      const offlineBooking = {
-        id: 'b-mob-247-' + Date.now(),
-        ...bookPayload,
-        status: 'scheduled',
-        isOfflineConfirmed: true,
-        createdAt: new Date().toISOString()
-      };
-
-      // Deduct duration locally
-      const durNum = parseFloat(bookingForm.duration) || 0;
-      const updatedBalance = Math.max(0, (parseFloat(client.currentBalance) || 0) - durNum);
-      const updatedClient = {
-        ...client,
-        currentBalance: updatedBalance
-      };
-      setClient(updatedClient);
-      setMyBookings(prev => [offlineBooking, ...prev]);
-
-      // Cache updated session
-      try {
-        const cached = JSON.parse(localStorage.getItem('al_kayan_client_session') || '{}');
-        cached.client = updatedClient;
-        cached.myBookings = [offlineBooking, ...(cached.myBookings || [])];
-        localStorage.setItem('al_kayan_client_session', JSON.stringify(cached));
-
-        // Add to pending sync queue
-        const syncQueue = JSON.parse(localStorage.getItem('al_kayan_pending_sync') || '[]');
-        syncQueue.push(offlineBooking);
-        localStorage.setItem('al_kayan_pending_sync', JSON.stringify(syncQueue));
-      } catch (e) {}
-      setBookingSuccessModal(offlineBooking);
-      triggerToast('تم تأكيد حجزك بنجاح 🌟', `تم حفظ وتثبيت موعدك في ${offlineBooking.room}.`, 'success');
-    } finally {
-      setBookingSubmitting(false);
-    }
+    } catch (e) {}
+    setBookingSuccessModal(fullBookingObj);
+    triggerToast('تم الحجز وخصم الساعات 🎉', `تم تأكيد حجز ${targetRoom} (${timeRangeStr}) وخصم (${durStr}س) فورياً من رصيدك.`, 'success');
+    setBookingSubmitting(false);
+    return;
   };
 
   // Handle Cancel Booking

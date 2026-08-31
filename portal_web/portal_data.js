@@ -1,7 +1,7 @@
-// AL KAYAN GROUP Cloud Sync Snapshot [2026-08-31T15:48:40.775552]
+// 🌟 AL KAYAN GROUP - 24/7 Cloud Portal Data Snapshot
 window.ALKAYAN_PORTAL_DATA = {
-  "version": "3.0",
-  "updatedAt": "2026-08-31T15:48:40.775552",
+  "version": "2.2",
+  "updatedAt": "2026-08-31T16:36:23.841199",
   "settings": {
     "companyName": "مجموعة الكيان | AL KAYAN GROUP",
     "companyPhone": "",
@@ -14,24 +14,6 @@ window.ALKAYAN_PORTAL_DATA = {
     "firebaseSyncUrl": "https://alkayan-group-default-rtdb.europe-west1.firebasedatabase.app"
   },
   "clients": [
-    {
-      "id": "c-1788180182851",
-      "name": "11",
-      "phone": "+9661",
-      "email": "",
-      "username": "12",
-      "password": "12",
-      "subscriptionType": "hourly",
-      "isFullTime": false,
-      "package": "باقة شهرية 10 ساعات",
-      "packageDuration": "monthly",
-      "startDate": "2026-08-31",
-      "expiryDate": "2026-10-01",
-      "initialHours": 10,
-      "currentBalance": 10,
-      "notes": "",
-      "createdAt": "2026-08-31"
-    },
     {
       "id": "c-1788177943569",
       "name": "اسلام",
@@ -63,7 +45,8 @@ window.ALKAYAN_PORTAL_DATA = {
       "serviceType": "حجز غرفة",
       "room": "Master VIP Room",
       "status": "scheduled",
-      "notes": ""
+      "notes": "",
+      "newBalanceAfterBooking": "58"
     }
   ],
   "attendance": []
