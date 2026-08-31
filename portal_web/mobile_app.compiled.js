@@ -302,7 +302,7 @@ function MobileApp() {
     if (fbUrl && fbUrl.startsWith('https://')) {
       try {
         let fetchUrl = fbUrl.trim();
-        if (!fetchUrl.endsWith('.json')) fetchUrl = fetchUrl.rstrip('/') + '/alkayan_db.json';
+        if (!fetchUrl.endsWith('.json')) fetchUrl = fetchUrl.replace(/\/+$/, '') + '/alkayan_db.json';
         const fbRes = await fetch(fetchUrl, {
           cache: 'no-store'
         });

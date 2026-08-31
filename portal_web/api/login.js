@@ -3,6 +3,7 @@ import portalDataFallback from '../portal_data.json';
 
 // Global cache for warm serverless instances
 let liveCachedData = null;
+let pendingCloudBookings = [];
 
 export function updateServerlessData(newData) {
   liveCachedData = newData;
@@ -10,6 +11,58 @@ export function updateServerlessData(newData) {
 
 export function getServerlessData() {
   return liveCachedData || portalDataFallback;
+}
+
+export function recordCloudBooking(bookingObj, updatedClient, attRecord) {
+  const current = getServerlessData();
+  const clients = current.clients || [];
+  const bookings = current.bookings || [];
+  const attendance = current.attendance || [];
+
+  // Update target client in clients list
+  const idx = clients.findIndex(c => c.id === updatedClient.id);
+  if (idx !== -1) {
+    clients[idx] = updatedClient;
+  }
+
+  // Insert booking & attendance
+  if (!bookings.some(b => b.id === bookingObj.id)) {
+    bookings.unshift(bookingObj);
+  }
+  if (attRecord && !attendance.some(a => a.id === attRecord.id)) {
+    attendance.unshift(attRecord);
+  }
+
+  liveCachedData = {
+    ...current,
+    clients,
+    bookings,
+    attendance,
+    updatedAt: new Date().toISOString()
+  };
+
+  // Add to pending queue for desktop retrieval
+  if (!pendingCloudBookings.some(b => b.id === bookingObj.id)) {
+    pendingCloudBookings.push({
+      booking: bookingObj,
+      client: updatedClient,
+      attendance: attRecord
+    });
+  }
+
+  return liveCachedData;
+}
+
+export function getPendingCloudBookings() {
+  return pendingCloudBookings;
+}
+
+export function clearPendingCloudBookings(ackIds = []) {
+  if (ackIds.length === 0) {
+    pendingCloudBookings = [];
+  } else {
+    pendingCloudBookings = pendingCloudBookings.filter(p => !ackIds.includes(p.booking?.id));
+  }
 }
 
 function cleanDigits(str) {
