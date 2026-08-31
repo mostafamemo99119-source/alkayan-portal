@@ -1,0 +1,102 @@
+{
+  "version": "2.2",
+  "updatedAt": "2026-08-31T14:05:59.594436",
+  "settings": {
+    "companyName": "مجموعة الكيان | AL KAYAN GROUP",
+    "companyPhone": "",
+    "rooms": [
+      "Master VIP Room",
+      "MaxRoom"
+    ],
+    "roomsLocked": true,
+    "customPermanentMobileUrl": "https://portalweb-lake.vercel.app/",
+    "firebaseSyncUrl": "https://alkayan-group-default-rtdb.europe-west1.firebasedatabase.app"
+  },
+  "clients": [
+    {
+      "id": "c-1788173427198",
+      "name": "111",
+      "phone": "+966232",
+      "email": "",
+      "username": "147",
+      "password": "147",
+      "subscriptionType": "hourly",
+      "isFullTime": false,
+      "package": "باقة شهرية 10 ساعات",
+      "packageDuration": "monthly",
+      "startDate": "2026-08-31",
+      "expiryDate": "2026-10-01",
+      "initialHours": 10,
+      "currentBalance": 10,
+      "notes": "",
+      "createdAt": "2026-08-31"
+    },
+    {
+      "id": "c-1788141375458",
+      "name": "qq",
+      "phone": "+20125739243",
+      "email": "",
+      "username": "222",
+      "password": "1234",
+      "subscriptionType": "hourly",
+      "isFullTime": false,
+      "package": "باقة سنوية 100 ساعات",
+      "packageDuration": "annual",
+      "startDate": "2026-08-31",
+      "expiryDate": "2027-08-31",
+      "initialHours": 100,
+      "currentBalance": 100,
+      "notes": "",
+      "createdAt": "2026-08-31"
+    },
+    {
+      "id": "c-1788097186040",
+      "name": "حبيبه",
+      "phone": "+201068815747",
+      "email": "",
+      "username": "66",
+      "password": "12002",
+      "subscriptionType": "hourly",
+      "isFullTime": false,
+      "packageDuration": "monthly",
+      "package": "باقة شهرية 30 ساعات",
+      "startDate": "2026-08-30",
+      "expiryDate": "2026-09-30",
+      "initialHours": 30,
+      "currentBalance": 27,
+      "notes": "-"
+    }
+  ],
+  "bookings": [
+    {
+      "id": "b-mob-1788116311839",
+      "clientId": "c-1788097186040",
+      "clientName": "حبيبه",
+      "clientPhone": "+201068815747",
+      "date": "2026-08-31",
+      "time": "06:00 م",
+      "duration": "2",
+      "serviceType": "جلسة عمل / اجتماع",
+      "room": "MaxRoom",
+      "status": "scheduled",
+      "bookedVia": "mobile_app",
+      "notes": "حجز تم بواسطة العميل عبر تطبيق الجوال",
+      "createdAt": "2026-08-30T21:58:31.839048"
+    }
+  ],
+  "attendance": [
+    {
+      "id": "att-1788097968938",
+      "clientId": "c-1788097186040",
+      "clientName": "حبيبه",
+      "clientPhone": "+201068815747",
+      "date": "2026-08-31",
+      "time": "٠٤:٥٢ م",
+      "hoursConsumed": 3,
+      "previousBalance": 30,
+      "newBalance": 27,
+      "serviceType": "ايجار غرفة",
+      "notes": "تم الحضور من خلال حجز الموعد (11:00 ص) - Master VIP Room"
+    }
+  ]
+}
