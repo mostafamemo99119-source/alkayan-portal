@@ -9,8 +9,9 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="الكيان">
-  <meta name="theme-color" content="#16100c">
+  <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
   <link rel="icon" type="image/x-icon" href="app_icon.ico">
+  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
   <link rel="manifest" href="manifest.json">
   
   <!-- Google Fonts: Cairo & Tajawal for Luxury Arabic Typography -->
@@ -159,17 +160,125 @@
     }
   </style>
 
-  <!-- 🚀 PWA 24/7 Offline Service Worker Registration -->
+  <!-- 🚀 PWA 24/7 Offline & Instant Zero-Intervention Auto-Updating Engine -->
   <script>
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', function() {
-        navigator.serviceWorker.register('./sw.js').then(function(reg) {
-          console.log('✅ ServiceWorker Registered Successfully for 24/7 Offline Access:', reg.scope);
-        }).catch(function(err) {
-          console.warn('⚠️ ServiceWorker registration note:', err);
+    (function initMobileAutoUpdater() {
+      var currentVersionTag = null;
+      var isUpdating = false;
+
+      function triggerInstantReload(reason) {
+        if (isUpdating) return;
+        isUpdating = true;
+        console.log('⚡ [AUTO-UPDATE] Triggered reload:', reason);
+        
+        try {
+          var toast = document.createElement('div');
+          toast.style.cssText = 'position:fixed;top:16px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#D9B167,#C5A059);color:#1a1207;padding:12px 24px;border-radius:22px;font-weight:900;font-size:12px;z-index:99999999;box-shadow:0 14px 35px rgba(0,0,0,0.85);border:2px solid #fff;display:flex;align-items:center;gap:10px;font-family:Cairo,sans-serif;';
+          toast.innerHTML = '<span style="font-size:18px;">⚡</span><span>تم تحديث تطبيق الكيان! جاري تطبيق النسخة الجديدة فورياً...</span>';
+          document.body.appendChild(toast);
+        } catch(e) {}
+
+        // Skip waiting in ServiceWorker and clear all old caches
+        if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+          navigator.serviceWorker.controller.postMessage({ type: 'SKIP_WAITING' });
+          if ('caches' in window) {
+            caches.keys().then(function(keys) {
+              return Promise.all(keys.map(function(k) { return caches.delete(k); }));
+            }).catch(function() {});
+          }
+        }
+
+        setTimeout(function() {
+          window.location.reload(true);
+        }, 400);
+      }
+
+      // 1. ServiceWorker Controller Change & Broadcast Listener
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.addEventListener('controllerchange', function() {
+          triggerInstantReload('ServiceWorker Controller Changed');
         });
+
+        navigator.serviceWorker.addEventListener('message', function(e) {
+          if (e.data && (e.data.type === 'APP_VERSION_UPDATED' || e.data.type === 'VERSION_UPDATED')) {
+            triggerInstantReload('ServiceWorker Broadcast Message');
+          }
+        });
+
+        window.addEventListener('load', function() {
+          navigator.serviceWorker.register('./sw.js').then(function(reg) {
+            reg.update();
+            setInterval(function() { reg.update(); }, 6000);
+
+            reg.addEventListener('updatefound', function() {
+              var newWorker = reg.installing;
+              if (newWorker) {
+                newWorker.addEventListener('statechange', function() {
+                  if (newWorker.state === 'installed') {
+                    if (navigator.serviceWorker.controller) {
+                      newWorker.postMessage({ type: 'SKIP_WAITING' });
+                      triggerInstantReload('New Worker Installed');
+                    }
+                  }
+                });
+              }
+            });
+          }).catch(function(err) {});
+        });
+      }
+
+      // 2. High-Frequency Version & Asset Sentinel (Every 3.5s & on Tab Resume)
+      function checkAssetVersion() {
+        if (isUpdating) return;
+        
+        // A. Primary: Check version.json
+        fetch('./version.json?_t=' + Date.now(), { cache: 'no-store' })
+          .then(function(res) { return res.json(); })
+          .then(function(data) {
+            if (data && (data.version || data.updatedAt)) {
+              var tag = String(data.version || data.updatedAt);
+              if (currentVersionTag === null) {
+                currentVersionTag = tag;
+              } else if (currentVersionTag !== tag) {
+                currentVersionTag = tag;
+                triggerInstantReload('version.json updated to ' + tag);
+              }
+            }
+          })
+          .catch(function() {
+            // B. Fallback: Check compiled script HEAD
+            fetch('./mobile_app.compiled.js?_t=' + Date.now(), { method: 'HEAD', cache: 'no-store' })
+              .then(function(res) {
+                var tag = res.headers.get('etag') || res.headers.get('last-modified') || res.headers.get('content-length');
+                if (tag) {
+                  if (currentVersionTag === null) {
+                    currentVersionTag = tag;
+                  } else if (currentVersionTag !== tag) {
+                    currentVersionTag = tag;
+                    triggerInstantReload('mobile_app.compiled.js HEAD Tag Changed');
+                  }
+                }
+              })
+              .catch(function() {});
+          });
+      }
+
+      // Initial asset check
+      checkAssetVersion();
+      // Real-time interval check every 3.5s
+      setInterval(checkAssetVersion, 3500);
+      // Check on resume / focus / online
+      document.addEventListener('visibilitychange', function() {
+        if (document.visibilityState === 'visible') {
+          if (navigator.serviceWorker && navigator.serviceWorker.controller) {
+            navigator.serviceWorker.getRegistration().then(function(reg) { if (reg) reg.update(); });
+          }
+          checkAssetVersion();
+        }
       });
-    }
+      window.addEventListener('focus', checkAssetVersion);
+      window.addEventListener('online', checkAssetVersion);
+    })();
   </script>
 
 </head>
@@ -240,7 +349,97 @@
 
   <!-- Mobile Client App Script -->
   <script src="portal_data.js"></script>
-  <script src="mobile_app.compiled.js"></script>
+
+  <!-- ⚡ ULTRA-FAST CLOUD LIVE CODE ENGINE & AUTO-BOOTSTRAPPER -->
+  <script>
+    (function bootstrapLiveMobileApp() {
+      var FIREBASE_CODE_URL = 'https://alkayan-group-default-rtdb.europe-west1.firebasedatabase.app/alkayan_db/live_app_code.json';
+      var LOCAL_CODE_KEY = 'ALKAYAN_DYNAMIC_APP_CODE_V6';
+      var LOCAL_VERSION_KEY = 'ALKAYAN_DYNAMIC_APP_VERSION_V6';
+      var appBooted = false;
+
+      function executeAppCode(codeString, version) {
+        if (!codeString || appBooted) return;
+        try {
+          var oldScript = document.getElementById('dynamic-alkayan-app');
+          if (oldScript) oldScript.remove();
+
+          var script = document.createElement('script');
+          script.id = 'dynamic-alkayan-app';
+          script.type = 'text/javascript';
+          script.text = codeString;
+          document.body.appendChild(script);
+          appBooted = true;
+          console.log('✅ [LIVE-ENGINE] AL KAYAN Mobile App Booted Successfully (v' + version + ')');
+        } catch(e) {
+          console.error('❌ [LIVE-ENGINE] Execution error:', e);
+        }
+      }
+
+      // 1. Try local storage cache for instant 0.0s startup
+      var cachedCode = null;
+      var cachedVer = null;
+      try {
+        cachedCode = localStorage.getItem(LOCAL_CODE_KEY);
+        cachedVer = localStorage.getItem(LOCAL_VERSION_KEY);
+      } catch(e) {}
+
+      if (cachedCode) {
+        executeAppCode(cachedCode, cachedVer);
+      }
+
+      // 2. Fetch latest live code from Firebase Cloud
+      function syncLatestCloudCode() {
+        fetch(FIREBASE_CODE_URL + '?_t=' + Date.now(), { cache: 'no-store' })
+          .then(function(r) { return r.json(); })
+          .then(function(res) {
+            if (res && res.code) {
+              var newVer = String(res.version || res.updatedAt || res.hash);
+              var curVer = null;
+              try { curVer = localStorage.getItem(LOCAL_VERSION_KEY); } catch(e) {}
+
+              // Boot immediately if not booted yet
+              if (!appBooted) {
+                try {
+                  localStorage.setItem(LOCAL_CODE_KEY, res.code);
+                  localStorage.setItem(LOCAL_VERSION_KEY, newVer);
+                } catch(e) {}
+                executeAppCode(res.code, newVer);
+              } else if (curVer && curVer !== newVer) {
+                // Version changed in cloud -> save and trigger instant live reload!
+                console.log('⚡ [LIVE-ENGINE] Cloud code updated (v' + newVer + ') -> Reloading...');
+                try {
+                  localStorage.setItem(LOCAL_CODE_KEY, res.code);
+                  localStorage.setItem(LOCAL_VERSION_KEY, newVer);
+                } catch(e) {}
+                if (typeof triggerInstantReload === 'function') {
+                  triggerInstantReload('Cloud App Code Updated');
+                } else {
+                  window.location.reload(true);
+                }
+              }
+            } else if (!appBooted && !cachedCode) {
+              var s = document.createElement('script');
+              s.src = 'mobile_app.compiled.js?_t=' + Date.now();
+              document.body.appendChild(s);
+              appBooted = true;
+            }
+          })
+          .catch(function() {
+            if (!appBooted && !cachedCode) {
+              var s = document.createElement('script');
+              s.src = 'mobile_app.compiled.js?_t=' + Date.now();
+              document.body.appendChild(s);
+              appBooted = true;
+            }
+          });
+      }
+
+      syncLatestCloudCode();
+      // Continuous background check every 3.5 seconds
+      setInterval(syncLatestCloudCode, 3500);
+    })();
+  </script>
 
 </body>
 </html>
