@@ -190,11 +190,7 @@ export default async function handler(req, res) {
         const fbJson = await fbRes.json();
         if (fbJson && fbJson.clients) {
           const fbClients = Array.isArray(fbJson.clients) ? fbJson.clients : Object.values(fbJson.clients);
-          currentData = { 
-            ...fbJson, 
-            clients: fbClients,
-            deleted_clients: fbJson.deleted_clients || []
-          };
+          currentData = { ...fbJson, clients: fbClients };
           updateServerlessData(currentData);
           clients = fbClients;
         }
@@ -203,30 +199,12 @@ export default async function handler(req, res) {
       console.warn('Firebase serverless fetch note:', fbErr.message);
     }
 
-    // 🚫 Check deleted_clients blacklist
-    const delClients = currentData.deleted_clients || [];
-    const delList = Array.isArray(delClients) ? delClients : Object.values(delClients);
-    for (const dc of delList) {
-      if (!dc) continue;
-      const dcId = (dc.id || '').toString().trim().toLowerCase();
-      const dcUser = cleanDigits(dc.username || '').toLowerCase();
-      const dcPhone = normDigits(dc.phone || '');
-      if ((dcId && dcId === cleanUser) || (dcUser && dcUser === cleanUser) || (dcPhone && normDigits(cleanUser) && dcPhone === normDigits(cleanUser))) {
-        return res.status(401).json({
-          success: false,
-          code: 'CLIENT_PURGED_PERMANENTLY',
-          message: 'تم حذف هذا الحساب نهائياً من قبل الإدارة العامة للمجموعة ولا يمكن الدخول إليه.'
-        });
-      }
-    }
-
     let targetClient = findMatch(clients);
 
     if (!targetClient) {
       return res.status(401).json({
         success: false,
-        code: 'CLIENT_DELETED_OR_NOT_FOUND',
-        message: 'اسم المستخدم أو رقم الهاتف غير مسجل بالنظام أو تم حذفه نهائياً'
+        message: 'اسم المستخدم أو رقم الهاتف غير مسجل بالنظام'
       });
     }
 

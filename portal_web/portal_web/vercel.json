@@ -35,6 +35,10 @@
     {
       "source": "/api/client/book",
       "destination": "/api/book"
+    },
+    {
+      "source": "/api/client/cancel",
+      "destination": "/api/cancel"
     }
   ]
 }

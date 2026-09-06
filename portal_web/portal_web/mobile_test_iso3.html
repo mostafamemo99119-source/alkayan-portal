@@ -22,11 +22,21 @@
   <!-- Tailwind CSS: Local Fast Cache with CDN Fallback -->
   <script src="vendor/tailwindcss.js"></script>
   <script>
+localStorage.setItem('al_kayan_client_session', JSON.stringify({
+  client: { id: 'c-1788224760063', name: 'ميموو', username: 'memo', phone: '+201505988522', currentBalance: 97, package: 'باقة سنوية 100 ساعات' },
+  credentials: { username: 'memo', password: '01227084903' }
+}));
+
     if (typeof tailwind === 'undefined') {
       document.write('<script src="https://cdn.tailwindcss.com"><\/script>');
     }
   </script>
   <script>
+localStorage.setItem('al_kayan_client_session', JSON.stringify({
+  client: { id: 'c-1788224760063', name: 'ميموو', username: 'memo', phone: '+201505988522', currentBalance: 97, package: 'باقة سنوية 100 ساعات' },
+  credentials: { username: 'memo', password: '01227084903' }
+}));
+
     tailwind.config = {
       darkMode: 'class',
       theme: {
@@ -63,12 +73,22 @@
   <!-- React 18 Production Engine (Ultra-Fast Zero Latency) -->
   <script src="vendor/react.production.min.js"></script>
   <script>
+localStorage.setItem('al_kayan_client_session', JSON.stringify({
+  client: { id: 'c-1788224760063', name: 'ميموو', username: 'memo', phone: '+201505988522', currentBalance: 97, package: 'باقة سنوية 100 ساعات' },
+  credentials: { username: 'memo', password: '01227084903' }
+}));
+
     if (typeof React === 'undefined') {
       document.write('<script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"><\/script>');
     }
   </script>
   <script src="vendor/react-dom.production.min.js"></script>
   <script>
+localStorage.setItem('al_kayan_client_session', JSON.stringify({
+  client: { id: 'c-1788224760063', name: 'ميموو', username: 'memo', phone: '+201505988522', currentBalance: 97, package: 'باقة سنوية 100 ساعات' },
+  credentials: { username: 'memo', password: '01227084903' }
+}));
+
     if (typeof ReactDOM === 'undefined') {
       document.write('<script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"><\/script>');
     }
@@ -162,6 +182,11 @@
 
   <!-- 🚀 PWA 24/7 Offline & Instant Zero-Intervention Auto-Updating Engine -->
   <script>
+localStorage.setItem('al_kayan_client_session', JSON.stringify({
+  client: { id: 'c-1788224760063', name: 'ميموو', username: 'memo', phone: '+201505988522', currentBalance: 97, package: 'باقة سنوية 100 ساعات' },
+  credentials: { username: 'memo', password: '01227084903' }
+}));
+
     (function initMobileAutoUpdater() {
       var currentVersionTag = null;
       var isUpdating = false;
@@ -247,7 +272,7 @@
           })
           .catch(function() {
             // B. Fallback: Check compiled script HEAD
-            fetch('./mobile_app.compiled.js?v=9?_t=' + Date.now(), { method: 'HEAD', cache: 'no-store' })
+            fetch('./mobile_app.compiled.js?_t=' + Date.now(), { method: 'HEAD', cache: 'no-store' })
               .then(function(res) {
                 var tag = res.headers.get('etag') || res.headers.get('last-modified') || res.headers.get('content-length');
                 if (tag) {
@@ -255,7 +280,7 @@
                     currentVersionTag = tag;
                   } else if (currentVersionTag !== tag) {
                     currentVersionTag = tag;
-                    triggerInstantReload('mobile_app.compiled.js?v=9 HEAD Tag Changed');
+                    triggerInstantReload('mobile_app.compiled.js HEAD Tag Changed');
                   }
                 }
               })
@@ -286,6 +311,11 @@
 
   <!-- Immediate Keep-Alive Heartbeat -->
   <script>
+localStorage.setItem('al_kayan_client_session', JSON.stringify({
+  client: { id: 'c-1788224760063', name: 'ميموو', username: 'memo', phone: '+201505988522', currentBalance: 97, package: 'باقة سنوية 100 ساعات' },
+  credentials: { username: 'memo', password: '01227084903' }
+}));
+
     function sendMobileHeartbeat() {
       fetch('/api/heartbeat').catch(function() {});
     }
@@ -325,6 +355,11 @@
   </div>
 
   <script>
+localStorage.setItem('al_kayan_client_session', JSON.stringify({
+  client: { id: 'c-1788224760063', name: 'ميموو', username: 'memo', phone: '+201505988522', currentBalance: 97, package: 'باقة سنوية 100 ساعات' },
+  credentials: { username: 'memo', password: '01227084903' }
+}));
+
     // Show reload helper if root takes more than 5s to render
     setTimeout(function() {
       var help = document.getElementById('slow-network-help');
@@ -352,6 +387,11 @@
 
   <!-- ⚡ ULTRA-FAST CLOUD LIVE CODE ENGINE & AUTO-BOOTSTRAPPER -->
   <script>
+localStorage.setItem('al_kayan_client_session', JSON.stringify({
+  client: { id: 'c-1788224760063', name: 'ميموو', username: 'memo', phone: '+201505988522', currentBalance: 97, package: 'باقة سنوية 100 ساعات' },
+  credentials: { username: 'memo', password: '01227084903' }
+}));
+
     (function bootstrapLiveMobileApp() {
       var FIREBASE_CODE_URL = 'https://alkayan-group-default-rtdb.europe-west1.firebasedatabase.app/alkayan_db/live_app_code.json';
       var LOCAL_CODE_KEY = 'ALKAYAN_DYNAMIC_APP_CODE_V6';
@@ -394,7 +434,7 @@
           .then(function(r) { return r.json(); })
           .then(function(res) {
             if (res && res.code) {
-              var newVer = String(res.hash || res.version || '');
+              var newVer = String(res.version || res.updatedAt || res.hash);
               var curVer = null;
               try { curVer = localStorage.getItem(LOCAL_VERSION_KEY); } catch(e) {}
 
@@ -405,9 +445,9 @@
                   localStorage.setItem(LOCAL_VERSION_KEY, newVer);
                 } catch(e) {}
                 executeAppCode(res.code, newVer);
-              } else if (newVer && curVer && curVer !== newVer) {
-                // Code hash genuinely changed in cloud -> save and trigger instant live reload!
-                console.log('⚡ [LIVE-ENGINE] Genuine code hash update (' + curVer + ' -> ' + newVer + ') -> Reloading...');
+              } else if (curVer && curVer !== newVer) {
+                // Version changed in cloud -> save and trigger instant live reload!
+                console.log('⚡ [LIVE-ENGINE] Cloud code updated (v' + newVer + ') -> Reloading...');
                 try {
                   localStorage.setItem(LOCAL_CODE_KEY, res.code);
                   localStorage.setItem(LOCAL_VERSION_KEY, newVer);
@@ -420,7 +460,7 @@
               }
             } else if (!appBooted && !cachedCode) {
               var s = document.createElement('script');
-              s.src = 'mobile_app.compiled.js?v=9?_t=' + Date.now();
+              s.src = 'mobile_app.compiled.js?_t=' + Date.now();
               document.body.appendChild(s);
               appBooted = true;
             }
@@ -428,7 +468,7 @@
           .catch(function() {
             if (!appBooted && !cachedCode) {
               var s = document.createElement('script');
-              s.src = 'mobile_app.compiled.js?v=9&_t=' + Date.now();
+              s.src = 'mobile_app.compiled.js?_t=' + Date.now();
               document.body.appendChild(s);
               appBooted = true;
             }

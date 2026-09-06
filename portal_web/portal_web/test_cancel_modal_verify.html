@@ -247,7 +247,7 @@
           })
           .catch(function() {
             // B. Fallback: Check compiled script HEAD
-            fetch('./mobile_app.compiled.js?v=9?_t=' + Date.now(), { method: 'HEAD', cache: 'no-store' })
+            fetch('./mobile_app.compiled.js?_t=' + Date.now(), { method: 'HEAD', cache: 'no-store' })
               .then(function(res) {
                 var tag = res.headers.get('etag') || res.headers.get('last-modified') || res.headers.get('content-length');
                 if (tag) {
@@ -255,7 +255,7 @@
                     currentVersionTag = tag;
                   } else if (currentVersionTag !== tag) {
                     currentVersionTag = tag;
-                    triggerInstantReload('mobile_app.compiled.js?v=9 HEAD Tag Changed');
+                    triggerInstantReload('mobile_app.compiled.js HEAD Tag Changed');
                   }
                 }
               })
@@ -376,7 +376,13 @@
         }
       }
 
-      // 1. Try local storage cache for instant 0.0s startup
+      
+const saved = {
+  client: { id: 'c-1788224760063', name: 'ميموو', username: 'memo', phone: '+201505988522', currentBalance: 95, package: 'باقة سنوية 100 ساعات' },
+  credentials: { username: 'memo', password: '01227084903' }
+};
+localStorage.setItem('al_kayan_client_session', JSON.stringify(saved));
+// 1. Try local storage cache for instant 0.0s startup
       var cachedCode = null;
       var cachedVer = null;
       try {
@@ -394,7 +400,7 @@
           .then(function(r) { return r.json(); })
           .then(function(res) {
             if (res && res.code) {
-              var newVer = String(res.hash || res.version || '');
+              var newVer = String(res.version || res.updatedAt || res.hash);
               var curVer = null;
               try { curVer = localStorage.getItem(LOCAL_VERSION_KEY); } catch(e) {}
 
@@ -405,9 +411,9 @@
                   localStorage.setItem(LOCAL_VERSION_KEY, newVer);
                 } catch(e) {}
                 executeAppCode(res.code, newVer);
-              } else if (newVer && curVer && curVer !== newVer) {
-                // Code hash genuinely changed in cloud -> save and trigger instant live reload!
-                console.log('⚡ [LIVE-ENGINE] Genuine code hash update (' + curVer + ' -> ' + newVer + ') -> Reloading...');
+              } else if (curVer && curVer !== newVer) {
+                // Version changed in cloud -> save and trigger instant live reload!
+                console.log('⚡ [LIVE-ENGINE] Cloud code updated (v' + newVer + ') -> Reloading...');
                 try {
                   localStorage.setItem(LOCAL_CODE_KEY, res.code);
                   localStorage.setItem(LOCAL_VERSION_KEY, newVer);
@@ -420,7 +426,7 @@
               }
             } else if (!appBooted && !cachedCode) {
               var s = document.createElement('script');
-              s.src = 'mobile_app.compiled.js?v=9?_t=' + Date.now();
+              s.src = 'mobile_app.compiled.js?_t=' + Date.now();
               document.body.appendChild(s);
               appBooted = true;
             }
@@ -428,7 +434,7 @@
           .catch(function() {
             if (!appBooted && !cachedCode) {
               var s = document.createElement('script');
-              s.src = 'mobile_app.compiled.js?v=9&_t=' + Date.now();
+              s.src = 'mobile_app.compiled.js?_t=' + Date.now();
               document.body.appendChild(s);
               appBooted = true;
             }

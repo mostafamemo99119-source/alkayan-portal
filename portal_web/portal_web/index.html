@@ -2,24 +2,27 @@
 <html lang="ar" dir="rtl">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>مجموعة الكيان | تطبيق الجوال وبوابة العميل</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>مجموعة الكيان | AL KAYAN GROUP - نظام إدارة المواعيد والباقات الذكي</title>
   
-  <!-- PWA & Mobile Optimization -->
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="الكيان">
-  <meta name="theme-color" content="#16100c">
-  <link rel="icon" type="image/x-icon" href="app_icon.ico">
-  <link rel="manifest" href="manifest.json">
-  
-  <!-- Google Fonts: Cairo & Tajawal for Luxury Arabic Typography -->
+  <!-- Unregister any conflicting mobile ServiceWorkers on Desktop Dashboard -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then(function(registrations) {
+        for (var i = 0; i < registrations.length; i++) {
+          registrations[i].unregister();
+        }
+      }).catch(function() {});
+    }
+  </script>
+
+  <!-- Google Fonts: Cairo & Tajawal for Ultra Crisp Arabic Typography -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&family=Tajawal:wght@400;500;700;900&display=swap" rel="stylesheet">
   
   <!-- Tailwind CSS: Local Fast Cache with CDN Fallback -->
-  <script src="vendor/tailwindcss.js"></script>
+  <script src="vendor/tailwindcss.js?v=4.0"></script>
   <script>
     if (typeof tailwind === 'undefined') {
       document.write('<script src="https://cdn.tailwindcss.com"><\/script>');
@@ -49,7 +52,7 @@
             },
             luxury: {
               dark: '#0e0b08',
-              card: 'rgba(24, 18, 14, 0.92)',
+              card: 'rgba(24, 18, 14, 0.88)',
               border: 'rgba(212, 175, 99, 0.25)',
               gold: '#D4AF63',
             }
@@ -59,13 +62,14 @@
     }
   </script>
 
-  <!-- React 18 Production Engine (Ultra-Fast Zero Latency) -->
+  <!-- React 18 & Babel: Local Ultra-Fast Zero-Latency Load with CDN Fallbacks -->
   <script src="vendor/react.production.min.js"></script>
   <script>
     if (typeof React === 'undefined') {
       document.write('<script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"><\/script>');
     }
   </script>
+
   <script src="vendor/react-dom.production.min.js"></script>
   <script>
     if (typeof ReactDOM === 'undefined') {
@@ -73,49 +77,67 @@
     }
   </script>
 
-  <style>
-    * {
-      -webkit-tap-highlight-color: transparent;
-      touch-action: manipulation;
-      box-sizing: border-box;
+  <script src="vendor/babel.min.js"></script>
+  <script>
+    if (typeof Babel === 'undefined') {
+      document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"><\/script>');
     }
+  </script>
 
+  <!-- SheetJS (xlsx): Local Fast Cache with CDN Fallback -->
+  <script src="vendor/xlsx.full.min.js"></script>
+  <script>
+    if (typeof XLSX === 'undefined') {
+      document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"><\/script>');
+    }
+  </script>
+
+  <style>
     body {
       font-family: 'Cairo', 'Tajawal', sans-serif;
-      background: radial-gradient(circle at 50% 15%, rgba(28, 21, 16, 0.95) 0%, rgba(17, 13, 9, 0.98) 65%, rgba(10, 7, 5, 1) 100%), url('alkayan_bg.jpg') center/cover fixed no-repeat;
+      background: radial-gradient(circle at 50% 20%, rgba(28, 21, 16, 0.82) 0%, rgba(17, 13, 9, 0.94) 65%, rgba(10, 7, 5, 0.98) 100%), url('alkayan_bg.jpg') center/cover fixed no-repeat;
       color: #f1f5f9;
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
       min-height: 100vh;
-      overflow-x: hidden;
     }
 
     /* Luxury Golden Scrollbar */
     ::-webkit-scrollbar {
-      width: 4px;
-      height: 4px;
+      width: 8px;
+      height: 8px;
     }
     ::-webkit-scrollbar-track {
       background: rgba(15, 11, 8, 0.9);
     }
     ::-webkit-scrollbar-thumb {
-      background: #C5A059;
-      border-radius: 4px;
+      background: linear-gradient(to bottom, #C5A059, #876728);
+      border-radius: 6px;
+      border: 1px solid rgba(245, 238, 220, 0.2);
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #D9B167;
     }
 
-    /* Luxury Glassmorphic Card Style */
+    /* Luxury Glassmorphism Card Style */
     .glass-card {
-      background: rgba(22, 16, 12, 0.92);
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
-      border: 1px solid rgba(212, 175, 99, 0.25);
-      box-shadow: 0 15px 35px -10px rgba(0, 0, 0, 0.8), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+      background: rgba(22, 16, 12, 0.86);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(212, 175, 99, 0.22);
+      box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.08);
     }
 
     .glass-card-subtle {
-      background: rgba(30, 22, 17, 0.8);
-      backdrop-filter: blur(14px);
-      border: 1px solid rgba(212, 175, 99, 0.18);
+      background: rgba(30, 22, 17, 0.75);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(212, 175, 99, 0.16);
+    }
+
+    .glass-card-bright {
+      background: rgba(255, 255, 255, 0.96);
+      color: #0f172a;
+      box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.5);
     }
 
     /* Gold Metallic Shimmer Effect */
@@ -124,123 +146,155 @@
       color: #1a1207;
       text-shadow: 0 1px 0 rgba(255, 255, 255, 0.3);
       border: 1px solid rgba(255, 245, 220, 0.4);
-      box-shadow: 0 8px 20px -4px rgba(197, 160, 89, 0.4);
+      box-shadow: 0 10px 20px -5px rgba(197, 160, 89, 0.35);
       transition: all 0.2s ease;
     }
     .gold-gradient-btn:hover {
       background: linear-gradient(135deg, #E4C691 0%, #D9B167 50%, #C5A059 100%);
-      box-shadow: 0 10px 25px -4px rgba(217, 177, 103, 0.6);
+      box-shadow: 0 12px 25px -5px rgba(217, 177, 103, 0.5);
       transform: translateY(-1px);
     }
     .gold-gradient-btn:active {
-      transform: scale(0.97);
+      transform: translateY(0px) scale(0.98);
     }
 
-    /* Bottom Nav Bar Blur */
-    .mobile-bottom-nav {
-      background: rgba(18, 13, 9, 0.96);
-      backdrop-filter: blur(24px);
-      -webkit-backdrop-filter: blur(24px);
-      border-top: 1px solid rgba(212, 175, 99, 0.25);
+    /* Gold Text Gradient */
+    .gold-text-gradient {
+      background: linear-gradient(135deg, #FFF0D0 0%, #D9B167 40%, #C5A059 80%, #876728 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
     }
 
-    /* Pulse Glow Animations */
-    @keyframes pulse-gold {
-      0%, 100% { filter: drop-shadow(0 0 6px rgba(212, 175, 99, 0.5)); }
-      50% { filter: drop-shadow(0 0 14px rgba(212, 175, 99, 0.9)); }
+    /* Pulse glow for active backup indicator */
+    @keyframes pulse-glow {
+      0%, 100% { opacity: 1; transform: scale(1); filter: drop-shadow(0 0 8px rgba(212, 175, 99, 0.6)); }
+      50% { opacity: 0.7; transform: scale(1.08); filter: drop-shadow(0 0 14px rgba(212, 175, 99, 0.9)); }
     }
-    .animate-pulse-gold {
-      animation: pulse-gold 2s infinite ease-in-out;
+    .animate-pulse-glow {
+      animation: pulse-glow 2.5s infinite ease-in-out;
     }
 
-    /* Safe Area Padding for Mobile Bottom Bar */
-    .pb-safe {
-      padding-bottom: calc(env(safe-area-inset-bottom, 16px) + 75px);
+    /* Modal Backdrop Blur */
+    .modal-backdrop {
+      background-color: rgba(10, 7, 5, 0.82);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
     }
   </style>
-
-  <!-- 🚀 PWA 24/7 Offline Service Worker Registration -->
-  <script>
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', function() {
-        navigator.serviceWorker.register('./sw.js').then(function(reg) {
-          console.log('✅ ServiceWorker Registered Successfully for 24/7 Offline Access:', reg.scope);
-        }).catch(function(err) {
-          console.warn('⚠️ ServiceWorker registration note:', err);
-        });
-      });
-    }
-  </script>
-
 </head>
 <body class="min-h-screen flex flex-col antialiased selection:bg-gold-500 selection:text-stone-950 font-cairo">
-
-  <!-- Immediate Keep-Alive Heartbeat -->
-  <script>
-    function sendMobileHeartbeat() {
-      fetch('/api/heartbeat').catch(function() {});
-    }
-    sendMobileHeartbeat();
-    setInterval(sendMobileHeartbeat, 2500);
-  </script>
-
   <div id="root">
-    <!-- Initial Loading Screen with Auto-Timeout Recovery -->
+    <!-- Initial Fast Luxury Loading State -->
     <div class="min-h-screen flex flex-col items-center justify-center p-6 text-center">
-      <div class="glass-card p-8 rounded-3xl border border-amber-500/30 max-w-xs w-full shadow-2xl flex flex-col items-center space-y-4">
-        <div class="w-12 h-12 rounded-full border-4 border-amber-500/20 border-t-amber-400 animate-spin"></div>
-        <h2 class="text-lg font-black text-white">مجموعة الكيان | AL KAYAN</h2>
-        <p class="text-xs font-bold text-amber-300">بوابة العميل وتطبيق الجوال 📱</p>
-        <p id="loading-status-text" class="text-[11px] text-stone-400">جاري الاتصال بالنظام وتجهيز البوابة...</p>
-        
-        <div id="slow-network-help" style="display: none;" class="pt-2 w-full space-y-2">
-          <p class="text-[10px] text-amber-200">إذا استمر التحميل، اضغط لإعادة المحاولة:</p>
-          <button onclick="window.location.reload()" class="w-full gold-gradient-btn text-stone-950 text-xs font-black py-2 rounded-xl">
-            إعادة التحميل 🔄
-          </button>
-        </div>
+      <div class="glass-card p-8 rounded-3xl border border-amber-500/30 max-w-md w-full shadow-2xl flex flex-col items-center space-y-4">
+        <div class="w-14 h-14 rounded-full border-4 border-amber-500/20 border-t-amber-400 animate-spin"></div>
+        <h2 class="text-xl font-black text-white">مجموعة الكيان | AL KAYAN GROUP</h2>
+        <p class="text-xs font-bold text-amber-300">الكيان يبدأ من كيان له كيان</p>
+        <p class="text-[11px] text-stone-400">جاري فتح وتجهيز النظام...</p>
       </div>
     </div>
   </div>
 
-  <!-- Global Script Error Recovery Box -->
-  <div id="mobile-error-box" style="display: none; position: fixed; inset: 0; z-index: 9999; background: rgba(10, 7, 5, 0.95); padding: 20px; align-items: center; justify-content: center;">
-    <div class="glass-card p-6 rounded-3xl border-2 border-rose-500/50 max-w-sm w-full text-center space-y-4">
-      <span class="text-3xl">⚠️</span>
-      <h3 class="text-base font-black text-white">تنبيه في تشغيل التطبيق</h3>
-      <p id="mobile-error-text" class="text-xs text-rose-300 font-mono font-bold bg-stone-950 p-3 rounded-xl border border-rose-500/30"></p>
-      <button onclick="window.location.reload()" class="w-full gold-gradient-btn text-stone-950 font-black py-3 rounded-2xl text-xs">
-        إعادة المحاولة 🔄
-      </button>
+  <div id="error-fallback" style="display: none;" class="fixed inset-0 z-50 bg-stone-950/95 flex items-center justify-center p-6 text-right" dir="rtl">
+    <div class="glass-card p-6 rounded-3xl border-2 border-rose-500/60 max-w-lg w-full text-white space-y-3">
+      <h3 class="text-base font-black text-rose-400">تنبيه أثناء التحميل:</h3>
+      <p id="error-text" class="text-xs text-stone-300 font-mono bg-stone-900 p-3 rounded-xl border border-rose-500/30"></p>
+      <button onclick="window.location.reload()" class="gold-gradient-btn text-stone-950 font-black text-xs px-4 py-2 rounded-xl">إعادة المحاولة 🔄</button>
     </div>
   </div>
 
   <script>
-    // Show reload helper if root takes more than 5s to render
-    setTimeout(function() {
-      var help = document.getElementById('slow-network-help');
-      var status = document.getElementById('loading-status-text');
-      if (help && document.getElementById('loading-status-text')) {
-        help.style.display = 'block';
-        if (status) status.innerText = 'تأكد من تشغيل البرنامج على الكمبيوتر والاتصال بنفس شبكة الـ Wi-Fi.';
-      }
-    }, 5000);
-
-    // Capture global JS errors
     window.addEventListener('error', function(e) {
-      console.error('Mobile Global Error:', e);
-      var errBox = document.getElementById('mobile-error-box');
-      var errText = document.getElementById('mobile-error-text');
-      if (errBox && errText) {
-        errText.innerText = e.message || 'خطأ في تشغيل السكربت';
-        errBox.style.display = 'flex';
+      var errBox = document.getElementById('error-fallback');
+      var errText = document.getElementById('error-text');
+      if (errBox && errText && document.getElementById('root').children.length > 0) {
+        if (document.querySelector('.min-h-screen.flex.flex-col.items-center.justify-center')) {
+          errText.innerText = e.message || 'خطأ في تشغيل السكربت';
+          errBox.style.display = 'flex';
+        }
       }
     });
   </script>
 
-  <!-- Mobile Client App Script -->
-  <script src="portal_data.js"></script>
-  <script src="mobile_app.compiled.js"></script>
+  <!-- Main Application Script (Pre-compiled for Instant Zero-Latency Startup) -->
+  <script src="app.compiled.js?v=19"></script>
+  <script>
+    // ⚡ Automatic Live Reload Sentinel for Desktop App & Admin Dashboard
+    (function initDesktopAutoUpdater() {
+      var currentAppTag = null;
+      var isUpdating = false;
+
+      function checkAppVersion() {
+        if (isUpdating) return;
+
+        fetch('./version.json?_t=' + Date.now(), { cache: 'no-store' })
+          .then(function(r) { return r.json(); })
+          .then(function(data) {
+            if (data && (data.version || data.updatedAt)) {
+              var tag = String(data.version || data.updatedAt);
+              if (currentAppTag === null) {
+                currentAppTag = tag;
+              } else if (currentAppTag !== tag) {
+                currentAppTag = tag;
+                isUpdating = true;
+                console.log('⚡ Desktop App version updated! Auto-reloading...');
+                window.location.reload(true);
+              }
+            }
+          })
+          .catch(function() {
+            fetch('./app.compiled.js?v=19&_t=' + Date.now(), { method: 'HEAD', cache: 'no-store' })
+              .then(function(res) {
+                var tag = res.headers.get('etag') || res.headers.get('last-modified') || res.headers.get('content-length');
+                if (tag) {
+                  if (currentAppTag === null) {
+                    currentAppTag = tag;
+                  } else if (currentAppTag !== tag) {
+                    currentAppTag = tag;
+                    isUpdating = true;
+                    console.log('⚡ Desktop App code updated! Auto-reloading...');
+                    window.location.reload(true);
+                  }
+                }
+              })
+              .catch(function() {});
+          });
+      }
+
+      setInterval(checkAppVersion, 3500);
+      document.addEventListener('visibilitychange', function() {
+        if (document.visibilityState === 'visible') checkAppVersion();
+      });
+      window.addEventListener('focus', checkAppVersion);
+    })();
+
+    // ========================================================
+    // 🛑 Desktop Lifecycle & Clean Background Shutdown Controller
+    // ========================================================
+    (function initDesktopLifecycle() {
+      var isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+      if (!isLocal) return;
+
+      // 1. Send periodic heartbeat to keep backend and background processes alive while window is open
+      function sendHeartbeat() {
+        fetch('/api/heartbeat', { method: 'GET', cache: 'no-store' }).catch(function() {});
+      }
+      sendHeartbeat();
+      setInterval(sendHeartbeat, 3000);
+
+      // 2. On window close or navigate away, tell backend to cleanly shut down all background processes
+      function notifyShutdown() {
+        if (navigator.sendBeacon) {
+          navigator.sendBeacon('/api/window_closing', '');
+        } else {
+          fetch('/api/window_closing', { method: 'POST', keepalive: true }).catch(function() {});
+        }
+      }
+
+      window.addEventListener('beforeunload', notifyShutdown);
+      window.addEventListener('pagehide', notifyShutdown);
+    })();
+  </script>
 
 </body>
 </html>
