@@ -30,6 +30,82 @@ function getClientStorageKey(clientObj) {
   return clientObj.id || clientObj.username || clientObj.phone || '';
 }
 
+// Helper to extract timestamp (ms) from client object creation date
+function getClientCreationTime(clientObj) {
+  if (!clientObj) return 0;
+
+  // 1. If explicit timestamp in created_at or createdAt with time
+  const rawCreated = clientObj.created_at || clientObj.createdAt;
+  if (rawCreated) {
+    if (typeof rawCreated === 'number' && rawCreated > 0) return rawCreated;
+    const str = String(rawCreated).trim();
+    if (str.length > 10) {
+      const t = new Date(str).getTime();
+      if (!isNaN(t) && t > 0) return t;
+    }
+  }
+
+  // 2. High-precision epoch ms embedded in client ID (e.g. c-1788751385312)
+  const idStr = String(clientObj.id || '');
+  const m = idStr.match(/\d{12,}/);
+  if (m) {
+    const t = parseInt(m[0], 10);
+    if (!isNaN(t) && t > 0) return t;
+  }
+
+  // 3. Fallback date string (e.g. '2026-09-07')
+  if (rawCreated) {
+    const t = new Date(rawCreated).getTime();
+    if (!isNaN(t) && t > 0) return t;
+  }
+  if (clientObj.registrationDate) {
+    const t = new Date(clientObj.registrationDate).getTime();
+    if (!isNaN(t) && t > 0) return t;
+  }
+  return 0;
+}
+
+// Helper to extract timestamp (ms) from notification or transaction
+function getRecordTimestamp(item) {
+  if (!item) return 0;
+  if (item.timestamp) {
+    const t = typeof item.timestamp === 'number' ? item.timestamp : new Date(item.timestamp).getTime();
+    if (!isNaN(t) && t > 0) return t;
+  }
+  if (item.createdAt) {
+    const t = new Date(item.createdAt).getTime();
+    if (!isNaN(t) && t > 0) return t;
+  }
+  if (item.created_at) {
+    const t = new Date(item.created_at).getTime();
+    if (!isNaN(t) && t > 0) return t;
+  }
+  const idStr = String(item.id || '');
+  const m = idStr.match(/\d{12,}/);
+  if (m) {
+    const t = parseInt(m[0], 10);
+    if (!isNaN(t) && t > 0) return t;
+  }
+  if (item.date) {
+    const cleanDate = toStandardDigits(item.date).trim();
+    const t = new Date(cleanDate).getTime();
+    if (!isNaN(t) && t > 0) return t;
+  }
+  return 0;
+}
+
+// Helper to detect financial notifications
+function isFinancialNotification(notif) {
+  if (!notif) return false;
+  const type = (notif.type || '').toString().toLowerCase();
+  const category = (notif.category || '').toString().toLowerCase();
+  const finTypes = ['financial', 'recharge', 'balance', 'payment', 'invoice', 'buffet', 'buffet_charge', 'money', 'debt', 'refund', 'subscription_renew'];
+  if (finTypes.includes(type) || finTypes.includes(category)) return true;
+  const text = ((notif.title || '') + ' ' + (notif.message || '') + ' ' + (notif.text || '')).toLowerCase();
+  const financialKeywords = ['رصيد', 'سداد', 'دفع', 'فاتورة', 'شحن', 'استرداد', 'بوفيه', 'جنيه', 'ريال', 'خصم مالي', 'إيداع', 'تحويل', 'إنستاباي', 'instapay', 'مديونية', 'تجديد باقة', 'تجديد الاشتراك', 'مبلغ'];
+  return financialKeywords.some(kw => text.includes(kw));
+}
+
 // 🔒 STRICT PER-ACCOUNT NOTIFICATION ISOLATION HELPER
 // Ensures that notifications sent to Client 1 will NEVER appear in Client 2's account
 function isNotificationForClient(notif, clientObj) {
@@ -41,40 +117,73 @@ function isNotificationForClient(notif, clientObj) {
   const tStr = ((notif.title || '') + ' ' + (notif.message || notif.text || '')).toLowerCase();
   if (tStr.includes('تم تجهيز رسالة واتساب')) return false;
 
-  // 1. Direct Match by Unique Client ID
-  if (clientObj.id && (notif.clientId === clientObj.id || notif.targetClientId === clientObj.id)) {
+  // 🛡️ CHRONOLOGICAL FILTER: Ignore any notification (broadcast or direct) created BEFORE this client account was created
+  const clientCreatedTime = getClientCreationTime(clientObj);
+  const notifTime = getRecordTimestamp(notif);
+  if (clientCreatedTime > 0 && notifTime > 0 && notifTime < clientCreatedTime) {
+    return false;
+  }
+  const curClientId = (clientObj.id || '').toString().trim();
+  const isFinancial = isFinancialNotification(notif);
+
+  // 💳 STRICT FINANCIAL RULE: Must strictly match the current client's unique client_id
+  // Financial notifications must NEVER be displayed based on username, phone, or broadcast 'all'
+  if (isFinancial) {
+    if (!curClientId) return false;
+    return notif.clientId === curClientId || notif.targetClientId === curClientId;
+  }
+
+  // 1. Direct Match by Unique Client ID (primary & authoritative)
+  if (curClientId && (notif.clientId === curClientId || notif.targetClientId === curClientId)) {
     return true;
   }
 
-  // 2. Match by Exact Username
+  // 2. Match by Exact Username ONLY if notification does not target a different clientId
   const cUser = (clientObj.username || '').toString().trim().toLowerCase();
   const nUser = (notif.clientUsername || notif.username || '').toString().trim().toLowerCase();
   if (cUser && nUser && cUser === nUser) {
-    return true;
-  }
-
-  // 3. Match by Registered Phone Number Digits
-  const cPhone = (clientObj.phone || '').toString().replace(/\D/g, '');
-  const nPhone = (notif.clientPhone || notif.phone || '').toString().replace(/\D/g, '');
-  if (cPhone && nPhone) {
-    if (cPhone === nPhone) return true;
-    if (cPhone.length >= 9 && nPhone.endsWith(cPhone)) return true;
-    if (nPhone.length >= 9 && cPhone.endsWith(nPhone)) return true;
-  }
-
-  // 4. General Broadcast sent explicitly to 'all'
-  if (nCid === 'all') {
-    // STRICT ISOLATION: Never show old 'all' broadcasts to clients created AFTER the broadcast was sent.
-    const notifTsMatch = notif.id ? String(notif.id).match(/\d{13}/) : null;
-    const clientTsMatch = clientObj.id ? String(clientObj.id).match(/\d{13}/) : null;
-    if (notifTsMatch && clientTsMatch) {
-      const notifTs = parseInt(notifTsMatch[0], 10);
-      const clientTs = parseInt(clientTsMatch[0], 10);
-      if (notifTs < clientTs) return false;
+    if (nCid && curClientId && nCid !== curClientId && nCid !== 'all') {
+      return false;
     }
     return true;
   }
+
+  // 3. General Broadcast sent explicitly to 'all' (only if sent on/after registration)
+  if (nCid === 'all') {
+    if (clientCreatedTime > 0 && notifTime > 0 && notifTime < clientCreatedTime) {
+      return false;
+    }
+    return true;
+  }
+
+  // ⛔ NEVER match by phone number alone! (prevents debt/history leaking to re-registered phone numbers)
   return false;
+}
+
+// 🛡️ STRICT DEDUPLICATION HELPER FOR BOOKINGS (With Safe ID Resolution)
+function deduplicateBookings(bookingsArray) {
+  if (!Array.isArray(bookingsArray)) return [];
+  const seenIds = new Set();
+  const uniqueBookings = [];
+  bookingsArray.forEach((b, idx) => {
+    if (!b) return;
+    const id = b.id || b.key || `${b.date || ''}_${b.start_time || b.time || b.startTime || ''}_${b.room_name || b.room || ''}` || (idx !== undefined ? `booking_${idx}` : '');
+    if (!id || seenIds.has(id)) return;
+    seenIds.add(id);
+    if (!b.id) {
+      b.id = id;
+    }
+    uniqueBookings.push(b);
+  });
+  return uniqueBookings;
+}
+
+// 🛡️ DOM Container Sanitizer: Targets dedicated cards container (#bookingsList / #cardsContainer)
+function clearBookingsContainer() {
+  const cardsContainer = document.getElementById('bookingsList') || document.getElementById('cardsContainer');
+  if (cardsContainer) {
+    cardsContainer.innerHTML = '';
+  }
 }
 
 // ====================================================
@@ -526,6 +635,23 @@ function MobileApp() {
   };
   const sortedNotifications = useMemo(() => {
     let list = [...(notifications || [])];
+
+    // Filter strictly with isNotificationForClient
+    if (client) {
+      list = list.filter(n => isNotificationForClient(n, client));
+    }
+
+    // Deduplicate notifications by unique ID
+    const seenNotifIds = new Set();
+    const uniqueNotifs = [];
+    list.forEach(n => {
+      if (!n) return;
+      const nId = String(n.id || '').trim();
+      if (!nId || seenNotifIds.has(nId)) return;
+      seenNotifIds.add(nId);
+      uniqueNotifs.push(n);
+    });
+    list = uniqueNotifs;
 
     // 🚨 Strict 100% System Notification Injection for Last 7 Days (FT) or Last 5 Hours (Hourly)
     if (client && client.name) {
@@ -1005,7 +1131,11 @@ function MobileApp() {
                 }
               } catch (cfErr) {}
             }
-            const fbBookings = fbDb.bookings ? Array.isArray(fbDb.bookings) ? fbDb.bookings : Object.values(fbDb.bookings) : [];
+            const fbBookings = fbDb.bookings ? Array.isArray(fbDb.bookings) ? fbDb.bookings : Object.entries(fbDb.bookings).map(([k, v]) => v && typeof v === 'object' ? {
+              key: k,
+              id: v.id || v.key || k,
+              ...v
+            } : v) : [];
             const fbAttendance = Array.isArray(fbDb.attendance) ? fbDb.attendance : fbDb.attendance && typeof fbDb.attendance === 'object' ? Object.values(fbDb.attendance) : [];
             let fbNotifs = [];
             if (Array.isArray(fbDb.notifications)) {
@@ -1019,25 +1149,8 @@ function MobileApp() {
             const curPhoneDigits = curPhone.replace(/\D/g, '');
             const curId = (currentClient.id || '').toString().trim();
 
-            // 🚨 SENTINEL 1: Check if client is in deleted_clients blacklist
-            const isBlacklisted = fbDeleted.some(dc => {
-              if (!dc) return false;
-              const dcId = (dc.id || '').toString().trim();
-              const dcU = toStandardDigits(dc.username || '').toLowerCase();
-              const dcP = toStandardDigits(dc.phone || '').replace(/\D/g, '');
-              if (curId && dcId && dcId === curId) return true;
-              if (curU && dcU && dcU === curU) return true;
-              if (curPhoneDigits.length >= 8 && dcP.length >= 8 && (dcP === curPhoneDigits || dcP.endsWith(curPhoneDigits))) return true;
-              return false;
-            });
-            if (isBlacklisted) {
-              handleImmediateAccountPurge('تم حذف هذا الحساب نهائياً من قبل الإدارة العامة للمجموعة. تم إغلاق الجلسة فوراً.');
-              return;
-            }
-
             // Find matching client using priority hierarchy
             let matched = null;
-
             // 1. Exact ID
             if (curId) {
               matched = fbClients.find(c => c && c.id === curId);
@@ -1054,15 +1167,33 @@ function MobileApp() {
                 return cDigits && (cDigits === curPhoneDigits || cDigits.endsWith(curPhoneDigits) || curPhoneDigits.endsWith(cDigits));
               });
             }
-
             // 4. Exact Name Match
             if (!matched && currentClient.name) {
               const curNm = currentClient.name.toString().trim().toLowerCase();
               matched = fbClients.find(c => c && (c.name || '').toString().trim().toLowerCase() === curNm);
             }
 
-            // 🚨 SENTINEL 2: Cloud database has active clients, but this client does NOT exist in clients list -> DELETED!
-            if (fbClients.length > 0 && !matched) {
+            // 🚨 SENTINEL 1: Check if client is in deleted_clients blacklist AND NOT ACTIVE
+            const isBlacklisted = fbDeleted.some(dc => {
+              if (!dc) return false;
+              const dcId = (dc.id || '').toString().trim();
+              const dcU = toStandardDigits(dc.username || '').toLowerCase();
+              const dcP = toStandardDigits(dc.phone || '').replace(/\D/g, '');
+              if (curId && dcId && dcId === curId) return true;
+              if (curU && dcU && dcU === curU) return true;
+              if (curPhoneDigits.length >= 8 && dcP.length >= 8 && (dcP === curPhoneDigits || dcP.endsWith(curPhoneDigits))) return true;
+              return false;
+            });
+            if (isBlacklisted && !matched) {
+              handleImmediateAccountPurge('تم حذف هذا الحساب نهائياً من قبل الإدارة العامة للمجموعة. تم إغلاق الجلسة فوراً.');
+              return;
+            }
+
+            // 🚨 SENTINEL 2: Cloud database has active clients, but this client does NOT exist -> likely deleted
+            // Safety checks to prevent false positives during sync/re-registration:
+            // - Require at least 2 clients in Firebase (not just 1 test record)
+            // - Require deleted_clients list to be empty (no ongoing deletion sync) 
+            if (fbClients.length >= 2 && fbDeleted.length === 0 && !matched) {
               handleImmediateAccountPurge('تم حذف هذا الحساب نهائياً من قاعدة بيانات المجموعة. تم إغلاق الجلسة فوراً.');
               return;
             }
@@ -1094,7 +1225,7 @@ function MobileApp() {
               const myB = fbBookings.filter(b => b && (b.clientId === matched.id || b.username === matched.username || matched.phone && b.clientPhone === matched.phone));
               const myA = fbAttendance.filter(a => a && (a.clientId === matched.id || matched.phone && a.clientPhone === matched.phone));
               const activeScheduled = fbBookings.filter(b => b && b.status === 'scheduled');
-              setMyBookings(myB);
+              setMyBookings(deduplicateBookings(myB));
               setAllBookings(activeScheduled);
 
               // 🔒 Filter client's financial transactions with STRICT 3-FIELD exact matching
@@ -1102,17 +1233,20 @@ function MobileApp() {
               const allFinancial = Array.isArray(fbDb.financial_transactions) ? fbDb.financial_transactions : fbDb.financial_transactions && typeof fbDb.financial_transactions === 'object' ? Object.values(fbDb.financial_transactions) : [];
               const _mId = (matched.id || '').toString().trim();
               const _mUser = (matched.username || '').trim().toLowerCase();
-              const _mPhone = (matched.phone || '').replace(/\D/g, '').trim();
+              const clientCreatedTime = getClientCreationTime(matched);
               const myFin = allFinancial.filter(t => {
                 if (!t) return false;
-                // 1. Exact client ID match (most reliable)
+                // 🛡️ CHRONOLOGICAL FILTER: Ignore transactions created before client account registration
+                const txTime = getRecordTimestamp(t);
+                if (clientCreatedTime > 0 && txTime > 0 && txTime < clientCreatedTime - 60000) {
+                  return false;
+                }
+                // 1. Exact client ID match (authoritative)
                 if (_mId && t.clientId === _mId) return true;
-                // 2. Exact username match (case-insensitive)
+                // 2. Exact username match only if not assigned to a different client ID
                 const tUser = (t.clientUsername || '').trim().toLowerCase();
-                if (_mUser && tUser && tUser === _mUser) return true;
-                // 3. Exact full phone digits match only (>= 9 digits, NO partial endsWith)
-                const tPhone = (t.clientPhone || '').replace(/\D/g, '').trim();
-                if (_mPhone && _mPhone.length >= 9 && tPhone && tPhone === _mPhone) return true;
+                if (_mUser && tUser && tUser === _mUser && (!t.clientId || t.clientId === _mId)) return true;
+                // ⛔ NEVER match transactions by phone number alone!
                 return false;
               });
               setMyFinancialTransactions(myFin);
@@ -1258,7 +1392,7 @@ function MobileApp() {
           const res = await fetch(`/api/client/data?clientId=${encodeURIComponent(currentClient.id)}&username=${encodeURIComponent(currentClient.username || '')}`);
           const json = res.ok ? await res.json() : null;
           if (json && json.success) {
-            if (Array.isArray(json.myBookings)) setMyBookings(json.myBookings);
+            if (Array.isArray(json.myBookings)) setMyBookings(deduplicateBookings(json.myBookings));
             if (Array.isArray(json.allBookings)) setAllBookings(json.allBookings);
             if (Array.isArray(json.myAttendance)) setMyAttendance(json.myAttendance);
 
@@ -1371,6 +1505,8 @@ function MobileApp() {
           try {
             const parsed = JSON.parse(e.data);
             const data = parsed ? parsed.data || parsed : null;
+            // Skip clear/reset signals
+            if (!data || data.id === 'clear' || data.timestamp === 0) return;
             if (data && client) {
               const curId = (client.id || '').toString().trim();
               const curU = (client.username || '').toString().trim().toLowerCase();
@@ -1378,6 +1514,8 @@ function MobileApp() {
               const pId = (data.id || '').toString().trim();
               const pU = (data.username || '').toString().trim().toLowerCase();
               const pP = (data.phone || '').replace(/\D/g, '');
+              // Extra safety: if client exists in fbClients (active list), do NOT purge
+              if (window.__fbActiveClientIds && window.__fbActiveClientIds.has(curId)) return;
               if (pId && curId && pId === curId || pU && curU && pU === curU || pP && curP && pP.length >= 8 && pP === curP) {
                 handleImmediateAccountPurge('تم حذف هذا الحساب نهائياً من قبل الإدارة العامة للمجموعة. تم طرد الجلسة فوراً.');
               }
@@ -1809,11 +1947,16 @@ function MobileApp() {
           return false;
         });
         const myN = notifsList.filter(n => isNotificationForClient(n, c));
+        const clientCreatedTime = getClientCreationTime(c);
         const allFins = Array.isArray(portalData.financial_transactions) ? portalData.financial_transactions : [];
         const myF = allFins.filter(t => {
           if (!t) return false;
+          const txTime = getRecordTimestamp(t);
+          if (clientCreatedTime > 0 && txTime > 0 && txTime < clientCreatedTime - 60000) {
+            return false;
+          }
           if (c.id && t.clientId === c.id) return true;
-          if (c.username && t.clientUsername && t.clientUsername.toString().trim().toLowerCase() === c.username.toString().trim().toLowerCase()) return true;
+          if (c.username && t.clientUsername && t.clientUsername.toString().trim().toLowerCase() === c.username.toString().trim().toLowerCase() && (!t.clientId || t.clientId === c.id)) return true;
           return false;
         });
         return {
@@ -1862,9 +2005,17 @@ function MobileApp() {
       if (res.ok) {
         const json = await res.json();
         if (json && json.success) {
+          try {
+            const prevSess = JSON.parse(localStorage.getItem('al_kayan_client_session') || '{}');
+            if (prevSess.client && prevSess.client.id && prevSess.client.id !== json.client.id) {
+              const uKeyOld = getClientStorageKey(prevSess.client);
+              localStorage.removeItem('ALKAYAN_NOTIFS_STORE_' + uKeyOld);
+              localStorage.removeItem('ALKAYAN_READ_NOTIFS_' + uKeyOld);
+            }
+          } catch (e) {}
           const clientNotifs = (json.notifications || []).filter(n => isNotificationForClient(n, json.client));
           setClient(json.client);
-          setMyBookings(json.myBookings || []);
+          setMyBookings(deduplicateBookings(json.myBookings || []));
           setAllBookings(json.allBookings || []);
           setMyAttendance(json.myAttendance || []);
           setMyFinancialTransactions(json.financialTransactions || []);
@@ -1933,9 +2084,17 @@ function MobileApp() {
         return;
       }
       if (cloudResult && typeof cloudResult === 'object' && cloudResult.client) {
+        try {
+          const prevSess = JSON.parse(localStorage.getItem('al_kayan_client_session') || '{}');
+          if (prevSess.client && prevSess.client.id && prevSess.client.id !== cloudResult.client.id) {
+            const uKeyOld = getClientStorageKey(prevSess.client);
+            localStorage.removeItem('ALKAYAN_NOTIFS_STORE_' + uKeyOld);
+            localStorage.removeItem('ALKAYAN_READ_NOTIFS_' + uKeyOld);
+          }
+        } catch (e) {}
         const clientNotifs = (cloudResult.notifications || []).filter(n => isNotificationForClient(n, cloudResult.client));
         setClient(cloudResult.client);
-        setMyBookings(cloudResult.myBookings || []);
+        setMyBookings(deduplicateBookings(cloudResult.myBookings || []));
         setAllBookings(cloudResult.allBookings || []);
         setMyAttendance(cloudResult.myAttendance || []);
         setMyFinancialTransactions(cloudResult.financialTransactions || []);
@@ -2017,7 +2176,7 @@ function MobileApp() {
       if (targetSession && targetSession.client) {
         const clientNotifs = (targetSession.notifications || []).filter(n => isNotificationForClient(n, targetSession.client));
         setClient(targetSession.client);
-        setMyBookings(targetSession.myBookings || []);
+        setMyBookings(deduplicateBookings(targetSession.myBookings || []));
         setMyAttendance(targetSession.myAttendance || []);
         setMyFinancialTransactions(targetSession.financialTransactions || []);
         setNotifications(clientNotifs);
@@ -2106,10 +2265,23 @@ function MobileApp() {
     triggerToast('تم قفل الحساب ⛔', reason, 'error');
   };
 
-  // Handle Logout
+  // Handle Logout (Completely purge client session and cached notifications from localStorage)
   const handleLogout = () => {
-    localStorage.removeItem('KAYAN_MOBILE_USER');
-    localStorage.removeItem('al_kayan_client_session');
+    try {
+      const keysToRemove = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && (key.startsWith('al_kayan_client_') || key.startsWith('KAYAN_') || key.startsWith('ALKAYAN_NOTIFS_') || key.startsWith('ALKAYAN_READ_'))) {
+          if (key !== 'ALKAYAN_CANCELLED_BOOKINGS_GLOBAL') {
+            keysToRemove.push(key);
+          }
+        }
+      }
+      keysToRemove.forEach(k => localStorage.removeItem(k));
+      localStorage.removeItem('KAYAN_MOBILE_USER');
+      localStorage.removeItem('al_kayan_client_session');
+      localStorage.removeItem('al_kayan_client_registry');
+    } catch (e) {}
     setClient(null);
     setMyBookings([]);
     setMyAttendance([]);
@@ -2174,9 +2346,9 @@ function MobileApp() {
     });
   }, [allBookings, bookingForm.date, bookingForm.room]);
 
-  // Stats for My Bookings Categorization
+  // Stats for My Bookings Categorization (Strictly Deduplicated)
   const myBookingsStats = useMemo(() => {
-    const all = myBookings || [];
+    const all = deduplicateBookings(myBookings || []);
     let scheduled = 0;
     let attended = 0;
     let cancelled = 0;
@@ -2192,15 +2364,68 @@ function MobileApp() {
     };
   }, [myBookings]);
 
-  // Filtered List for My Bookings
+  // Filtered List for My Bookings (Strictly Deduplicated)
   const filteredMyBookings = useMemo(() => {
-    const all = myBookings || [];
+    const all = deduplicateBookings(myBookings || []);
     return all.filter(b => {
       if (bookingFilter === 'all') return true;
       const cat = getBookingDisplayCategory(b);
       return cat === bookingFilter;
     });
   }, [myBookings, bookingFilter]);
+
+  // 🛡️ Safe DOM Container State (React handles rendering inside #bookingsList / #cardsContainer)
+
+  // ⚡ Firebase Realtime Database Listener Management with strict .off() before .on('value')
+  useEffect(() => {
+    let fbBookingsRef = null;
+    let fbNotifsRef = null;
+    try {
+      if (typeof window !== 'undefined' && window.firebase && window.firebase.database) {
+        // 1. Bookings Listener: ALWAYS call .off('value') before .on('value') to prevent stacking
+        fbBookingsRef = window.firebase.database().ref('alkayan_db/bookings');
+        fbBookingsRef.off('value');
+        fbBookingsRef.on('value', snapshot => {
+          const val = snapshot.val();
+          if (val) {
+            const rawList = Array.isArray(val) ? val : Object.values(val);
+            const dedupedList = deduplicateBookings(rawList);
+            setAllBookings(dedupedList.filter(b => b && b.status === 'scheduled'));
+            if (client && client.id) {
+              const myB = dedupedList.filter(b => b && (b.clientId === client.id || b.username === client.username));
+              setMyBookings(deduplicateBookings(myB));
+            }
+          }
+        });
+
+        // 2. Notifications Listener: ALWAYS call .off('value') before .on('value') to prevent stacking
+        fbNotifsRef = window.firebase.database().ref('alkayan_db/notifications');
+        fbNotifsRef.off('value');
+        fbNotifsRef.on('value', snapshot => {
+          const val = snapshot.val();
+          if (val) {
+            const rawNotifs = Array.isArray(val) ? val : Object.values(val);
+            if (client) {
+              const clientNotifs = rawNotifs.filter(n => isNotificationForClient(n, client));
+              setNotifications(clientNotifs);
+            }
+          }
+        });
+      }
+    } catch (err) {
+      console.warn('Firebase listener setup note:', err);
+    }
+    return () => {
+      try {
+        if (fbBookingsRef && typeof fbBookingsRef.off === 'function') {
+          fbBookingsRef.off('value');
+        }
+        if (fbNotifsRef && typeof fbNotifsRef.off === 'function') {
+          fbNotifsRef.off('value');
+        }
+      } catch (err) {}
+    };
+  }, [activeTab, client?.id]);
 
   // Client Contract Details
   const contractStatus = useMemo(() => {
@@ -2216,127 +2441,102 @@ function MobileApp() {
 
   // Handle Client Booking Submission
   const handleExecuteBooking = async e => {
-    if (e) e.preventDefault();
-    if (!client) return;
-
-    // 1. Strict Date Validation (Must be tomorrow or later)
-    const todayStr = new Date().toISOString().split('T')[0];
-    if (bookingForm.date <= todayStr) {
-      alert('⛔ وفقاً لشروط النظام: لا يمكن حجز قاعة في نفس اليوم!\nيجب أن يكون تاريخ الموعد غداً على الأقل (ابتداءً من تاريخ ' + tomorrowStr + ').');
+    e.preventDefault();
+    if (!bookingForm.date || !bookingForm.time || !bookingForm.duration) {
+      triggerToast('خطأ', 'يرجى تعبئة كافة الحقول المطلوبة.', 'error');
       return;
     }
-
-    // 2. Strict Duration Validation (Integer Hours Only)
-    const durNum = parseFloat(bookingForm.duration);
-    if (isNaN(durNum) || durNum <= 0 || !Number.isInteger(durNum)) {
-      alert('⛔ وفقاً لشروط النظام: لا يمكن حجز نصف ساعة!\nيمكنك حجز ساعات كاملة فقط (ساعة، ساعتين، 3 ساعات، وهكذا).');
-      return;
-    }
-
-    // 2.5 Strict Working Hours Validation (10:00 AM to 10:00 PM)
-    if (workingHoursCheck.isOutside) {
-      alert(`⚠️ تنبيه مواعيد العمل الرسمية:\n\nمواعيد العمل والحجوزات الرسمية في مجموعة الكيان تبدأ من الساعة 10:00 صباحاً وحتى الساعة 10:00 مساءً فقط.\n\nالحجز المحدد ينتهي في الساعة (${workingHoursCheck.endTimeFormatted}) وهو خارج مواعيد العمل الأساسية.\nيرجى تعديل وقت البدء أو المدة بحيث ينتهي الحجز قبل الساعة 10:00 مساءً.`);
-      return;
-    }
-
-    // 3. Contract Validity Check
-    if (contractStatus.isExpired) {
-      alert(`⛔ لا يمكنك حجز قاعة لأن اشتراكك منتهي الصلاحية!\nالسبب: ${contractStatus.reason}.\n\nيرجى التواصل مع إدارة مجموعة الكيان لتجديد الباقة.`);
-      return;
-    }
-
-    // 4. Hours Balance Check (for hourly clients)
-    if (!contractStatus.isFullTime && (client.currentBalance || 0) < durNum) {
-      alert(`⛔ رصيدك الحالي (${client.currentBalance} ساعة) لا يكفي لحجز مدة (${durNum} ساعة)!\n\nيرجى شحن رصيد ساعات إضافي من إدارة الكيان.`);
-      return;
-    }
-
-    // 5. Room Conflict Validation
-    if (conflictCheck.hasConflict) {
-      alert(`⚠️ القاعة "${bookingForm.room}" مشغولة في هذا التوقيت (${conflictCheck.conflictTime}) بحجز آخر!\n\nيرجى اختيار قاعة أخرى أو توقيت بديل.`);
-      return;
-    }
-
-    // Submit Booking to Backend & Firebase Cloud Bridge (Immediate Hour Deduction & 24/7 Sync)
     setBookingSubmitting(true);
-
-    // Calculate 12-Hour Time Range
-    const durVal = parseFloat(bookingForm.duration) || 1;
-    const parts = (bookingForm.time || '12:00').split(':');
-    const h = parseInt(toStandardDigits(parts[0])) || 12;
-    const m = parseInt(toStandardDigits(parts[1] || '0')) || 0;
-    const endH = (h + Math.floor(durVal)) % 24;
-    const endM = m;
-    const to12h = (hour, minute) => {
-      const period = hour >= 12 ? 'م' : 'ص';
-      const h12 = hour % 12 === 0 ? 12 : hour % 12;
-      const minStr = String(minute).padStart(2, '0');
-      const hStr = String(h12).padStart(2, '0');
-      return `${hStr}:${minStr} ${period}`;
-    };
-    const start12h = to12h(h, m);
-    const end12h = to12h(endH, endM);
-    const timeRangeStr = `من ${start12h} إلى ${end12h}`;
-    const durStr = String(Math.floor(durVal));
-    const nowIso = new Date().toISOString();
-    const bookingId = `b-mob-${Date.now()}`;
-    const targetRoom = bookingForm.room || settings.rooms && settings.rooms[0] || 'Master VIP Room';
-
-    // Immediate hour deduction
-    const oldBalNum = parseFloat(client.currentBalance || 0);
-    const newBalNum = Math.max(0, oldBalNum - durVal);
-    const newBalStr = newBalNum % 1 === 0 ? String(newBalNum) : String(newBalNum.toFixed(1));
-    const updatedClient = {
-      ...client,
-      currentBalance: newBalStr,
-      balanceUpdatedAt: Date.now(),
-      updatedAt: nowIso
-    };
-    const fullBookingObj = {
-      id: bookingId,
-      clientId: client.id,
-      clientName: client.name,
-      clientPhone: client.phone,
-      username: client.username,
-      date: bookingForm.date,
-      time: bookingForm.time,
-      startTime: start12h,
-      endTime: end12h,
-      timeRange: timeRangeStr,
-      duration: durStr,
-      durationHours: durStr,
-      serviceType: bookingForm.serviceType || 'حجز ذاتي من الجوال',
-      room: targetRoom,
-      status: 'scheduled',
-      bookedVia: 'mobile_app',
-      isAutoDeducted: true,
-      hoursDeducted: durStr,
-      newBalanceAfterBooking: newBalStr,
-      notes: bookingForm.notes || 'حجز تم بواسطة العميل عبر تطبيق الجوال',
-      createdAt: nowIso
-    };
-    const attItem = {
-      id: `att-mob-${Date.now()}`,
-      clientId: client.id,
-      clientName: client.name,
-      clientPhone: client.phone,
-      date: bookingForm.date,
-      time: bookingForm.time,
-      startTime: start12h,
-      endTime: end12h,
-      timeRange: timeRangeStr,
-      hoursConsumed: durStr,
-      oldBalance: String(oldBalNum),
-      newBalance: newBalStr,
-      serviceType: `حجز قاعة (${targetRoom})`,
-      notes: `خصم فوري لحجز ${targetRoom} (${timeRangeStr}) - المدة: ${durStr} ساعات`,
-      source: 'mobile_app',
-      createdAt: nowIso
-    };
-
-    // 1. Direct Firebase Realtime Cloud Sync (Google Cloud 0.05s Sync)
     try {
-      // A. Push booking to Firebase
+      // 1) قراءة مستند العميل الفعلي بالسحابة بناءً على هاتفه/معرفه والتأكد من رصيده
+      const fbClientsRes = await fetch(`${FIREBASE_BASE_URL}/alkayan_db/clients.json?t=${Date.now()}`, {
+        cache: 'no-store'
+      });
+      if (!fbClientsRes.ok) throw new Error('فشل الاتصال بقاعدة البيانات السحابية.');
+      const fbClientsRaw = await fbClientsRes.json();
+      if (!fbClientsRaw) throw new Error('لا توجد بيانات للعملاء.');
+      let clientList = Array.isArray(fbClientsRaw) ? [...fbClientsRaw] : Object.values(fbClientsRaw);
+      const clientIdx = clientList.findIndex(c => c && (c.id === client.id || client.username && c.username && c.username.toLowerCase() === client.username.toLowerCase() || client.phone && c.phone && c.phone === client.phone));
+      if (clientIdx === -1) {
+        throw new Error('العميل غير موجود في قاعدة البيانات السحابية.');
+      }
+      const cloudClient = clientList[clientIdx];
+      const oldBalNum = parseFloat(cloudClient.currentBalance) || parseFloat(cloudClient.active_hours) || parseFloat(cloudClient.hours) || 0;
+      const durVal = parseFloat(bookingForm.duration);
+      if (oldBalNum <= 0) {
+        throw new Error(`رصيد الساعات منتهٍ بالكامل. لا يمكن الحجز.`);
+      }
+      if (oldBalNum < durVal) {
+        throw new Error(`رصيد الساعات (${oldBalNum}س) أقل من مدة الحجز المطلوبة (${durVal}س).`);
+      }
+
+      // 2) خصم الساعات من نفس المستند بالسحابة مباشرة
+      const newBalNum = Math.max(0, oldBalNum - durVal);
+      const newBalStr = newBalNum % 1 === 0 ? String(newBalNum) : String(newBalNum.toFixed(1));
+      const nowIso = new Date().toISOString();
+      const updatedClient = {
+        ...cloudClient,
+        currentBalance: newBalStr,
+        active_hours: newBalStr,
+        hours: newBalStr,
+        balanceUpdatedAt: Date.now(),
+        updatedAt: nowIso
+      };
+      clientList[clientIdx] = updatedClient;
+
+      // Push updated clients array
+      const updateClientRes = await fetch(`${FIREBASE_BASE_URL}/alkayan_db/clients.json`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(clientList)
+      });
+      if (!updateClientRes.ok) throw new Error('فشل في تحديث الرصيد السحابي.');
+
+      // Setup booking details
+      const h = parseInt(bookingForm.time.split(':')[0], 10);
+      const m = parseInt(bookingForm.time.split(':')[1], 10);
+      const endH = (h + Math.floor(durVal)) % 24;
+      const endM = m;
+      const to12h = (hour, minute) => {
+        const period = hour >= 12 ? 'م' : 'ص';
+        const h12 = hour % 12 === 0 ? 12 : hour % 12;
+        const minStr = String(minute).padStart(2, '0');
+        const hStr = String(h12).padStart(2, '0');
+        return `${hStr}:${minStr} ${period}`;
+      };
+      const start12h = to12h(h, m);
+      const end12h = to12h(endH, endM);
+      const timeRangeStr = `من ${start12h} إلى ${end12h}`;
+      const durStr = String(Math.floor(durVal));
+      const bookingId = `b-mob-${Date.now()}`;
+      const targetRoom = bookingForm.room || settings.rooms && settings.rooms[0] || 'Master VIP Room';
+      const fullBookingObj = {
+        id: bookingId,
+        clientId: updatedClient.id,
+        clientName: updatedClient.name,
+        clientPhone: updatedClient.phone,
+        username: updatedClient.username,
+        date: bookingForm.date,
+        time: bookingForm.time,
+        startTime: start12h,
+        endTime: end12h,
+        timeRange: timeRangeStr,
+        duration: durStr,
+        durationHours: durStr,
+        serviceType: bookingForm.serviceType || 'حجز قاعة من تطبيق العميل',
+        room: targetRoom,
+        status: 'scheduled',
+        bookedVia: 'mobile_app',
+        isAutoDeducted: true,
+        hoursDeducted: durStr,
+        newBalanceAfterBooking: newBalStr,
+        notes: bookingForm.notes || 'حجز آلي عبر التطبيق',
+        createdAt: nowIso
+      };
+
+      // 3) إضافة كائن الحجز الجديد إلى مصفوفة/مجموعة الحجوزات السحابية
       await fetch(`${FIREBASE_BASE_URL}/alkayan_db/bookings/${bookingId}.json`, {
         method: 'PUT',
         headers: {
@@ -2345,157 +2545,117 @@ function MobileApp() {
         body: JSON.stringify(fullBookingObj)
       });
 
-      // B. Update client balance in Firebase (Works 24/7 independently of desktop PC)
-      try {
-        const fbClientsRes = await fetch(`${FIREBASE_BASE_URL}/alkayan_db/clients.json`, {
-          cache: 'no-store'
-        });
-        if (fbClientsRes.ok) {
-          const fbClientsRaw = await fbClientsRes.json();
-          if (fbClientsRaw) {
-            let clientList = Array.isArray(fbClientsRaw) ? [...fbClientsRaw] : Object.values(fbClientsRaw);
-            const idx = clientList.findIndex(c => c && (c.id === client.id || client.username && c.username && c.username.toLowerCase() === client.username.toLowerCase() || client.phone && c.phone && c.phone === client.phone));
-            if (idx !== -1) {
-              clientList[idx] = {
-                ...clientList[idx],
-                ...updatedClient,
-                currentBalance: newBalStr
-              };
-            } else {
-              clientList.push(updatedClient);
-            }
-            await fetch(`${FIREBASE_BASE_URL}/alkayan_db/clients.json`, {
-              method: 'PUT',
-              headers: {
-                'Content-Type': 'application/json'
-              },
-              body: JSON.stringify(clientList)
-            });
-          }
-        }
-      } catch (e) {}
-
-      // C. Push attendance record to Firebase
-      await fetch(`${FIREBASE_BASE_URL}/alkayan_db/attendance/${attItem.id}.json`, {
+      // (Optional) add attendance and notifications asynchronously without awaiting
+      const attItem = {
+        id: `att-mob-${Date.now()}`,
+        clientId: updatedClient.id,
+        clientName: updatedClient.name,
+        clientPhone: updatedClient.phone,
+        date: bookingForm.date,
+        time: bookingForm.time,
+        startTime: start12h,
+        endTime: end12h,
+        timeRange: timeRangeStr,
+        hoursConsumed: durStr,
+        oldBalance: String(oldBalNum),
+        newBalance: newBalStr,
+        serviceType: `حجز قاعة (${targetRoom})`,
+        notes: `خصم فوري من التطبيق (${timeRangeStr}) - المدة: ${durStr}س`,
+        source: 'mobile_app',
+        createdAt: nowIso
+      };
+      fetch(`${FIREBASE_BASE_URL}/alkayan_db/attendance/${attItem.id}.json`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify(attItem)
-      });
-
-      // D. Push booking confirmation notification to Firebase
+      }).catch(() => {});
       const bookNotif = {
         id: `notif-book-${Date.now()}`,
-        targetClientId: client.id,
-        clientId: client.id,
-        clientName: client.name,
-        clientPhone: client.phone,
-        clientUsername: client.username,
-        title: `📅 تأكيد حجز قاعة (${targetRoom})`,
-        message: `تم تأكيد حجزك بنجاح للقاعة (${targetRoom}) بتاريخ ${bookingForm.date} (${timeRangeStr}). تم خصم (${durStr}س) فورياً من رصيدك. رصيدك المتبقي الحالي: ${newBalStr} ساعة.`,
-        text: `تم تأكيد حجزك بنجاح للقاعة (${targetRoom}) بتاريخ ${bookingForm.date} (${timeRangeStr}). تم خصم (${durStr}س) فورياً من رصيدك. رصيدك المتبقي الحالي: ${newBalStr} ساعة.`,
+        targetClientId: updatedClient.id,
+        clientId: updatedClient.id,
+        clientName: updatedClient.name,
+        title: `✅ تم حجز القاعة (${targetRoom}) بنجاح`,
+        message: `تم حجز القاعة (${targetRoom}) بتاريخ ${bookingForm.date} (${timeRangeStr}). تم خصم (${durStr}س) آلياً. الرصيد المتبقي: ${newBalStr}س.`,
+        text: `تم حجز القاعة (${targetRoom}) بتاريخ ${bookingForm.date} (${timeRangeStr}). تم خصم (${durStr}س) آلياً. الرصيد المتبقي: ${newBalStr}س.`,
         type: 'booking',
         time: new Date().toLocaleTimeString('ar-SA', {
           hour: '2-digit',
           minute: '2-digit'
-        }) + ' • ' + nowIso.split('T')[0],
+        }) + ' - ' + nowIso.split('T')[0],
         date: nowIso.split('T')[0],
         read: false,
         source: 'mobile_app',
         createdAt: nowIso
       };
-      await fetch(`${FIREBASE_BASE_URL}/alkayan_db/notifications/${bookNotif.id}.json`, {
+      fetch(`${FIREBASE_BASE_URL}/alkayan_db/notifications/${bookNotif.id}.json`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify(bookNotif)
-      });
-
-      // E. Push Admin Notification to Desktop App (via latest_admin_notification & notifications collection)
+      }).catch(() => {});
       const adminBookNotif = {
+        ...bookNotif,
         id: `notif-admin-book-${Date.now()}`,
         targetClientId: 'admin_only',
-        clientId: client.id,
-        clientName: client.name,
-        clientPhone: client.phone,
-        clientUsername: client.username,
-        title: `📅 حجز قاعة جديد من الجوال (${client.name})`,
-        message: `قام العميل "${client.name}" بحجز قاعة (${targetRoom}) بتاريخ ${bookingForm.date} (${timeRangeStr}) لمدة (${durStr}س).\nتم خصم الساعات تلقائياً ورصيده المتبقي: ${newBalStr}س.`,
-        text: `قام العميل "${client.name}" بحجز قاعة (${targetRoom}) بتاريخ ${bookingForm.date} (${timeRangeStr}) لمدة (${durStr}س).\nتم خصم الساعات تلقائياً ورصيده المتبقي: ${newBalStr}س.`,
-        type: 'booking',
-        time: new Date().toLocaleTimeString('ar-SA', {
-          hour: '2-digit',
-          minute: '2-digit'
-        }) + ' • ' + nowIso.split('T')[0],
-        date: nowIso.split('T')[0],
-        read: false,
-        source: 'mobile_app_book',
-        createdAt: nowIso
+        title: `✅ حجز من العميل (${updatedClient.name})`
       };
-      await fetch(`${FIREBASE_BASE_URL}/alkayan_db/notifications/${adminBookNotif.id}.json`, {
+      fetch(`${FIREBASE_BASE_URL}/alkayan_db/notifications/${adminBookNotif.id}.json`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify(adminBookNotif)
-      });
-      await fetch(`${FIREBASE_BASE_URL}/alkayan_db/latest_admin_notification.json`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(adminBookNotif)
-      });
-    } catch (fbErr) {
-      console.warn('Firebase direct booking warning:', fbErr);
-    }
-
-    // 2. Also send to Backend API
-    try {
-      fetch('/api/client/book', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(fullBookingObj)
       }).catch(() => {});
-    } catch (e) {}
-
-    // 3. Immediately Update UI State & Local Storage
-    setClient(updatedClient);
-    setMyBookings(prev => [fullBookingObj, ...prev.filter(b => b.id !== fullBookingObj.id)]);
-    setAllBookings(prev => [fullBookingObj, ...prev.filter(b => b.id !== fullBookingObj.id)]);
-    setMyAttendance(prev => [attItem, ...prev]);
-    try {
-      const sessionObj = {
-        client: updatedClient,
-        myBookings: [fullBookingObj, ...myBookings],
-        myAttendance: [attItem, ...myAttendance],
-        notifications: notifications || [],
-        settings: settings || {},
-        credentials: {
-          username: client.username,
-          password: client.password
-        },
-        savedAt: nowIso
+      const bookingUpdateEntry = {
+        action: 'book',
+        bookingId: bookingId,
+        room: targetRoom,
+        date: bookingForm.date,
+        clientId: updatedClient.id,
+        booking: fullBookingObj,
+        timestamp: Date.now()
       };
-      localStorage.setItem('al_kayan_client_session', JSON.stringify(sessionObj));
-      const registry = JSON.parse(localStorage.getItem('al_kayan_client_registry') || '{}');
-      if (client.username) {
-        registry[client.username.toLowerCase()] = sessionObj;
-        localStorage.setItem('al_kayan_client_registry', JSON.stringify(registry));
-      }
-    } catch (e) {}
-    playNotificationSound('success');
-    setBookingSuccessModal(fullBookingObj);
-    triggerToast('تم الحجز وخصم الساعات 🎉', `تم تأكيد حجز ${targetRoom} (${timeRangeStr}) وخصم (${durStr}س) فورياً من رصيدك.`, 'success');
-    setBookingSubmitting(false);
-    return;
-  };
+      fetch(`${FIREBASE_BASE_URL}/alkayan_db/latest_booking_update.json`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(bookingUpdateEntry)
+      }).catch(() => {});
 
-  // Open Cancel Booking Warning Modal
+      // 4) إرجاع حالة النجاح للواجهة فوراً دون انتظار أي رد محلي
+      setClient(updatedClient);
+      setMyBookings(prev => [fullBookingObj, ...prev.filter(b => b.id !== fullBookingObj.id)]);
+      setAllBookings(prev => [fullBookingObj, ...prev.filter(b => b.id !== fullBookingObj.id)]);
+      setMyAttendance(prev => [attItem, ...prev]);
+      try {
+        const sessionObj = {
+          client: updatedClient,
+          myBookings: [fullBookingObj, ...(myBookings || [])],
+          myAttendance: [attItem, ...(myAttendance || [])],
+          notifications: notifications || [],
+          settings: settings || {},
+          credentials: {
+            username: updatedClient.username,
+            password: updatedClient.password
+          },
+          savedAt: nowIso
+        };
+        localStorage.setItem('al_kayan_client_session', JSON.stringify(sessionObj));
+      } catch (e) {}
+      playNotificationSound('success');
+      setBookingSuccessModal(fullBookingObj);
+      triggerToast('تم الحجز وخصم الساعات بنجاح', `تم الحجز بقاعة ${targetRoom} وخصم ${durStr}س من رصيدك.`, 'success');
+    } catch (err) {
+      console.error(err);
+      triggerToast('خطأ في الحجز', err.message || 'حدث خطأ أثناء الاتصال بالسحابة', 'error');
+    } finally {
+      setBookingSubmitting(false);
+    }
+  };
   const handleCancelBooking = bookingId => {
     const target = (myBookings || []).find(b => b.id === bookingId);
     if (target) {
@@ -2525,12 +2685,14 @@ function MobileApp() {
     // 0.2 Immediately update UI state & release room in zero milliseconds!
     setMyBookings(prev => (prev || []).map(item => item && item.id === bookingId ? {
       ...item,
-      status: 'cancelled'
+      status: 'ملغي بواسطة العميل',
+      is_active: false
     } : item));
     setAllBookings(prev => (prev || []).map(item => item && item.id === bookingId ? {
       ...item,
-      status: 'cancelled'
-    } : item).filter(item => item && item.id !== bookingId));
+      status: 'ملغي بواسطة العميل',
+      is_active: false
+    } : item));
 
     // 0.3 Close modal and trigger sound/toast immediately
     setCancelModalBooking(null);
@@ -2549,7 +2711,8 @@ function MobileApp() {
           if (Array.isArray(rawBookings)) {
             const updated = rawBookings.map(item => item && item.id === bookingId ? {
               ...item,
-              status: 'cancelled'
+              status: 'ملغي بواسطة العميل',
+              is_active: false
             } : item);
             await fetch(`${FIREBASE_BASE_URL}/alkayan_db/bookings.json`, {
               method: 'PUT',
@@ -2561,12 +2724,16 @@ function MobileApp() {
           } else if (rawBookings && typeof rawBookings === 'object') {
             for (const key of Object.keys(rawBookings)) {
               if (rawBookings[key] && rawBookings[key].id === bookingId) {
-                await fetch(`${FIREBASE_BASE_URL}/alkayan_db/bookings/${key}/status.json`, {
-                  method: 'PUT',
+                await fetch(`${FIREBASE_BASE_URL}/alkayan_db/bookings/${key}.json`, {
+                  method: 'PATCH',
                   headers: {
                     'Content-Type': 'application/json'
                   },
-                  body: JSON.stringify('cancelled')
+                  body: JSON.stringify({
+                    status: 'ملغي بواسطة العميل',
+                    is_active: false,
+                    cancelled_at: new Date().toISOString()
+                  })
                 });
                 break;
               }
@@ -2574,13 +2741,17 @@ function MobileApp() {
           }
         }
 
-        // Also push status directly to bookingId key just in case
-        await fetch(`${FIREBASE_BASE_URL}/alkayan_db/bookings/${bookingId}/status.json`, {
-          method: 'PUT',
+        // Also push status directly to bookingId key
+        await fetch(`${FIREBASE_BASE_URL}/alkayan_db/bookings/${bookingId}.json`, {
+          method: 'PATCH',
           headers: {
             'Content-Type': 'application/json'
           },
-          body: JSON.stringify('cancelled')
+          body: JSON.stringify({
+            status: "ملغي بواسطة العميل",
+            cancelled_at: new Date().toISOString(),
+            is_active: false
+          })
         });
 
         // Push cancellation warning notification to Firebase
@@ -2672,6 +2843,8 @@ function MobileApp() {
         try {
           const bookingUpdateEntry = {
             action: 'cancel',
+            status: 'ملغي بواسطة العميل',
+            is_active: false,
             bookingId: bookingId,
             room: b.room,
             date: b.date,
@@ -2831,8 +3004,8 @@ function MobileApp() {
     className: "relative flex-shrink-0"
   }, /*#__PURE__*/React.createElement("div", {
     className: "w-10 h-10 rounded-2xl bg-gradient-to-br from-amber-400 via-amber-500 to-amber-700 p-0.5 shadow-lg flex items-center justify-center overflow-hidden"
-  }, settings.companyLogo ? /*#__PURE__*/React.createElement("img", {
-    src: settings.companyLogo,
+  }, settings.companyLogo || settings.logo ? /*#__PURE__*/React.createElement("img", {
+    src: settings.companyLogo || settings.logo,
     alt: "Logo",
     className: "w-full h-full object-cover rounded-[14px]"
   }) : /*#__PURE__*/React.createElement("div", {
@@ -3506,9 +3679,14 @@ function MobileApp() {
   }, f.label), /*#__PURE__*/React.createElement("span", {
     className: `text-xs font-mono font-black ${bookingFilter === f.id ? 'text-amber-400' : 'text-stone-500'}`
   }, "(", f.count, ")")))), (() => {
-    if (filteredMyBookings.length === 0) {
+    const uniqueBookings = deduplicateBookings(filteredMyBookings);
+    if (uniqueBookings.length === 0) {
       return /*#__PURE__*/React.createElement("div", {
+        id: "bookingsContainer",
         className: "text-center py-10 glass-card rounded-3xl border border-amber-500/20 space-y-3"
+      }, /*#__PURE__*/React.createElement("div", {
+        id: "bookingsList",
+        className: "space-y-3"
       }, /*#__PURE__*/React.createElement("span", {
         className: "text-3xl"
       }, "\uD83D\uDCC5"), /*#__PURE__*/React.createElement("p", {
@@ -3516,21 +3694,30 @@ function MobileApp() {
       }, "\u0644\u0627 \u062A\u0648\u062C\u062F \u062D\u062C\u0648\u0632\u0627\u062A \u0645\u0633\u062C\u0644\u0629 \u0641\u064A \u0647\u0630\u0627 \u0627\u0644\u0642\u0633\u0645 \u062D\u0627\u0644\u064A\u0627\u064B."), /*#__PURE__*/React.createElement("button", {
         onClick: () => setActiveTab('book'),
         className: "gold-gradient-btn text-stone-950 text-xs font-black px-4 py-2 rounded-2xl shadow"
-      }, "\u062D\u062C\u0632 \u0642\u0627\u0639\u0629 \u0627\u0644\u0622\u0646"));
+      }, "\u062D\u062C\u0632 \u0642\u0627\u0639\u0629 \u0627\u0644\u0622\u0646")));
     }
     return /*#__PURE__*/React.createElement("div", {
+      id: "bookingsContainer",
       className: "space-y-3"
-    }, filteredMyBookings.map(b => {
+    }, /*#__PURE__*/React.createElement("div", {
+      id: "cardsContainer",
+      className: "space-y-3"
+    }, /*#__PURE__*/React.createElement("div", {
+      id: "bookingsList",
+      className: "space-y-3"
+    }, uniqueBookings.map((b, idx) => {
+      const bKey = b.id || b.key || `${b.date || ''}_${b.start_time || b.time || b.startTime || ''}_${b.room_name || b.room || ''}` || 'booking-' + idx;
       const category = getBookingDisplayCategory(b);
       const isUpcoming = category === 'scheduled';
       const isCompleted = category === 'attended';
       const isCancelled = category === 'cancelled';
-      const startDec = parseArabicTimeToDecimal(b.time || b.startTime);
+      const startDec = parseArabicTimeToDecimal(b.time || b.startTime || b.start_time);
       const durNum = parseFloat(b.duration || b.durationHours || 1);
       const endDec = startDec + durNum;
       const timeRangeFormatted = b.timeRange || `من ${decimalToTimeStr(startDec)} إلى ${decimalToTimeStr(endDec)}`;
       return /*#__PURE__*/React.createElement("div", {
-        key: b.id,
+        key: bKey,
+        "data-booking-id": bKey,
         className: `glass-card p-4 sm:p-5 rounded-3xl border space-y-3 shadow-xl transition-all ${isUpcoming ? 'border-amber-500/40 bg-stone-950/90 hover:border-amber-400/70' : isCompleted ? 'border-blue-500/30 bg-blue-950/20' : 'border-rose-500/30 bg-rose-950/20'}`
       }, /*#__PURE__*/React.createElement("div", {
         className: "flex justify-between items-start gap-2"
@@ -3558,7 +3745,7 @@ function MobileApp() {
       }, "\u062C\u0644\u0633\u0629 \u0645\u0646\u062A\u0647\u064A\u0629 \u2705") : /*#__PURE__*/React.createElement("span", {
         className: "text-[10px] text-rose-300 font-bold bg-rose-950/60 px-2.5 py-0.5 rounded-lg border border-rose-500/20"
       }, "\u0627\u0644\u0642\u0627\u0639\u0629 \u0645\u062D\u0631\u0631\u0629 \uD83D\uDD13")));
-    }));
+    }))));
   })()), activeTab === 'history' && /*#__PURE__*/React.createElement("div", {
     className: "space-y-4"
   }, /*#__PURE__*/React.createElement("div", {
@@ -4015,3 +4202,5 @@ try {
 } catch (e) {
   console.error('Mobile React mount error:', e);
 }
+
+// trigger build
