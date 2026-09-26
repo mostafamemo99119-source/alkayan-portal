@@ -3548,15 +3548,23 @@ function MobileApp() {
                       value={bookingForm.time}
                       onChange={(e) => setBookingForm(b => ({ ...b, time: e.target.value }))}
                       className="w-full bg-stone-900 border border-amber-500/40 text-white font-mono rounded-2xl p-3 text-xs font-bold focus:ring-2 focus:ring-amber-400 focus:outline-none"
-                    >
-                      {[
-                        '10:00 ص', '11:00 ص', '12:00 م',
-                        '01:00 م', '02:00 م', '03:00 م', '04:00 م',
-                        '05:00 م', '06:00 م', '07:00 م', '08:00 م',
-                        '09:00 م', '10:00 م'
-                      ].map((t, idx) => (
-                        <option key={idx} value={t}>{t}</option>
-                      ))}
+                    >{[
+  { val: '10:00', show: '10:00 ص' },
+  { val: '11:00', show: '11:00 ص' },
+  { val: '12:00', show: '12:00 م' },
+  { val: '13:00', show: '01:00 م' },
+  { val: '14:00', show: '02:00 م' },
+  { val: '15:00', show: '03:00 م' },
+  { val: '16:00', show: '04:00 م' },
+  { val: '17:00', show: '05:00 م' },
+  { val: '18:00', show: '06:00 م' },
+  { val: '19:00', show: '07:00 م' },
+  { val: '20:00', show: '08:00 م' },
+  { val: '21:00', show: '09:00 م' },
+  { val: '22:00', show: '10:00 م' }
+].map((timeObj, idx) => (
+  <option key={idx} value={timeObj.val}>{timeObj.show}</option>
+))}
                     </select>
                   </div>
 
