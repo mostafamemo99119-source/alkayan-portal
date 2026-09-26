@@ -2472,8 +2472,12 @@ function MobileApp() {
       if (!updateClientRes.ok) throw new Error('فشل في تحديث الرصيد السحابي.');
 
       // Setup booking details
-      const h = parseInt(bookingForm.time.split(':')[0], 10);
+      let h = parseInt(bookingForm.time.split(':')[0], 10);
       const m = parseInt(bookingForm.time.split(':')[1], 10);
+      const isPM = bookingForm.time.includes('م') || bookingForm.time.toLowerCase().includes('pm');
+      const isAM = bookingForm.time.includes('ص') || bookingForm.time.toLowerCase().includes('am');
+      if (isPM && h < 12) h += 12;
+      if (isAM && h === 12) h = 0;
       const endH = (h + Math.floor(durVal)) % 24;
       const endM = m;
       

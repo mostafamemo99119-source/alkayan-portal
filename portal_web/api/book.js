@@ -62,8 +62,12 @@ export default async function handler(req, res) {
 
     // Calculate time range
     const parts = (time || '12:00').split(':');
-    const h = parseInt(cleanDigits(parts[0])) || 12;
+    let h = parseInt(cleanDigits(parts[0])) || 12;
     const m = parseInt(cleanDigits(parts[1] || '0')) || 0;
+    const isPM = (time || '').includes('م') || (time || '').toLowerCase().includes('pm');
+    const isAM = (time || '').includes('ص') || (time || '').toLowerCase().includes('am');
+    if (isPM && h < 12) h += 12;
+    if (isAM && h === 12) h = 0;
     const endH = (h + Math.floor(durVal)) % 24;
     const endM = m;
 
