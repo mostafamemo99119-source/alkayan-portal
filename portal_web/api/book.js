@@ -6,7 +6,7 @@ function cleanDigits(str) {
   const arabicNumbers = ['٠','١','٢','٣','٤','٥','٦','٧','٨','٩'];
   return str.toString().replace(/[٠-٩]/g, d => arabicNumbers.indexOf(d)).trim();
 }
-ر
+
 function to12h(hour, minute) {
   const period = hour >= 12 ? 'م' : 'ص';
   const h12 = hour % 12 === 0 ? 12 : hour % 12;
