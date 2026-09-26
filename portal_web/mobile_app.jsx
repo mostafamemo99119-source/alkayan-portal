@@ -2472,14 +2472,17 @@ function MobileApp() {
       if (!updateClientRes.ok) throw new Error('فشل في تحديث الرصيد السحابي.');
 
       // Setup booking details
-      let h = parseInt(bookingForm.time.split(':')[0], 10);
-      const m = parseInt(bookingForm.time.split(':')[1], 10);
-      const isPM = bookingForm.time.includes('م') || bookingForm.time.toLowerCase().includes('pm');
-      const isAM = bookingForm.time.includes('ص') || bookingForm.time.toLowerCase().includes('am');
-      if (isPM && h < 12) h += 12;
-      if (isAM && h === 12) h = 0;
-      const endH = (h + Math.floor(durVal)) % 24;
-      const endM = m;
+      // Setup booking details safely with reliable decimals
+      const startDec = parseArabicTimeToDecimal(bookingForm.time);
+      const safeH = Math.floor(startDec) % 24;
+      const safeM = Math.round((startDec - Math.floor(startDec)) * 60);
+      
+      const endDec = startDec + Math.floor(durVal);
+      const endH = Math.floor(endDec) % 24;
+      const endM = safeM;
+      
+      let h = safeH;
+      const m = safeM;
       
       const to12h = (hour, minute) => {
         const period = hour >= 12 ? 'م' : 'ص';
@@ -2489,7 +2492,7 @@ function MobileApp() {
         return `${hStr}:${minStr} ${period}`;
       };
 
-      const start12h = to12h(h, m);
+      const start12h = to12h(safeH, safeM);
       const end12h = to12h(endH, endM);
       const timeRangeStr = `من ${start12h} إلى ${end12h}`;
       const durStr = String(Math.floor(durVal));
