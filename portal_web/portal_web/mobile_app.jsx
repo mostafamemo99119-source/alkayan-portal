@@ -2226,12 +2226,15 @@ function MobileApp() {
     const endM = m;
 
     const to12h = (hour, minute) => {
-      const period = hour >= 12 ? 'م' : 'ص';
-      const h12 = hour % 12 === 0 ? 12 : hour % 12;
-      const minStr = String(minute).padStart(2, '0');
-      const hStr = String(h12).padStart(2, '0');
-      return `${hStr}:${minStr} ${period}`;
-    };
+  let period = 'ص';
+  if (hour >= 12) {
+    period = 'م';
+  }
+  const h12 = hour % 12 === 0 ? 12 : hour % 12;
+  const minStr = String(minute).padStart(2, '0');
+  const hStr = String(h12).padStart(2, '0');
+  return ${hStr}:${minStr} ${period};
+};
 
     const start12h = ${String((Number(h) % 12) || 12).padStart(2, '0')}:${String(m).padStart(2, '0')} ${Number(h) >= 12 ? 'م' : 'ص'};
 const end12h = ${String((Number(endH) % 12) || 12).padStart(2, '0')}:${String(endM).padStart(2, '0')} ${Number(endH) >= 12 ? 'م' : 'ص'};
