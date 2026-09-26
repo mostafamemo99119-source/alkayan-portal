@@ -105,7 +105,10 @@ function decimalToTimeStr(decimal) {
   let displayHour = hours % 12;
   if (displayHour === 0) displayHour = 12;
   const displayMin = minutes < 10 ? `0${minutes}` : `${minutes}`;
-  const period = isPM ? 'م' : 'ص';
+  let period = 'ص';
+if (isPM) {
+  period = 'م';
+}
   const hStr = displayHour < 10 ? `0${displayHour}` : `${displayHour}`;
   return `${hStr}:${displayMin} ${period}`;
 }
