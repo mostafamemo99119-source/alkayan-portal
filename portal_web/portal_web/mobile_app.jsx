@@ -2233,9 +2233,9 @@ function MobileApp() {
       return `${hStr}:${minStr} ${period}`;
     };
 
-    const start12h = to12h(h, m);
-    const end12h = to12h(endH, endM);
-    const timeRangeStr = `من ${start12h} إلى ${end12h}`;
+    const start12h = ${String((Number(h) % 12) || 12).padStart(2, '0')}:${String(m).padStart(2, '0')} ${Number(h) >= 12 ? 'م' : 'ص'};
+const end12h = ${String((Number(endH) % 12) || 12).padStart(2, '0')}:${String(endM).padStart(2, '0')} ${Number(endH) >= 12 ? 'م' : 'ص'};
+const timeRangeStr = من ${start12h} إلى ${end12h};
     const durStr = String(Math.floor(durVal));
     const nowIso = new Date().toISOString();
     const bookingId = `b-mob-${Date.now()}`;
