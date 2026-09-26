@@ -2516,6 +2516,13 @@ function MobileApp() {
       const durStr = String(Math.floor(durVal));
       const bookingId = `b-mob-${Date.now()}`;
       const targetRoom = bookingForm.room || settings.rooms && settings.rooms[0] || 'Master VIP Room';
+      
+      // Calculate 24h format time string for backend payload based on decimal variables
+      const startDecStrFormat = parseArabicTimeToDecimal(bookingForm.time);
+      const displayH = Math.floor(startDecStrFormat) % 24;
+      const displayM = Math.round((startDecStrFormat - Math.floor(startDecStrFormat)) * 60);
+      const time24h = String(displayH).padStart(2, '0') + ':' + String(displayM).padStart(2, '0');
+      
       const fullBookingObj = {
         id: bookingId,
         clientId: updatedClient.id,
@@ -2523,7 +2530,7 @@ function MobileApp() {
         clientPhone: updatedClient.phone,
         username: updatedClient.username,
         date: bookingForm.date,
-        time: bookingForm.time,
+        time: time24h,
         startTime: start12h,
         endTime: end12h,
         timeRange: timeRangeStr,
@@ -2556,7 +2563,7 @@ function MobileApp() {
         clientName: updatedClient.name,
         clientPhone: updatedClient.phone,
         date: bookingForm.date,
-        time: bookingForm.time,
+        time: time24h,
         startTime: start12h,
         endTime: end12h,
         timeRange: timeRangeStr,
