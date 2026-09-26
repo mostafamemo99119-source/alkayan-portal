@@ -38,30 +38,10 @@ export default async function handler(req, res) {
 
     const currentData = getServerlessData();
     const clients = currentData.clients || [];
-    // 🚫 Check deleted_clients blacklist
-    const delClients = currentData.deleted_clients || [];
-    const delList = Array.isArray(delClients) ? delClients : Object.values(delClients);
-    const checkId = clientId ? clientId.toString().trim().toLowerCase() : '';
-    for (const dc of delList) {
-      if (!dc) continue;
-      const dcId = (dc.id || '').toString().trim().toLowerCase();
-      if (checkId && dcId && dcId === checkId) {
-        return res.status(401).json({
-          success: false,
-          code: 'CLIENT_PURGED_PERMANENTLY',
-          message: 'تم حذف هذا الحساب نهائياً، لا يمكن إتمام الحجز.'
-        });
-      }
-    }
-
     const targetClient = clients.find(c => c.id === clientId);
 
     if (!targetClient) {
-      return res.status(401).json({ 
-        success: false, 
-        code: 'CLIENT_DELETED_OR_NOT_FOUND',
-        message: 'العميل غير مسجل بالنظام أو تم حذفه نهائياً' 
-      });
+      return res.status(404).json({ success: false, message: 'العميل غير مسجل بالنظام' });
     }
 
     const durVal = parseFloat(cleanDigits(duration));
@@ -82,8 +62,10 @@ export default async function handler(req, res) {
 
     // Calculate time range
     const parts = (time || '12:00').split(':');
-    const h = parseInt(cleanDigits(parts[0])) || 12;
+    // Convert to 24h format for correct AM/PM rendering
+    let h = parseInt(cleanDigits(parts[0])) || 12;
     const m = parseInt(cleanDigits(parts[1] || '0')) || 0;
+    // Backend directly uses 24h format sent by payload payload
     const endH = (h + Math.floor(durVal)) % 24;
     const endM = m;
 

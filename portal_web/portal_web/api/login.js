@@ -95,151 +95,45 @@ export default async function handler(req, res) {
     const cleanUser = cleanDigits(username).toLowerCase();
     const cleanPass = cleanDigits(password);
 
-    let currentData = getServerlessData();
-    let clients = currentData.clients || [];
+    const currentData = getServerlessData();
+    const clients = currentData.clients || [];
+    const bookings = currentData.bookings || [];
+    const attendance = currentData.attendance || [];
+    const settings = currentData.settings || {};
 
-    // Helper: tolerance password checker
-    const checkPasswordMatch = (cObj, inP) => {
-      if (!inP) return true;
-      const cp = cleanDigits(cObj.password || '').toLowerCase();
-      const cu = cleanDigits(cObj.username || '').toLowerCase();
-      const cph = cleanDigits(cObj.phone || '');
-      const inp = cleanDigits(inP).toLowerCase();
-      if (cp === inp || inp === cu) return true;
+    let targetClient = null;
+    for (const c of clients) {
+      const uName = cleanDigits(c.username || '').toLowerCase();
+      const phone = cleanDigits(c.phone || '');
+      const phoneLocal = phone.replace(/^\+?\d{1,3}/, ''); // Strip country code for easy matching
+      const name = (c.name || '').toString().trim().toLowerCase();
+      const cId = (c.id || '').toString().trim().toLowerCase();
 
-      const normDigits = (p) => {
-        if (!p) return '';
-        const d = p.replace(/\D/g, '');
-        return (d.startsWith('20') && d.length > 10) ? ('0' + d.slice(2)) : d;
-      };
-      const cDigits = normDigits(cp);
-      const inDigits = normDigits(inp);
-      if (cDigits && inDigits && cDigits.length >= 8 && inDigits.length >= 8) {
-        if (cDigits === inDigits || cDigits.endsWith(inDigits) || inDigits.endsWith(cDigits)) return true;
-      }
-      const phDigits = normDigits(cph);
-      if (phDigits && inDigits && phDigits.length >= 8 && inDigits.length >= 8) {
-        if (phDigits === inDigits || phDigits.endsWith(inDigits) || inDigits.endsWith(phDigits)) return true;
-      }
-      return false;
-    };
+      const isMatch = (uName && uName === cleanUser) ||
+                      (phone && (phone === cleanUser || phoneLocal === cleanUser || cleanUser.endsWith(phoneLocal))) ||
+                      (name && name === cleanUser) ||
+                      (cId && cId === cleanUser);
 
-    const normDigits = (p) => {
-      if (!p) return '';
-      const d = p.replace(/\D/g, '');
-      return (d.startsWith('20') && d.length > 10) ? ('0' + d.slice(2)) : d;
-    };
-
-    const findMatch = (cList) => {
-      const uDigits = cleanUser.replace(/\D/g, '');
-      const isPhone = uDigits.length >= 8 && cleanUser.replace(/[\d\+\s\-]/g, '') === '';
-      const uNormPhone = normDigits(cleanUser);
-
-      // 1. Exact username
-      for (const c of cList) {
-        if (!c) continue;
-        const cu = cleanDigits(c.username || '').toLowerCase();
-        if (cu && cu === cleanUser) {
-          return c;
-        }
-      }
-
-      // 2. Exact phone
-      if (isPhone) {
-        for (const c of cList) {
-          if (!c) continue;
-          const cph = normDigits(c.phone || '');
-          if (cph && cph.length >= 8) {
-            if (cph === uNormPhone || cph.endsWith(uNormPhone) || uNormPhone.endsWith(cph)) {
-              return c;
-            }
-          }
-        }
-      }
-
-      // 3. ID
-      for (const c of cList) {
-        if (!c) continue;
-        const cid = (c.id || '').toString().trim().toLowerCase();
-        if (cid && cid === cleanUser) return c;
-      }
-
-      // 4. Name
-      for (const c of cList) {
-        if (!c) continue;
-        const cnm = (c.name || '').toString().trim().toLowerCase();
-        if (cnm && cnm === cleanUser) return c;
-      }
-
-      // 5. Reverse credentials
-      for (const c of cList) {
-        if (!c) continue;
-        const cu = cleanDigits(c.username || '').toLowerCase();
-        const cp = cleanDigits(c.password || '').toLowerCase();
-        if (cp && cp === cleanUser && (cu === cleanPass.toLowerCase() || checkPasswordMatch(c, cleanUser))) {
-          return c;
-        }
-      }
-      return null;
-    };
-
-    // Always fetch live from Firebase first for 100% up-to-date client balance & data
-    try {
-      const fbRes = await fetch('https://alkayan-group-default-rtdb.europe-west1.firebasedatabase.app/alkayan_db.json', { cache: 'no-store' });
-      if (fbRes.ok) {
-        const fbJson = await fbRes.json();
-        if (fbJson && fbJson.clients) {
-          const fbClients = Array.isArray(fbJson.clients) ? fbJson.clients : Object.values(fbJson.clients);
-          currentData = { 
-            ...fbJson, 
-            clients: fbClients,
-            deleted_clients: fbJson.deleted_clients || []
-          };
-          updateServerlessData(currentData);
-          clients = fbClients;
-        }
-      }
-    } catch (fbErr) {
-      console.warn('Firebase serverless fetch note:', fbErr.message);
-    }
-
-    // 🚫 Check deleted_clients blacklist
-    const delClients = currentData.deleted_clients || [];
-    const delList = Array.isArray(delClients) ? delClients : Object.values(delClients);
-    for (const dc of delList) {
-      if (!dc) continue;
-      const dcId = (dc.id || '').toString().trim().toLowerCase();
-      const dcUser = cleanDigits(dc.username || '').toLowerCase();
-      const dcPhone = normDigits(dc.phone || '');
-      if ((dcId && dcId === cleanUser) || (dcUser && dcUser === cleanUser) || (dcPhone && normDigits(cleanUser) && dcPhone === normDigits(cleanUser))) {
-        return res.status(401).json({
-          success: false,
-          code: 'CLIENT_PURGED_PERMANENTLY',
-          message: 'تم حذف هذا الحساب نهائياً من قبل الإدارة العامة للمجموعة ولا يمكن الدخول إليه.'
-        });
+      if (isMatch) {
+        targetClient = c;
+        break;
       }
     }
-
-    let targetClient = findMatch(clients);
 
     if (!targetClient) {
       return res.status(401).json({
         success: false,
-        code: 'CLIENT_DELETED_OR_NOT_FOUND',
-        message: 'اسم المستخدم أو رقم الهاتف غير مسجل بالنظام أو تم حذفه نهائياً'
+        message: 'اسم المستخدم أو رقم الهاتف غير مسجل بالنظام'
       });
     }
 
-    if (cleanPass && !checkPasswordMatch(targetClient, cleanPass)) {
+    const correctPass = cleanDigits(targetClient.password || '');
+    if (correctPass && cleanPass && correctPass !== cleanPass) {
       return res.status(401).json({
         success: false,
         message: 'كلمة المرور غير صحيحة'
       });
     }
-
-    const bookings = currentData.bookings || [];
-    const attendance = currentData.attendance || [];
-    const settings = currentData.settings || {};
 
     const myBookings = bookings.filter(b => b.clientId === targetClient.id);
     const myAttendance = attendance.filter(a => a.clientId === targetClient.id);
