@@ -62,6 +62,7 @@ export default async function handler(req, res) {
 
     // Calculate time range
     const parts = (time || '12:00').split(':');
+    // Convert to 24h format for correct AM/PM rendering
     let h = parseInt(cleanDigits(parts[0])) || 12;
     const m = parseInt(cleanDigits(parts[1] || '0')) || 0;
     const isPM = (time || '').includes('م') || (time || '').toLowerCase().includes('pm');
