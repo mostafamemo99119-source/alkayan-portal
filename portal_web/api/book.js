@@ -15,6 +15,20 @@ function to12h(hour, minute) {
   return `${hStr}:${minStr} ${period}`;
 }
 
+// Unified: parse any time string (12h or 24h, with or without م/ص) to full 24h integer hours+minutes
+function parseTimeStr(timeStr) {
+  const str = cleanDigits(String(timeStr || '12:00')).trim();
+  const isPM = timeStr.includes('م') || timeStr.toLowerCase().includes('مساء') || timeStr.toLowerCase().includes('pm');
+  const isAM = timeStr.includes('ص') || timeStr.toLowerCase().includes('صباح') || timeStr.toLowerCase().includes('am');
+  const clean = str.replace(/[^0-9:]/g, '');
+  const parts = clean.split(':');
+  let h = parseInt(parts[0]) || 0;
+  const m = parseInt(parts[1] || '0') || 0;
+  if (isPM && h < 12) h += 12;
+  if (isAM && h === 12) h = 0;
+  return { h, m };
+}
+
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -60,17 +74,15 @@ export default async function handler(req, res) {
       });
     }
 
-    // Calculate time range
-    const parts = (time || '12:00').split(':');
-    // Convert to 24h format for correct AM/PM rendering
-    let h = parseInt(cleanDigits(parts[0])) || 12;
-    const m = parseInt(cleanDigits(parts[1] || '0')) || 0;
-    // Backend directly uses 24h format sent by payload payload
+    // ✅ UNIFIED TIME PARSING: Single source of truth for all time fields
+    // Supports both 24h ("14:00") and 12h with Arabic AM/PM ("02:00 م")
+    const { h, m } = parseTimeStr(time);
     const endH = (h + Math.floor(durVal)) % 24;
     const endM = m;
 
+    // All string fields built from the same 24h h/m values — no inconsistency possible
     const start12h = to12h(h, m);
-    const end12h = to12h(endH, endM);
+    const end12h   = to12h(endH, endM);
     const timeRangeStr = `من ${start12h} إلى ${end12h}`;
     const durStr = String(Math.floor(durVal));
 
@@ -93,9 +105,9 @@ export default async function handler(req, res) {
       clientName: targetClient.name,
       clientPhone: targetClient.phone,
       date,
-      time,
-      startTime: start12h,
-      endTime: end12h,
+      time: start12h,       // Normalized 12h display string with correct م/ص
+      startTime: start12h,  // Same source — always correct
+      endTime: end12h,      // Same source — always correct
       timeRange: timeRangeStr,
       duration: durStr,
       durationHours: durStr,
@@ -116,7 +128,7 @@ export default async function handler(req, res) {
       clientName: targetClient.name,
       clientPhone: targetClient.phone,
       date,
-      time,
+      time: start12h,
       startTime: start12h,
       endTime: end12h,
       timeRange: timeRangeStr,
