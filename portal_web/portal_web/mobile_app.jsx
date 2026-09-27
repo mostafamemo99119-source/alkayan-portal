@@ -1,7 +1,7 @@
 const { useState, useEffect, useRef, useMemo } = React;
 
 const INITIAL_ROOMS = ['Master VIP Room', 'MaxRoom'];
-const FIREBASE_BASE_URL = 'https://alkayan-group-default-rtdb.europe-west1.firebasedatabase.app';
+const FIREBASE_BASE_URL = 'https://alkayan-groub-v2-default-rtdb.europe-west1.firebasedatabase.app';
 
 // Convert Arabic/Persian digits to standard digits
 function toStandardDigits(str) {
@@ -2472,17 +2472,10 @@ function MobileApp() {
       if (!updateClientRes.ok) throw new Error('فشل في تحديث الرصيد السحابي.');
 
       // Setup booking details
-      // Setup booking details safely with reliable decimals
-      const startDec = parseArabicTimeToDecimal(bookingForm.time);
-      const safeH = Math.floor(startDec) % 24;
-      const safeM = Math.round((startDec - Math.floor(startDec)) * 60);
-      
-      const endDec = startDec + Math.floor(durVal);
-      const endH = Math.floor(endDec) % 24;
-      const endM = safeM;
-      
-      let h = safeH;
-      const m = safeM;
+      const h = parseInt(bookingForm.time.split(':')[0], 10);
+      const m = parseInt(bookingForm.time.split(':')[1], 10);
+      const endH = (h + Math.floor(durVal)) % 24;
+      const endM = m;
       
       const to12h = (hour, minute) => {
         const period = hour >= 12 ? 'م' : 'ص';
@@ -2492,20 +2485,13 @@ function MobileApp() {
         return `${hStr}:${minStr} ${period}`;
       };
 
-      const start12h = to12h(safeH, safeM);
+      const start12h = to12h(h, m);
       const end12h = to12h(endH, endM);
       const timeRangeStr = `من ${start12h} إلى ${end12h}`;
       const durStr = String(Math.floor(durVal));
       const bookingId = `b-mob-${Date.now()}`;
       const targetRoom = bookingForm.room || (settings.rooms && settings.rooms[0]) || 'Master VIP Room';
 
-      
-      // Calculate 24h format time string for backend payload based on decimal variables
-      const startDecStrFormat = parseArabicTimeToDecimal(bookingForm.time);
-      const displayH = Math.floor(startDecStrFormat) % 24;
-      const displayM = Math.round((startDecStrFormat - Math.floor(startDecStrFormat)) * 60);
-      const time24h = String(displayH).padStart(2, '0') + ':' + String(displayM).padStart(2, '0');
-      
       const fullBookingObj = {
         id: bookingId,
         clientId: updatedClient.id,
@@ -2513,7 +2499,7 @@ function MobileApp() {
         clientPhone: updatedClient.phone,
         username: updatedClient.username,
         date: bookingForm.date,
-        time: time24h,
+        time: bookingForm.time,
         startTime: start12h,
         endTime: end12h,
         timeRange: timeRangeStr,
@@ -2544,7 +2530,7 @@ function MobileApp() {
         clientName: updatedClient.name,
         clientPhone: updatedClient.phone,
         date: bookingForm.date,
-        time: time24h,
+        time: bookingForm.time,
         startTime: start12h,
         endTime: end12h,
         timeRange: timeRangeStr,

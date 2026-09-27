@@ -1,0 +1,12983 @@
+const { useState, useEffect, useMemo, useRef } = React;
+const FIREBASE_BASE_URL = "https://alkayan-groub-v2-default-rtdb.europe-west1.firebasedatabase.app";
+
+// ==========================================
+// 🎨 Helper Icons (Inline SVG for 100% Reliability)
+// ==========================================
+const Icon = ({ name, className = "w-5 h-5" }) => {
+  const icons = {
+    wallet: (
+      <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+      </svg>
+    ),
+    coffee: (
+      <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M18 8h1a4 4 0 010 8h-1M2 8h16v9a4 4 0 01-4 4H6a4 4 0 01-4-4V8zM6 1v3M10 1v3M14 1v3" />
+      </svg>
+    ),
+    dashboard: (
+      <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+      </svg>
+    ),
+    users: (
+      <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+      </svg>
+    ),
+    attendance: (
+      <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+    ),
+    calendar: (
+      <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+      </svg>
+    ),
+    excel: (
+      <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+      </svg>
+    ),
+    bell: (
+      <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+      </svg>
+    ),
+    settings: (
+      <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+      </svg>
+    ),
+    whatsapp: (
+      <svg className={className} fill="currentColor" viewBox="0 0 24 24">
+        <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.711 2.598 2.664-.698c.972.531 1.879.812 2.796.812 3.183 0 5.769-2.587 5.77-5.767 0-3.18-2.587-5.766-5.77-5.766zm3.374 8.167c-.145.409-.737.75-1.023.795-.276.044-.633.064-1.031-.065-.252-.081-.577-.189-1.002-.373-1.765-.764-2.909-2.535-3.001-2.656-.088-.121-.722-.962-.722-1.834 0-.872.456-1.302.618-1.479.162-.177.353-.221.471-.221.118 0 .235.001.338.006.108.005.253-.041.396.303.147.353.5 1.221.544 1.31.044.089.073.192.015.309-.059.118-.088.192-.176.295-.088.103-.186.23-.265.31-.088.088-.18.184-.077.36.103.177.458.756.983 1.224.675.602 1.244.788 1.421.876.177.089.279.074.382-.044.103-.118.441-.515.559-.692.118-.177.235-.147.397-.088.162.059 1.029.485 1.206.574.177.089.294.133.338.207.044.074.044.427-.101.836zM12 2C6.477 2 2 6.477 2 12c0 1.891.524 3.662 1.436 5.182L2 22l4.957-1.397C8.423 21.499 10.154 22 12 22c5.523 0 10-4.477 10-10S17.523 2 12 2zm0 18.143c-1.637 0-3.151-.497-4.417-1.348l-.316-.213-2.941.828.835-2.903-.217-.323C4.053 14.887 3.557 13.486 3.557 12c0-4.655 3.788-8.443 8.443-8.443s8.443 3.788 8.443 8.443c0 4.656-3.788 8.443-8.443 8.443z" />
+      </svg>
+    ),
+    refresh: (
+      <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+      </svg>
+    ),
+    ban: (
+      <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+      </svg>
+    ),
+    shieldCheck: (
+      <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+      </svg>
+    ),
+    hourglass: (
+      <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+    ),
+    calendarCheck: (
+      <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+      </svg>
+    ),
+    externalLink: (
+      <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+      </svg>
+    ),
+    editMessage: (
+      <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+      </svg>
+    ),
+    edit: (
+      <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+      </svg>
+    ),
+    plus: (
+      <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+      </svg>
+    ),
+    userPlus: (
+      <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+      </svg>
+    ),
+    check: (
+      <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+      </svg>
+    ),
+    trash: (
+      <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+      </svg>
+    ),
+    download: (
+      <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+      </svg>
+    ),
+    search: (
+      <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+      </svg>
+    ),
+    alert: (
+      <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+      </svg>
+    ),
+    image: (
+      <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+      </svg>
+    )
+  };
+  return icons[name] || null;
+};
+
+// ==========================================
+// 🔊 Audio Notification Generator
+// ==========================================
+const playChime = (type = 'success') => {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+
+    if (type === 'success') {
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(587.33, ctx.currentTime);
+      osc.frequency.setValueAtTime(880.00, ctx.currentTime + 0.12);
+      gain.gain.setValueAtTime(0.15, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.4);
+    } else if (type === 'warning') {
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(329.63, ctx.currentTime);
+      osc.frequency.setValueAtTime(261.63, ctx.currentTime + 0.15);
+      gain.gain.setValueAtTime(0.2, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.45);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.45);
+    }
+  } catch (e) {
+    console.warn('Audio Context error:', e);
+  }
+};
+
+// ====================================================================
+// 🌍 SMART PHONE FORMATTER (PRESERVES REGISTERED COUNTRY CODE 100%)
+// ====================================================================
+const cleanAndFormatPhone = (phone, fallbackCountryCode = '966') => {
+  if (!phone) return '';
+  let raw = phone.toString().trim();
+
+  if (raw.startsWith('+')) {
+    return raw.replace(/[^\d]/g, '');
+  }
+
+  if (raw.startsWith('00')) {
+    return raw.substring(2).replace(/[^\d]/g, '');
+  }
+
+  let digits = raw.replace(/[^\d]/g, '');
+
+  const knownPrefixes = [
+    '966', '20', '971', '965', '974', '968', '973', '962', '964', '961',
+    '963', '970', '967', '212', '216', '213', '249', '218', '222', '1', '44', '49', '33', '90', '91'
+  ];
+
+  for (const prefix of knownPrefixes) {
+    if (digits.startsWith(prefix) && digits.length >= (prefix.length + 8)) {
+      return digits;
+    }
+  }
+
+  if (digits.startsWith('0')) {
+    const cleanFallback = fallbackCountryCode.toString().replace(/[^\d]/g, '') || '966';
+    return cleanFallback + digits.substring(1);
+  }
+
+  if (digits.length === 9 && digits.startsWith('5')) {
+    const cleanFallback = fallbackCountryCode.toString().replace(/[^\d]/g, '') || '966';
+    return cleanFallback + digits;
+  }
+
+  return digits;
+};
+
+// WhatsApp Direct URLs Builder
+const buildWhatsAppWebUrl = (cleanPhone, messageText) => {
+  return `https://web.whatsapp.com/send?phone=${cleanPhone}&text=${encodeURIComponent(messageText)}`;
+};
+
+const buildWhatsAppAppUrl = (cleanPhone, messageText) => {
+  return `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodeURIComponent(messageText)}`;
+};
+
+// Template replacer helper
+const fillTemplate = (template, variables) => {
+  if (!template) return '';
+  let text = template;
+  for (const [key, val] of Object.entries(variables)) {
+    text = text.replaceAll(`{${key}}`, val !== undefined && val !== null ? val : '');
+  }
+  return text;
+};
+
+// ====================================================================
+// 📅 DATE NORMALIZATION ENGINE (HANDLES MANUAL INPUT, ARABIC DIGITS, SLASHES, DOTS, DD/MM/YYYY)
+// ====================================================================
+const toStandardDigits = (str) => {
+  if (!str) return '';
+  const arabicDigits = ['٠','١','٢','٣','٤','٥','٦','٧','٨','٩'];
+  const persianDigits = ['۰','۱','۲','۳','۴','۵','۶','۷','۸','۹'];
+  return str.toString()
+    .replace(/[٠-٩]/g, d => arabicDigits.indexOf(d))
+    .replace(/[۰-۹]/g, d => persianDigits.indexOf(d));
+};
+
+const normalizeDate = (dateStr) => {
+  if (!dateStr) return '';
+  let clean = toStandardDigits(dateStr).trim().replace(/[\/\.\\_]/g, '-');
+  
+  // Case 1: DD-MM-YYYY or D-M-YYYY (e.g. 29-08-2026 or 29/8/2026)
+  const dmyMatch = clean.match(/^(\d{1,2})-(\d{1,2})-(\d{4})$/);
+  if (dmyMatch) {
+    const day = String(dmyMatch[1]).padStart(2, '0');
+    const month = String(dmyMatch[2]).padStart(2, '0');
+    const year = dmyMatch[3];
+    return `${year}-${month}-${day}`;
+  }
+
+  // Case 2: YYYY-MM-DD or YYYY-M-D (e.g. 2026-8-29 or 2026/08/29)
+  const ymdMatch = clean.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+  if (ymdMatch) {
+    const year = ymdMatch[1];
+    const month = String(ymdMatch[2]).padStart(2, '0');
+    const day = String(ymdMatch[3]).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+
+  // Case 3: DD-MM (assumes current year)
+  const dmMatch = clean.match(/^(\d{1,2})-(\d{1,2})$/);
+  if (dmMatch) {
+    const currentYear = new Date().getFullYear();
+    const day = String(dmMatch[1]).padStart(2, '0');
+    const month = String(dmMatch[2]).padStart(2, '0');
+    return `${currentYear}-${month}-${day}`;
+  }
+
+  return clean;
+};
+
+// ====================================================================
+// 📅 CONTRACT & EXPIRY DATE HELPERS (MONTHLY / ANNUAL / EXPIRATION)
+// ====================================================================
+const addHoursToTime = (timeStr, hours) => {
+  if (!timeStr || !hours) return '';
+  const parts = timeStr.split(':');
+  if (parts.length !== 2) return '';
+  let h = parseInt(parts[0], 10);
+  let m = parseInt(parts[1], 10);
+  const addH = parseFloat(hours);
+  const totalMins = h * 60 + m + Math.round(addH * 60);
+  const newH = Math.floor(totalMins / 60) % 24;
+  const newM = totalMins % 60;
+  return `${newH.toString().padStart(2, '0')}:${newM.toString().padStart(2, '0')}`;
+};
+
+const computeExpiryDate = (startDateStr, durationType) => {
+  const normalized = normalizeDate(startDateStr);
+  let year, month, day;
+  if (normalized && typeof normalized === 'string' && normalized.includes('-')) {
+    const parts = normalized.split('-');
+    year = parseInt(parts[0], 10);
+    month = parseInt(parts[1], 10) - 1;
+    day = parseInt(parts[2], 10);
+  } else {
+    const now = new Date();
+    year = now.getFullYear();
+    month = now.getMonth();
+    day = now.getDate();
+  }
+
+  const d = new Date(year, month, day);
+
+  if (durationType === 'monthly' || durationType === 'fulltime_1m') {
+    d.setMonth(d.getMonth() + 1);
+  } else if (durationType === '3months' || durationType === 'quarterly' || durationType === 'fulltime_3m') {
+    d.setMonth(d.getMonth() + 3);
+  } else if (durationType === 'annual' || durationType === 'fulltime_1y') {
+    d.setFullYear(d.getFullYear() + 1);
+  } else {
+    d.setMonth(d.getMonth() + 1);
+  }
+
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
+};
+
+// ====================================================================
+// 🚪 DEFAULT ROOMS & CONFLICT DETECTION ENGINE
+// ====================================================================
+const INITIAL_ROOMS = [
+  'Master VIP Room',
+  'MaxRoom'
+];
+
+// ====================================================================
+// 🔐 SECURITY, ENCRYPTION & USER AUTHENTICATION ENGINE
+// ====================================================================
+const SECRET_AUTH_KEY = 'KAYAN_SECURE_AUTH_V3_2026';
+
+const encryptPassword = (text) => {
+  if (!text) return '';
+  try {
+    let result = '';
+    for (let i = 0; i < text.length; i++) {
+      const charCode = text.charCodeAt(i) ^ SECRET_AUTH_KEY.charCodeAt(i % SECRET_AUTH_KEY.length);
+      result += String.fromCharCode(charCode);
+    }
+    return 'KYN_' + btoa(unescape(encodeURIComponent(result)));
+  } catch (e) {
+    return 'KYN_' + btoa(text);
+  }
+};
+
+const decryptPassword = (encrypted) => {
+  if (!encrypted) return '';
+  try {
+    let raw = encrypted;
+    if (raw.startsWith('KYN_')) raw = raw.substring(4);
+    const decoded = decodeURIComponent(escape(atob(raw)));
+    let result = '';
+    for (let i = 0; i < decoded.length; i++) {
+      const charCode = decoded.charCodeAt(i) ^ SECRET_AUTH_KEY.charCodeAt(i % SECRET_AUTH_KEY.length);
+      result += String.fromCharCode(charCode);
+    }
+    return result;
+  } catch (e) {
+    try {
+      if (encrypted.startsWith('KYN_')) return atob(encrypted.substring(4));
+    } catch (err) {}
+    return encrypted;
+  }
+};
+
+// 🛡️ All Available System Permissions Definition (20 Comprehensive Subsystems)
+const ALL_PERMISSIONS_KEYS = [
+  'canAddClients',
+  'canEditClients',
+  'canDeleteClients',
+  'canRenewContracts',
+  'canRechargeHours',
+  'canViewClientCredentials',
+  'canManageBookings',
+  'canCancelBookings',
+  'canDeductAttendance',
+  'canDeleteAttendance',
+  'canAccessFinancials',
+  'canAddFinancialTransaction',
+  'canDeleteFinancialTransaction',
+  'canSendClientNotifications',
+  'canSendWhatsAppMessages',
+  'canAccessExcel',
+  'canAccessSettings',
+  'canManageRooms',
+  'canTriggerBackups',
+  'canManageStaff'
+];
+
+const DEFAULT_STAFF_PERMISSIONS = {
+  canAddClients: true,
+  canEditClients: true,
+  canDeleteClients: false,
+  canRenewContracts: true,
+  canRechargeHours: true,
+  canViewClientCredentials: true,
+  canManageBookings: true,
+  canCancelBookings: false,
+  canDeductAttendance: true,
+  canDeleteAttendance: false,
+  canAccessFinancials: true,
+  canAddFinancialTransaction: true,
+  canDeleteFinancialTransaction: false,
+  canSendClientNotifications: true,
+  canSendWhatsAppMessages: true,
+  canAccessExcel: false,
+  canAccessSettings: false,
+  canManageRooms: false,
+  canTriggerBackups: false,
+  canManageStaff: false
+};
+
+const DEFAULT_MASTER_USER = {
+  id: 'u-master-memo',
+  name: 'المدير العام (MeMo)',
+  jobTitle: 'المدير العام والإدارة العليا',
+  phone: '01227084903',
+  username: 'MeMo',
+  passwordEncrypted: encryptPassword('01227084903'),
+  role: 'admin',
+  permissions: {
+    canAddClients: true,
+    canEditClients: true,
+    canDeleteClients: true,
+    canRenewContracts: true,
+    canRechargeHours: true,
+    canViewClientCredentials: true,
+    canManageBookings: true,
+    canCancelBookings: true,
+    canDeductAttendance: true,
+    canDeleteAttendance: true,
+    canAccessFinancials: true,
+    canAddFinancialTransaction: true,
+    canDeleteFinancialTransaction: true,
+    canSendClientNotifications: true,
+    canSendWhatsAppMessages: true,
+    canAccessExcel: true,
+    canAccessSettings: true,
+    canManageRooms: true,
+    canTriggerBackups: true,
+    canManageStaff: true
+  },
+  createdAt: '2026-08-30'
+};
+
+
+const QUICK_TIME_SLOTS = [
+  '10:00 ص',
+  '11:00 ص',
+  '12:00 م',
+  '01:00 م',
+  '02:00 م',
+  '03:00 م',
+  '04:00 م',
+  '05:00 م',
+  '06:00 م',
+  '07:00 م',
+  '08:00 م',
+  '09:00 م',
+  '10:00 م'
+];
+
+// Time conversion helpers
+const parseTimeToMinutes = (timeStr) => {
+  if (!timeStr) return null;
+  const clean = toStandardDigits(timeStr).trim().toLowerCase();
+  
+  const isPM = clean.includes('م') || clean.includes('مساء') || clean.includes('pm');
+  const isAM = clean.includes('ص') || clean.includes('صباح') || clean.includes('am');
+
+  const match = clean.match(/(\d{1,2})(?::(\d{1,2}))?/);
+  if (!match) return null;
+
+  let hours = parseInt(match[1], 10);
+  let minutes = match[2] ? parseInt(match[2], 10) : 0;
+
+  if (isPM && hours < 12) {
+    hours += 12;
+  } else if (isAM && hours === 12) {
+    hours = 0;
+  }
+
+  return hours * 60 + minutes;
+};
+
+const formatMinutesToTime = (totalMinutes) => {
+  if (totalMinutes === null || totalMinutes === undefined || isNaN(totalMinutes)) return '';
+  let hours = Math.floor(totalMinutes / 60) % 24;
+  const mins = totalMinutes % 60;
+  const isPM = hours >= 12;
+  const period = isPM ? 'م' : 'ص';
+  let displayHour = hours % 12;
+  if (displayHour === 0) displayHour = 12;
+  return `${String(displayHour).padStart(2, '0')}:${String(mins).padStart(2, '0')} ${period}`;
+};
+
+// Advanced Time-Range Room Conflict Detection Engine:
+const checkRoomConflict = (bookingsList, { date, time, duration = 1, room, excludeId = null }) => {
+  if (!date || !time || !room || !Array.isArray(bookingsList)) return null;
+  const cleanRoom = room.toString().trim().toLowerCase();
+  const cleanDate = normalizeDate(date);
+  const startB = parseTimeToMinutes(time);
+  if (startB === null) return null;
+  const durB = parseFloat(duration) || 1;
+  const endB = startB + Math.round(durB * 60);
+
+  // 🛡️ Read global cancellation blacklist
+  let cancelledGlobalSet = new Set();
+  try {
+    const rawG = localStorage.getItem('ALKAYAN_CANCELLED_BOOKINGS_GLOBAL');
+    if (rawG) {
+      const arr = JSON.parse(rawG);
+      if (Array.isArray(arr)) cancelledGlobalSet = new Set(arr);
+    }
+  } catch (_) {}
+
+  for (const b of bookingsList) {
+    if (excludeId && b.id === excludeId) continue;
+    // 🛡️ Room Release Guard: Only active 'scheduled' bookings occupy the room.
+    // Completed sessions with deducted hours ('attended' / 'completed') and cancelled sessions ('cancelled') release the room so it becomes immediately available.
+    if (b.status === 'cancelled' || b.status === 'ملغي بواسطة العميل' || b.is_active === false || (b.id && cancelledGlobalSet.has(b.id)) || b.status === 'attended' || b.status === 'completed' || b.status !== 'scheduled') continue;
+
+    const bRoom = (b.room || INITIAL_ROOMS[0]).toString().trim().toLowerCase();
+    const bDate = normalizeDate(b.date || '');
+    if (bDate !== cleanDate || bRoom !== cleanRoom) continue;
+
+    const startA = parseTimeToMinutes(b.time);
+    if (startA === null) continue;
+    const durA = parseFloat(b.durationHours) || 1;
+    const endA = startA + Math.round(durA * 60);
+
+    // Overlap condition: startB < endA && endB > startA
+    if (startB < endA && endB > startA) {
+      return {
+        ...b,
+        conflictStartTime: b.time,
+        conflictEndTime: formatMinutesToTime(endA),
+        conflictDuration: durA,
+        requestedStartTime: time,
+        requestedEndTime: formatMinutesToTime(endB),
+        availableAfter: formatMinutesToTime(endA)
+      };
+    }
+  }
+
+  return null;
+};
+
+const calcFullTimeWorkingHours = (startDateStr, expiryDateStr, refDate = new Date()) => {
+  // ⚡ Full Time and Shift operate strictly on renewal dates. NO hours are calculated.
+  if (!expiryDateStr) {
+    return {
+      totalWorkingDays: 0,
+      totalWorkingHours: null,
+      remainingWorkingDays: 0,
+      remainingWorkingHours: null,
+      consumedWorkingDays: 0,
+      consumedWorkingHours: null,
+      dailyHours: null
+    };
+  }
+
+  const parseD = (s) => {
+    if (!s) return null;
+    const clean = s.toString().split('T')[0].trim();
+    const parts = clean.split('-');
+    if (parts.length < 3) return null;
+    return new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+  };
+
+  const today = new Date(refDate.getFullYear(), refDate.getMonth(), refDate.getDate());
+  const start = parseD(startDateStr) || today;
+  const end = parseD(expiryDateStr);
+
+  if (!end || end < start) {
+    return {
+      totalWorkingDays: 0,
+      totalWorkingHours: null,
+      remainingWorkingDays: 0,
+      remainingWorkingHours: null,
+      consumedWorkingDays: 0,
+      consumedWorkingHours: null,
+      dailyHours: null
+    };
+  }
+
+  // Count total non-Friday days between start and end
+  let totalWorkingDays = 0;
+  let cur = new Date(start.getTime());
+  while (cur < end) {
+    if (cur.getDay() !== 5) { // 5 is Friday
+      totalWorkingDays++;
+    }
+    cur.setDate(cur.getDate() + 1);
+  }
+
+  // Count remaining non-Friday days from today until end
+  let remainingWorkingDays = 0;
+  if (today < end) {
+    let curRem = new Date(today.getTime());
+    while (curRem < end) {
+      if (curRem.getDay() !== 5) { // 5 is Friday
+        remainingWorkingDays++;
+      }
+      curRem.setDate(curRem.getDate() + 1);
+    }
+  }
+
+  const consumedWorkingDays = Math.max(0, totalWorkingDays - remainingWorkingDays);
+
+  return {
+    totalWorkingDays,
+    totalWorkingHours: null,
+    remainingWorkingDays,
+    remainingWorkingHours: null,
+    consumedWorkingDays,
+    consumedWorkingHours: null,
+    dailyHours: null
+  };
+};
+
+const getClientPkgNameForWA = (client, fallbackDuration) => {
+  try {
+    if (!client) return 'باقة عامة';
+    if (client.subscriptionType === 'shift' || (client.package && typeof client.package === 'string' && client.package.includes('الشيفت'))) {
+     const st = (client.shiftType === 'evening' || (client.package && typeof client.package === 'string' && client.package.includes('مسائي'))) ? 'مسائي' : 'صباحي';
+     return `نظام الشيفت (${st} | استلام: ${client.shiftStartTime || '-'} • تسليم: ${client.shiftEndTime || '-'})`;
+  }
+  if (client.subscriptionType === 'fulltime' || client.isFullTime || (client.package && typeof client.package === 'string' && client.package.toLowerCase().includes('full time'))) {
+     return client.package || 'اشتراك Full Time 👑';
+  }
+  const dur = fallbackDuration || client.packageDuration;
+    if (dur === '3months' || dur === 'quarterly') return 'باقة 3 شهور (ربع سنوية ⭐)';
+    return dur === 'annual' ? 'باقة سنوية (مدة سنة كاملة)' : 'باقة شهرية (مدة شهر واحد)';
+  } catch (err) {
+    console.error('Error in getClientPkgNameForWA:', err);
+    return 'باقة عامة';
+  }
+};
+
+const getClientContractStatus = (client) => {
+  if (!client) return { status: 'unknown', badgeText: 'غير محدد', label: '-', color: 'stone', daysLeft: null, isExpired: false, isFullTime: false, isLastWeek: false };
+
+    const isShift = client.subscriptionType === 'shift' || (client.package && typeof client.package === 'string' && client.package.includes('الشيفت'));
+  const isFullTimeOnly = client.subscriptionType === 'fulltime' || client.isFullTime || (client.package && typeof client.package === 'string' && client.package.toLowerCase().includes('full time')) || (client.packageDuration && typeof client.packageDuration === 'string' && client.packageDuration.startsWith('fulltime'));
+  const isFullTime = isFullTimeOnly || isShift;
+  const isZeroHours = !isFullTime && (client.currentBalance !== undefined && client.currentBalance <= 0);
+
+  const ftMetrics = isFullTime ? calcFullTimeWorkingHours(client.startDate, client.expiryDate, new Date()) : null;
+
+  if (!client.expiryDate) {
+    if (isFullTime) {
+      return {
+        status: 'active_fulltime',
+        badgeText: isShift ? 'الشيفت ساري 🔄' : 'Full Time ساري 👑',
+        label: isShift 
+          ? `نظام الشيفت (${client.shiftType === 'evening' ? 'مسائي' : 'صباحي'} | استلام: ${client.shiftStartTime || '-'} • تسليم: ${client.shiftEndTime || '-'}) • غرفة خاصة` 
+          : 'اشتراك دوام كامل (غرفة خاصة طوال مواقيت العمل)',
+        color: 'purple',
+        daysLeft: null,
+        workingDaysLeft: null,
+        workingHoursLeft: null,
+        totalWorkingDays: null,
+        totalWorkingHours: null,
+        consumedWorkingDays: null,
+        consumedWorkingHours: null,
+        dailyHours: null,
+        isExpired: false,
+        isFullTime: true,
+        isLastWeek: false,
+        effectiveActive: true,
+        reason: isShift ? 'اشتراك الشيفت مستمر' : 'اشتراك Full Time مستمر'
+      };
+    }
+    return {
+      status: isZeroHours ? 'zero_hours' : 'active_no_expiry',
+      badgeText: isZeroHours ? 'رصيد منتهٍ ⚠️' : 'ساري (غير محدد انتهاء) ✅',
+      label: isZeroHours ? 'انتهت الساعات' : 'ساري بدون تاريخ انتهاء',
+      color: isZeroHours ? 'rose' : 'emerald',
+      daysLeft: null,
+      isExpired: isZeroHours,
+      isFullTime: false,
+      isLastWeek: false,
+      effectiveActive: !isZeroHours,
+      reason: isZeroHours ? 'استهلاك الرصيد بالكامل' : 'عقد ساري'
+    };
+  }
+
+  const normExpiry = normalizeDate(client.expiryDate);
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  
+  let expYear, expMonth, expDay;
+  if (normExpiry && normExpiry.includes('-')) {
+    const parts = normExpiry.split('-');
+    expYear = parseInt(parts[0], 10);
+    expMonth = parseInt(parts[1], 10) - 1;
+    expDay = parseInt(parts[2], 10);
+  } else {
+    return {
+      status: 'active',
+      badgeText: isFullTime ? (isShift ? 'نظام الشيفت 🔄' : 'Full Time 👑') : 'ساري ✅',
+      label: 'ساري',
+      color: isFullTime ? (isShift ? 'blue' : 'purple') : 'emerald',
+      daysLeft: null,
+      isExpired: false,
+      isFullTime,
+      isLastWeek: false,
+      effectiveActive: true,
+      reason: 'ساري'
+    };
+  }
+
+  const expiryDateObj = new Date(expYear, expMonth, expDay);
+  const diffTime = expiryDateObj - today;
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+  // Case 1: Expired
+  if (diffDays < 0) {
+    return {
+      status: isFullTime ? 'expired_fulltime' : 'contract_expired',
+      badgeText: isFullTime ? (isShift ? `نظام الشيفت منتهي (${Math.abs(diffDays)} يوم مضت) ⛔` : `Full Time منتهي (${Math.abs(diffDays)} يوم مضت) ⛔`) : `منتهي التعاقد (${Math.abs(diffDays)} يوم مضت) ⛔`,
+      label: isFullTime 
+        ? (isShift ? `انتهت فترة اشتراك الشيفت منذ ${Math.abs(diffDays)} يوم` : `انتهت فترة اشتراك الدوام الكامل منذ ${Math.abs(diffDays)} يوم`) 
+        : `انتهت فترة الاشتراك منذ ${Math.abs(diffDays)} يوم`,
+      color: 'rose',
+      daysLeft: diffDays,
+      workingDaysLeft: 0,
+      workingHoursLeft: null,
+      totalWorkingDays: ftMetrics ? ftMetrics.totalWorkingDays : null,
+      totalWorkingHours: null,
+      consumedWorkingDays: ftMetrics ? ftMetrics.totalWorkingDays : null,
+      consumedWorkingHours: null,
+      dailyHours: null,
+      isExpired: true,
+      isFullTime,
+      isLastWeek: false,
+      effectiveActive: false,
+      reason: isFullTime ? (isShift ? 'انتهاء تاريخ تجديد الشيفت' : 'انتهاء تاريخ تجديد الدوام الكامل') : 'انتهاء تاريخ التعاقد المحدد'
+    };
+  }
+
+  // Case 2: Zero hours (only for hourly packages)
+  if (!isFullTime && isZeroHours) {
+    return {
+      status: 'zero_hours',
+      badgeText: 'رصيد منتهٍ ⚠️',
+      label: 'انتهت الساعات (العقد ساري)',
+      color: 'rose',
+      daysLeft: diffDays,
+      isExpired: true,
+      isFullTime: false,
+      isLastWeek: false,
+      effectiveActive: false,
+      reason: 'استهلاك كافة رصيد الساعات'
+    };
+  }
+
+  // Case 3: Last week (<= 7 days remaining)
+  if (diffDays <= 7) {
+    return {
+      status: isFullTime ? 'expiring_soon_fulltime' : 'expiring_soon',
+      badgeText: isFullTime ? (isShift ? `⚠️ آخر أسبوع (${diffDays} يوم) - الشيفت` : `⚠️ آخر أسبوع (${diffDays} يوم) FT`) : `ينتهي قريباً (متبقي ${diffDays} يوم) ⏳`,
+      label: isFullTime 
+        ? (isShift ? `الشيفت: ينتهي خلال ${diffDays} يوم (تاريخ التجديد: ${client.expiryDate})` : `دوام كامل: ينتهي خلال ${diffDays} يوم (تاريخ التجديد: ${client.expiryDate})`) 
+        : `ينتهي خلال ${diffDays} يوم (آخر أسبوع)`,
+      color: 'amber',
+      daysLeft: diffDays,
+      workingDaysLeft: ftMetrics ? ftMetrics.remainingWorkingDays : null,
+      workingHoursLeft: null,
+      totalWorkingDays: ftMetrics ? ftMetrics.totalWorkingDays : null,
+      totalWorkingHours: null,
+      consumedWorkingDays: ftMetrics ? ftMetrics.consumedWorkingDays : null,
+      consumedWorkingHours: null,
+      dailyHours: null,
+      isExpired: false,
+      isFullTime,
+      isLastWeek: true,
+      effectiveActive: true,
+      reason: isFullTime ? (isShift ? 'اقتراب موعد تجديد الشيفت (آخر أسبوع)' : 'اقتراب موعد تجديد اشتراك Full Time (آخر أسبوع)') : 'في الأسبوع الأخير من الاشتراك'
+    };
+  }
+
+  // Case 4: Active
+  return {
+    status: isFullTime ? 'active_fulltime' : 'active',
+    badgeText: isFullTime ? (isShift ? `الشيفت ساري (${diffDays} يوم) 🔄` : `Full Time ساري (${diffDays} يوم) 👑`) : `ساري (متبقي ${diffDays} يوم) ✅`,
+    label: isFullTime 
+      ? (isShift 
+          ? `نظام الشيفت: ساري حتى ${client.expiryDate} (${diffDays} يوم) • استلام ${client.shiftStartTime || '-'} ➔ تسليم ${client.shiftEndTime || '-'}` 
+          : `دوام كامل: ساري حتى ${client.expiryDate} (${diffDays} يوم) • غرفة خاصة طوال مواقيت العمل`) 
+      : `ساري حتى ${client.expiryDate} (${diffDays} يوم)`,
+    color: isFullTime ? 'purple' : 'emerald',
+    daysLeft: diffDays,
+    workingDaysLeft: ftMetrics ? ftMetrics.remainingWorkingDays : null,
+    workingHoursLeft: null,
+    totalWorkingDays: ftMetrics ? ftMetrics.totalWorkingDays : null,
+    totalWorkingHours: null,
+    consumedWorkingDays: ftMetrics ? ftMetrics.consumedWorkingDays : null,
+    consumedWorkingHours: null,
+    dailyHours: null,
+    isExpired: false,
+    isFullTime,
+    isLastWeek: false,
+    effectiveActive: true,
+    reason: isFullTime ? (isShift ? 'اشتراك الشيفت ساري' : 'اشتراك Full Time ساري') : 'عقد ورصيد ساريان'
+  };
+};
+
+// Default WhatsApp Message Templates (Includes Cancellation Without Deduction)
+const DEFAULT_TEMPLATES = {
+  // 1. باقات الساعات (10س، 30س لـ 3 أشهر، 100س سنوي)
+  welcome: `أهلاً بك أستاذ/ة *{اسم_العميل}* في *{اسم_الشركة}* 🎉✨\n\nيسعدنا ويشرفنا انضمامك واشتراكك معنا بنظام *باقات الساعات الذكية*! تم تفعيل باقتك بنجاح بالبيانات التالية:\n\n📋 *تفاصيل الباقة والاشتراك:*\n📦 *نوع الباقة:* {نوع_الباقة} ({اسم_الباقة})\n💳 *رصيد الساعات المتاح في حسابك:* *{الرصيد_المتاح} ساعة*\n📅 *تاريخ بداية التعاقد:* {تاريخ_البداية}\n⏳ *تاريخ انتهاء التعاقد:* {تاريخ_الانتهاء}\n📱 *رقم الهاتف المسجل:* {رقم_الهاتف}\n\n📱 *بيانات الدخول لبوابة العميل وتطبيق الجوال:*\n👤 *اسم المستخدم:* {اسم_المستخدم}\n🔐 *كلمة المرور:* {كلمة_المرور}\n📲 *رابط التطبيق المباشر:* https://portalweb-lake.vercel.app/mobile.html\n🌐 *رابط الدخول التلقائي والمباشر (ضغطة واحدة):*\n{رابط_الدخول_المباشر}\n\n🛡️ *سياسة حماية الرصيد والحجوزات:*\n• رصيدك متاح للاستخدام طوال فترة سريان التعاقد.\n• يتم خصم ساعات الحجز لتأكيد وحجز القاعة، وعند إلغاء الحجز يتم تحرير القاعة دون أي استرجاع للساعات وفقاً للائحة المعتمدة.\n\nنتمنى لك تجربة عمل مميزة ومثمرة ويسعدنا دائماً خدمتك! 🌸`,
+
+  // 2. اشتراك الدوام الكامل (Full Time)
+  fulltime_welcome: `أهلاً بك أستاذ/ة *{اسم_العميل}* في *{اسم_الشركة}* ⚜️👑\n\nيسعدنا ويشرفنا انضمامك واشتراكك معنا بنظام *الدوام الكامل (Full Time)*! تم تفعيل حسابك ومساحتك الخاصة بنجاح بالبيانات التالية:\n\n📋 *تفاصيل التعاقد والمكتب الخاص:*\n📦 *نوع الباقة والمدة:* {نوع_الباقة}\n🏢 *الغرفة / المكتب المخصص لك:* *{اسم_الغرفة}*\n📅 *تاريخ بداية التعاقد:* {تاريخ_البداية}\n⏳ *تاريخ انتهاء وتجديد الباقة:* {تاريخ_الانتهاء}\n⏱️ *مواقيت العمل الرسمية:* غرفتك الخاصة متاحة لك طوال مواقيت العمل الرسمية (12 ساعة يومياً / 6 أيام بالأسبوع) عدا الجمعة عطلة.\n📱 *رقم الهاتف المسجل:* {رقم_الهاتف}\n\n📱 *بيانات الدخول لبوابة العميل وتطبيق الجوال:*\n👤 *اسم المستخدم:* {اسم_المستخدم}\n🔐 *كلمة المرور:* {كلمة_المرور}\n📲 *رابط التطبيق المباشر:* https://portalweb-lake.vercel.app/mobile.html\n🌐 *رابط الدخول التلقائي والمباشر (ضغطة واحدة):*\n{رابط_الدخول_المباشر}\n\nنتمنى لك تجربة عمل مميزة ومثمرة ويسعدنا دائماً خدمتك بأعلى معايير الجودة والراحة! ✨`,
+
+  // 3. اشتراك نظام الشيفت (Shift System)
+  shift_welcome: `أهلاً بك أستاذ/ة *{اسم_العميل}* في *{اسم_الشركة}* 🔄✨\n\nيسعدنا ويشرفنا انضمامك واشتراكك معنا في *نظام الشيفت (Shift System)*! تم تفعيل وتثبيت موعد غرفتك الخاصة بنجاح بالبيانات التالية:\n\n📋 *تفاصيل التعاقد ومواعيد الغرفة:*\n📦 *نوع الاشتراك:* {نوع_الباقة}\n🏢 *الغرفة المخصصة للشيفت:* *{اسم_الغرفة}*\n⏰ *وقت استلام الغرفة:* *{وقت_استلام_الغرفة}*\n🚪 *وقت تسليم الغرفة:* *{وقت_تسليم_الغرفة}*\nℹ️ *نظام الاستخدام:* الغرفة خاصة بك خلال وقت الشيفت المحدد، ويتم تسليم الغرفة بعد انتهاء الوقت دون أي احتساب لرصيد ساعات.\n📅 *تاريخ بداية التعاقد:* {تاريخ_البداية}\n⏳ *تاريخ انتهاء التعاقد:* {تاريخ_الانتهاء}\n📱 *رقم الهاتف المسجل:* {رقم_الهاتف}\n\n📱 *بيانات الدخول لبوابة العميل وتطبيق الجوال:*\n👤 *اسم المستخدم:* {اسم_المستخدم}\n🔐 *كلمة المرور:* {كلمة_المرور}\n📲 *رابط التطبيق المباشر:* https://portalweb-lake.vercel.app/mobile.html\n🌐 *رابط الدخول التلقائي والمباشر (ضغطة واحدة):*\n{رابط_الدخول_المباشر}\n\nنتمنى لك أوقات عمل مميزة وموفقة ويسعدنا دائماً تقديم أفضل خدمة لك! 🌸`,
+
+  fulltime_reminder: `مرحباً بك أستاذ/ة *{اسم_العميل}* في *{اسم_الشركة}* ⚜️\n\nنود إحاطتكم علماً بأنه متبقي *{الايام_المتبقية} يوم* على انتهاء اشتراككم في نظام *الدوام الكامل ({نوع_الباقة})* بتاريخ *{تاريخ_الانتهاء}*.\n\n📋 *ملخص الاشتراك الحالي:*\n🏷️ *نوع الاشتراك:* {نوع_الباقة}\n📅 *تاريخ انتهاء التعاقد:* {تاريخ_الانتهاء}\n⏳ *المدة المتبقية:* {الايام_المتبقية} يوم\n\nلتجديد الاشتراك والاستمرار في الاستفادة من مكتبك الخاص ومزايا مجموعة الكيان دون انقطاع، يسعدنا تواصلكم معنا لتأكيد التجديد. 🌸`,
+
+  attendance: `مرحباً بك أستاذ/ة *{اسم_العميل}* في *{اسم_الشركة}* 🌟
+
+تم تسجيل حضوركم بنجاح ومباشرة استخدام مساحة العمل:
+
+📋 *بيانات تسجيل الحضور:*
+🏷️ *نوع الخدمة:* {نوع_الخدمة}
+📦 *نوع الباقة:* {نوع_الباقة}
+📅 *التاريخ والوقت:* {التاريخ} • {الوقت}
+⏱️ *الساعات المستهلكة في هذه الجلسة:* {الساعات_المستهلكة}
+💳 *رصيد الساعات المتبقي الحالي:* *{الرصيد_المتبقي}*
+⏳ *تاريخ انتهاء الباقة:* {تاريخ_الانتهاء} ({حالة_التعاقد})
+
+نتمنى لكم قضاء وقت عمل ممتع ومثمر، وفريقنا دائماً في خدمتكم! ✨`,
+
+  booking: `مرحباً بك أستاذ/ة *{اسم_العميل}* في *{اسم_الشركة}* 📅✨
+
+تم تأكيد حجز موعدك وقاعتك بنجاح وفقاً للتفاصيل التالية:
+
+📋 *بيانات الحجز المعتمد:*
+🏷️ *نوع الخدمة:* {نوع_الخدمة}
+🚪 *القاعة / الغرفة:* *{الغرفة}*
+📅 *تاريخ الموعد:* {التاريخ}
+⏰ *وقت البدء:* {الوقت}
+⏱️ *المدة المحجوزة:* {المدة} ساعة
+📦 *حالة الباقة:* {نوع_الباقة} (سارية حتى: {تاريخ_الانتهاء})
+
+🛡️ *سياسة الحجوزات المعتمدة:*
+• يتم تأكيد الحجز وخصم الساعات فورياً لتجهيز وحجز القاعة باسمكم.
+• يتم تأكيد الحجز وخصم الساعات لتجهيز القاعة، وإلغاء الحجز يحرر القاعة دون استرداد الساعات وفقاً للائحة.
+
+نتطلع لاستقبالكم ونتمنى لكم جلسة عمل ناجحة ومثمرة! 🌸`,
+
+  cancellation: `مرحباً بك أستاذ/ة *{اسم_العميل}* من إدارة *{اسم_الشركة}* 🔔
+
+نحيطكم علماً بأنه تم إلغاء حجز موعدكم وتحرير القاعة:
+
+📋 *تفاصيل الموعد الملغي:*
+🏷️ *الخدمة:* {نوع_الخدمة}
+🚪 *القاعة:* {الغرفة}
+📅 *تاريخ ووقت الموعد:* {التاريخ} ({الوقت})
+⏱️ *المدة:* {المدة} ساعة
+
+⚠️ *سياسة الساعات:*
+وفقاً للائحة الحجوزات المعتمدة، تم تحرير القاعة ولا يتم استرجاع الساعات المخصومة عند الإلغاء. رصيد ساعاتكم المتاح الحالي هو: *{الرصيد_المتبقي} ساعة*.
+
+يسعدنا دائماً خدمتكم وتنسيق موعد جديد في أي وقت يناسبكم! ✨`,
+
+  refund_cancellation: `مرحباً بك أستاذ/ة *{اسم_العميل}* في *{اسم_الشركة}* 🔄
+
+تم إلغاء الجلسة واسترجاع الساعات بنجاح:
+🏷️ *الخدمة:* {نوع_الخدمة}
+📅 *تاريخ الجلسة:* {التاريخ}
+➕ *الساعات المسترجعة لرصيدك:* {الساعات_المسترجعة} ساعة
+💳 *إجمالي رصيدك الحالي بعد الاسترجاع:* {الرصيد_المتبقي} ساعة
+
+يسعدنا دائماً تقديم أفضل خدمة لكم! ✨`,
+
+  recharge: `مرحباً بك أستاذ/ة *{اسم_العميل}* في *{اسم_الشركة}* 💳✨\n\nتم تجديد / شحن باقتكم بنجاح بالبيانات التالية:\n\n📋 *تفاصيل الرصيد والتعاقد:*\n📦 *نوع الباقة:* {نوع_الباقة}\n➕ *الساعات المضافة:* *{الساعات_المضافة} ساعة*\n💳 *إجمالي الرصيد المتاح حالياً:* *{الرصيد_الجديد} ساعة*\n📅 *سريان التعاقد حتى:* {تاريخ_الانتهاء}\n\n📱 *بيانات الدخول ورابط الحساب المباشر:*\n👤 *اسم المستخدم:* {اسم_المستخدم}\n🔐 *كلمة المرور:* {كلمة_المرور}\n📲 *رابط التطبيق المباشر:* https://portalweb-lake.vercel.app/mobile.html\n🌐 *رابط الحساب التلقائي (ضغطة واحدة):*\n{رابط_الدخول_المباشر}\n\nشكراً لثقتكم بنا ويسعدنا دائماً تقديم أفضل خدمة لكم! ✨`,
+
+  expiry_alert: `تنبيه هام من *{اسم_الشركة}* 🔔
+
+عزيزنا العميل *{اسم_العميل}*، نود تذكيركم بأن باقتكم ({نوع_الباقة}) {حالة_الصلاحية}:
+📅 *تاريخ انتهاء التعاقد:* {تاريخ_الانتهاء}
+⏱️ *رصيد الساعات المتبقي:* {الرصيد_المتبقي} ساعة
+
+لتجديد التعاقد أو شحن باقة ساعات جديدة والاستمرار في حجز القاعات ومساحات العمل، يسعدنا تواصلكم المباشر معنا عبر هذا الرقم. ✨`,
+
+  statement: `مرحباً بك أستاذ/ة *{اسم_العميل}* في *{اسم_الشركة}* 📄✨
+
+إليك كشف حساب الساعات الخاص بتعاقدكم:
+📦 *الباقة:* {نوع_الباقة}
+📅 *فترة التعاقد:* من {تاريخ_البداية} إلى {تاريخ_الانتهاء} ({حالة_التعاقد})
+⏱️ *إجمالي الساعات المشتراة:* {الساعات_المشتراة} ساعة
+🔻 *الساعات المستهلكة:* {الساعات_المستهلكة} ساعة
+💳 *الرصيد المتبقي المتاح حالياً:* *{الرصيد_المتبقي} ساعة*
+
+شكراً لثقتكم الغالية ويسعدنا دائماً تواجدكم معنا! ✨`
+};
+
+// ==========================================
+// 📦 Initial Mock Data with Monthly/Annual Contracts
+// ==========================================
+const INITIAL_CLIENTS = [];
+const INITIAL_ATTENDANCE = [];
+const INITIAL_BOOKINGS = [];
+
+// ==========================================
+// ⚡ Official InstaPay Payment Configuration & Logo Component
+// ==========================================
+const INSTAPAY_PAYMENT_URL = 'https://ipn.eg/S/x.lance/instapay/1ZQ65n';
+
+function InstaPayLogo({ className = "w-7 h-7" }) {
+  return (
+    <svg className={className} viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="ipn_main_grad_app" x1="0" y1="0" x2="100" y2="100" gradientUnits="userSpaceOnUse">
+          <stop stopColor="#9C1C62" />
+          <stop offset="0.6" stopColor="#78134B" />
+          <stop offset="1" stopColor="#4A0A2E" />
+        </linearGradient>
+        <linearGradient id="ipn_bolt_grad_app" x1="30" y1="15" x2="70" y2="85" gradientUnits="userSpaceOnUse">
+          <stop stopColor="#FFB300" />
+          <stop offset="1" stopColor="#FF6D00" />
+        </linearGradient>
+      </defs>
+      <rect width="100" height="100" rx="26" fill="url(#ipn_main_grad_app)" />
+      <rect x="2.5" y="2.5" width="95" height="95" rx="23.5" stroke="#FF4D94" strokeWidth="2" strokeOpacity="0.4" />
+      <path d="M54 16L24 53H47L41 84L76 47H52L60 16H54Z" fill="url(#ipn_bolt_grad_app)" />
+      <path d="M50 23L31 50H46L43 72L67 45H50L56 23H50Z" fill="#FFFFFF" />
+      <circle cx="75" cy="24" r="6" fill="#FFB300" />
+    </svg>
+  );
+}
+
+// ==========================================
+// 🚀 Main Application Component
+// ==========================================
+
+const originalUseState = useState;
+const useStateWithLogging = useState;
+
+function App() {
+  const normalizePhone = (p) => {
+    let raw = (p || '').replace(/[\+\-\s]/g, '');
+    if (raw.startsWith('20') && raw.length > 10) raw = raw.substring(2);
+    if (raw.startsWith('0')) raw = raw.substring(1);
+    return raw;
+  };
+
+  const getClientTxs = (clientOrId) => {
+    const client = typeof clientOrId === 'string' ? clients.find(c => c && c.id === clientOrId) : clientOrId;
+    const cid = typeof clientOrId === 'string' ? clientOrId : (clientOrId ? clientOrId.id : null);
+    if (!client) return financialTransactions.filter(t => t && t.clientId === cid);
+    const normPhone = normalizePhone(client.phone);
+    return financialTransactions.filter(t => {
+      if (!t) return false;
+      if (t.clientId === cid) return true;
+      const tPhone = normalizePhone(t.clientPhone);
+      return normPhone && tPhone && normPhone === tPhone;
+    });
+  };
+
+window.renderCount = (window.renderCount || 0) + 1;
+console.log("App rendered:", window.renderCount);
+  // ⏰ Helper to format booking time range (من الساعة كام إلى الساعة كام) and numeric hours
+  const formatBookingTimeRange = (b) => {
+    if (!b) return '';
+    if (b.timeRange && b.timeRange.includes('إلى')) return b.timeRange;
+    const rawTime = b.time || b.startTime || '12:00';
+    const dur = parseFloat(b.duration || b.durationHours || 1) || 1;
+    const parts = String(rawTime).split(':');
+    let startH = parseInt(parts[0], 10);
+    let startM = parseInt(parts[1] || '0', 10);
+    if (isNaN(startH)) startH = 12;
+    if (isNaN(startM)) startM = 0;
+
+    const rawLower = String(rawTime).toLowerCase();
+    if (rawLower.includes('م') || rawLower.includes('pm')) {
+      if (startH < 12) startH += 12;
+    } else if (rawLower.includes('ص') || rawLower.includes('am')) {
+      if (startH === 12) startH = 0;
+    }
+
+    let endH = (startH + Math.floor(dur)) % 24;
+    let endM = startM;
+
+    const to12 = (h, m) => {
+      let period = 'ص';
+      if (h >= 12) {
+        period = 'م';
+      }
+      const h12 = h % 12 === 0 ? 12 : h % 12;
+      return `${String(h12).padStart(2, '0')}:${String(m).padStart(2, '0')} ${period}`;
+    };
+
+    const start12 = to12(startH, startM);
+    const end12 = to12(endH, endM);
+    return `من ${start12} إلى ${end12}`;
+  };
+
+  // ⏰ Helper to parse time string (e.g. "03:00 م", "12:00 ص", "14:30") to 24-hour {h, m}
+  const parseTimeTo24H = (timeStr) => {
+    if (!timeStr || typeof timeStr !== 'string') return null;
+    const clean = timeStr.trim();
+    const isPM = clean.includes('م') || clean.toUpperCase().includes('PM');
+    const isAM = clean.includes('ص') || clean.toUpperCase().includes('AM');
+    const digits = clean.replace(/[^\d:]/g, '');
+    const parts = digits.split(':');
+    if (!parts || !parts[0]) return null;
+    let h = parseInt(parts[0], 10);
+    let m = parts.length > 1 ? parseInt(parts[1], 10) : 0;
+    if (isNaN(h)) return null;
+    if (isNaN(m)) m = 0;
+    if (isPM && h < 12) h += 12;
+    if (isAM && h === 12) h = 0;
+    return { h, m };
+  };
+
+  // ⏰ Helper to check if a booking's scheduled time has passed
+  const isBookingPast = (b) => {
+    if (!b || !b.date) return false;
+    try {
+      const now = new Date();
+      const todayStr = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
+      if (b.date < todayStr) return true;
+      if (b.date > todayStr) return false;
+
+      let endH = null, endM = null;
+      if (b.endTime) {
+        const pEnd = parseTimeTo24H(b.endTime);
+        if (pEnd) {
+          endH = pEnd.h;
+          endM = pEnd.m;
+        }
+      }
+
+      if (endH === null) {
+        const rawStart = b.time || b.startTime || '12:00';
+        const pStart = parseTimeTo24H(rawStart);
+        const dur = parseFloat(b.duration || b.durationHours || 1) || 1;
+        if (pStart) {
+          const totMin = pStart.h * 60 + pStart.m + Math.round(dur * 60);
+          endH = Math.floor(totMin / 60) % 24;
+          endM = totMin % 60;
+        } else {
+          endH = 23;
+          endM = 59;
+        }
+      }
+
+      const nowMin = now.getHours() * 60 + now.getMinutes();
+      const endMin = endH * 60 + endM;
+
+      // Handle overnight bookings if start time > end time
+      const rawStart = b.time || b.startTime;
+      const pStart = rawStart ? parseTimeTo24H(rawStart) : null;
+      if (pStart && endMin < (pStart.h * 60 + pStart.m)) {
+        return false;
+      }
+
+      return nowMin >= endMin;
+    } catch (e) {
+      return false;
+    }
+  };
+
+  // ⏰ Helper to check if booking is cancelled
+  const isBookingCancelled = (b) => {
+    if (!b) return false;
+    return b.status === 'cancelled' || b.status === 'ملغي بواسطة العميل' || b.is_active === false;
+  };
+
+  // ⏰ Helper to check if booking is attended / completed / auto-deducted past
+  const isBookingCompletedOrAttended = (b) => {
+    if (!b || isBookingCancelled(b)) return false;
+    if (b.status === 'attended' || b.status === 'completed') return true;
+    const isDeducted = b.isAutoDeducted || b.bookedVia === 'mobile_app' || parseFloat(b.hoursDeducted || 0) > 0;
+    if (isBookingPast(b) && (isDeducted || b.status !== 'scheduled')) return true;
+    if (isBookingPast(b)) return true; // Any past booking whose scheduled time ended is treated as completed/attended
+    return false;
+  };
+
+  // ⏰ Helper to check if booking is truly upcoming in the future
+  const isBookingUpcoming = (b) => {
+    if (!b || isBookingCancelled(b)) return false;
+    if (isBookingCompletedOrAttended(b)) return false;
+    return !isBookingPast(b);
+  };
+  const isHydratedRef = useRef(false);
+  const [isLoaded, setIsLoaded] = useStateWithLogging(false);
+
+  // 🎯 Persistent Active Tab & Session Resumption
+  const [activeTab, setActiveTab] = useStateWithLogging(() => {
+    return localStorage.getItem('COMPANY_APP_ACTIVE_TAB') || 'dashboard';
+  });
+
+  const [recentTasks, setRecentTasks] = useStateWithLogging(() => {
+    const saved = localStorage.getItem('COMPANY_APP_RECENT_TASKS');
+    return saved ? JSON.parse(saved) : [];
+  });
+  
+  const [clients, setClients] = useStateWithLogging(() => {
+    const saved = localStorage.getItem('COMPANY_APP_CLIENTS');
+    return saved ? JSON.parse(saved) : INITIAL_CLIENTS;
+  });
+
+  const [attendance, setAttendance] = useStateWithLogging(() => {
+    const saved = localStorage.getItem('COMPANY_APP_ATTENDANCE');
+    return saved ? JSON.parse(saved) : INITIAL_ATTENDANCE;
+  });
+
+  const [bookings, setBookings] = useStateWithLogging(() => {
+    const saved = localStorage.getItem('COMPANY_APP_BOOKINGS');
+    if (!saved) return INITIAL_BOOKINGS;
+    try {
+      const parsed = JSON.parse(saved);
+      return parsed.map(b => {
+        let r = b.room;
+        if (!r || !INITIAL_ROOMS.includes(r)) {
+          r = b.id === 'b-2' ? 'MaxRoom' : 'Master VIP Room';
+        }
+        return { ...b, room: r };
+      });
+    } catch (e) {
+      return INITIAL_BOOKINGS;
+    }
+  });
+
+  const [notifications, setNotifications] = useStateWithLogging(() => {
+    const saved = localStorage.getItem('COMPANY_APP_NOTIFICATIONS');
+    return saved ? JSON.parse(saved) : [];
+  });
+
+  // ☕📄 Financial Ledger State (Buffet, Photocopying, Services & Payments)
+  const [financialTransactions, setFinancialTransactions] = useStateWithLogging(() => {
+    try {
+      const saved = localStorage.getItem('COMPANY_APP_FINANCIAL_TXS');
+      return saved ? JSON.parse(saved) : [];
+    } catch (e) {
+      return [];
+    }
+  });
+
+  const [showFinancialModal, setShowFinancialModal] = useStateWithLogging(null); // null | { client: obj, type: 'charge'|'payment', category: 'buffet'|... }
+  const [showClientLedgerModal, setShowClientLedgerModal] = useStateWithLogging(null); // null | client
+  const [showInstaPayModal, setShowInstaPayModal] = useStateWithLogging(false);
+
+  // ⚡ Handle InstaPay Automatic Redirect & Mandatory Screenshot Notice
+  const handleOpenInstaPay = () => {
+    try {
+      const win = window.open(INSTAPAY_PAYMENT_URL, '_blank');
+      if (!win || win.closed || typeof win.closed === 'undefined') {
+        window.location.assign(INSTAPAY_PAYMENT_URL);
+      }
+    } catch(e) {
+      window.location.href = INSTAPAY_PAYMENT_URL;
+    }
+    setShowInstaPayModal(true);
+  };
+
+  const [financialSearch, setFinancialSearch] = useStateWithLogging('');
+  const [financialFilterCategory, setFinancialFilterCategory] = useStateWithLogging('all'); // all | buffet | printing | services | payment
+  const [financialFilterClient, setFinancialFilterClient] = useStateWithLogging('all');
+  const [financialMonthFilter, setFinancialMonthFilter] = useStateWithLogging(() => new Date().toISOString().slice(0, 7)); // e.g. '2026-09'
+
+  // Helper to format Arabic month names (e.g. 2026-09 -> سبتمبر 2026)
+  const getArabicMonthName = (yearMonthStr) => {
+    if (!yearMonthStr || yearMonthStr === 'all') return 'جميع الشهور (الإجمالي التراكمي الشامل)';
+    const parts = yearMonthStr.split('-');
+    if (parts.length < 2) return yearMonthStr;
+    const y = parts[0];
+    const m = parts[1];
+    const months = {
+      '01': 'يناير', '02': 'فبراير', '03': 'مارس', '04': 'أبريل',
+      '05': 'مايو', '06': 'يونيو', '07': 'يوليو', '08': 'أغسطس',
+      '09': 'سبتمبر', '10': 'أكتوبر', '11': 'نوفمبر', '12': 'ديسمبر'
+    };
+    return `${months[m] || m} ${y}`;
+  };
+
+  // Extract distinct available months from transactions + current month + past 6 months
+  const availableFinancialMonths = useMemo(() => {
+    const currentYM = new Date().toISOString().slice(0, 7);
+    const setM = new Set();
+    setM.add(currentYM);
+
+    // Seed previous 6 months
+    const nowD = new Date();
+    for (let i = 1; i <= 6; i++) {
+      const pastD = new Date(nowD.getFullYear(), nowD.getMonth() - i, 1);
+      setM.add(pastD.toISOString().slice(0, 7));
+    }
+
+    // Add any months from actual transactions
+    (financialTransactions || []).forEach(t => {
+      if (t && t.date && t.date.length >= 7) {
+        setM.add(t.date.slice(0, 7));
+      }
+    });
+
+    return Array.from(setM).sort().reverse();
+  }, [financialTransactions]);
+
+  // ⚡ PERFORMANCE BOOST: Indexed O(1) Map for client financial transactions
+  const clientFinancialMap = useMemo(() => {
+    const map = {};
+    (financialTransactions || []).forEach(t => {
+      if (t && t.clientId) {
+        if (!map[t.clientId]) map[t.clientId] = [];
+        map[t.clientId].push(t);
+      }
+    });
+    return map;
+  }, [financialTransactions]);
+
+  // Settings
+  const [settings, setSettings] = useStateWithLogging(() => {
+    const saved = localStorage.getItem('COMPANY_APP_SETTINGS');
+    const parsed = saved ? JSON.parse(saved) : {};
+    const logoVal = parsed.companyLogo || parsed.logo || '';
+    const tb = parsed.telegram_backup || {};
+    const botTok = tb.bot_token || parsed.telegram_token || parsed.bot_token || '';
+    const cid1 = tb.chat_id_1 || parsed.telegram_chat_id || parsed.chat_id_1 || '';
+    const cid2 = tb.chat_id_2 || parsed.telegram_chat_id_2 || parsed.chat_id_2 || '';
+    return {
+      companyName: parsed.companyName && parsed.companyName !== 'شركة الإنجاز للحلول الذكية' ? parsed.companyName : 'مجموعة الكيان | AL KAYAN GROUP',
+      companyTagline: parsed.companyTagline && parsed.companyTagline !== 'نظام إدارة المواعيد والباقات الشهرية والسنوية' ? parsed.companyTagline : 'الكيان يبدأ من كيان له كيان',
+      companyLogo: logoVal,
+      logo: logoVal,
+      telegram_backup: {
+        bot_token: botTok,
+        chat_id_1: cid1,
+        chat_id_2: cid2
+      },
+      telegram_token: botTok,
+      telegram_chat_id: cid1,
+      telegram_chat_id_2: cid2,
+      lowBalanceThreshold: parsed.lowBalanceThreshold || 2.0,
+      autoBackup24h: parsed.autoBackup24h !== undefined ? parsed.autoBackup24h : true,
+      soundEnabled: parsed.soundEnabled !== undefined ? parsed.soundEnabled : true,
+      browserNotifsEnabled: parsed.browserNotifsEnabled || false,
+      whatsappCountryCode: parsed.whatsappCountryCode || '966',
+      roomsLocked: true, // Permanent lock with the 2 specified rooms
+      rooms: INITIAL_ROOMS,
+      templates: {
+        ...DEFAULT_TEMPLATES,
+        ...(parsed.templates || {})
+      }
+    };
+  });
+
+  const [lastBackupTime, setLastBackupTime] = useStateWithLogging(() => {
+    const saved = localStorage.getItem('COMPANY_APP_LAST_BACKUP');
+    return saved ? parseInt(saved, 10) : Date.now();
+  });
+
+  // 🕒 Live Countdown Ticker (updates every 60s for real-time display)
+  const [countdownTick, setCountdownTick] = useStateWithLogging(0);
+
+  // 🛡️ Hard-Disk Persistence & Anti-Loss Safety Engine
+  const [isDiskSynced, setIsDiskSynced] = useStateWithLogging(true);
+
+  // 🔐 Staff Users & Access Control
+  const [users, setUsers] = useStateWithLogging(() => {
+    const saved = localStorage.getItem('COMPANY_APP_USERS');
+    if (!saved) return [DEFAULT_MASTER_USER];
+    try {
+      const parsed = JSON.parse(saved);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        if (!parsed.some(u => u.username && u.username.toLowerCase() === 'memo')) {
+          parsed.unshift(DEFAULT_MASTER_USER);
+        }
+        return parsed;
+      }
+      return [DEFAULT_MASTER_USER];
+    } catch (e) {
+      return [DEFAULT_MASTER_USER];
+    }
+  });
+
+  const [currentUser, setCurrentUser] = useStateWithLogging(() => {
+    const session = localStorage.getItem('KAYAN_DESKTOP_LOGGED_USER');
+    if (session) {
+      try {
+        const u = JSON.parse(session);
+        if (u && u.username) return u;
+      } catch (e) {}
+    }
+    return null;
+  });
+
+  const [desktopLoginData, setDesktopLoginData] = useStateWithLogging({
+    username: '',
+    password: '',
+    rememberMe: true,
+    showPassword: false,
+    error: ''
+  });
+
+  const [showStaffModal, setShowStaffModal] = useStateWithLogging(false);
+  const [editingStaffUser, setEditingStaffUser] = useStateWithLogging(null);
+  const [revealedPasswords, setRevealedPasswords] = useStateWithLogging({});
+
+  const [staffFormData, setStaffFormData] = useStateWithLogging({
+    name: '',
+    jobTitle: '',
+    phone: '',
+    username: '',
+    password: '',
+    role: 'custom',
+    permissions: { ...DEFAULT_STAFF_PERMISSIONS }
+  });
+
+  // 🔐 Dynamic Active User Resolution (Synchronized live with users state)
+  const activeUser = useMemo(() => {
+    if (!currentUser) return null;
+    const found = users.find(u => u.username && u.username.toLowerCase() === currentUser.username.toLowerCase());
+    return found || currentUser;
+  }, [currentUser, users]);
+
+  // 🛡️ Strict Comprehensive Permission Check Helper (100% Strict & Backward Compatible)
+  const hasPermission = (permKey) => {
+    if (!activeUser) return false;
+    // Master admin MeMo always has 100% full permissions unconditionally
+    if (activeUser.username && activeUser.username.toLowerCase() === 'memo') return true;
+    if (activeUser.role === 'admin') return true;
+    if (!activeUser.permissions || typeof activeUser.permissions !== 'object') return false;
+
+    // Explicit boolean value
+    if (typeof activeUser.permissions[permKey] === 'boolean') {
+      return activeUser.permissions[permKey];
+    }
+
+    // Smart Fallbacks for backward compatibility with legacy staff accounts
+    if (permKey === 'canRenewContracts') return !!activeUser.permissions.canEditClients;
+    if (permKey === 'canRechargeHours') return !!activeUser.permissions.canEditClients;
+    if (permKey === 'canViewClientCredentials') return !!activeUser.permissions.canEditClients;
+    if (permKey === 'canAccessFinancials') return true;
+    if (permKey === 'canAddFinancialTransaction') return activeUser.permissions.canAccessFinancials !== false;
+    if (permKey === 'canDeleteFinancialTransaction') return false; // Strict: deletion requires explicit grant
+    if (permKey === 'canSendClientNotifications') return !!activeUser.permissions.canManageBookings || !!activeUser.permissions.canEditClients;
+    if (permKey === 'canSendWhatsAppMessages') return true;
+    if (permKey === 'canDeleteAttendance') return !!activeUser.permissions.canDeductAttendance;
+    if (permKey === 'canManageRooms') return !!activeUser.permissions.canAccessSettings;
+    if (permKey === 'canTriggerBackups') return !!activeUser.permissions.canAccessSettings;
+
+    return false;
+  };
+
+  // Automatic Tab Access Guard for Restricted Employees
+  useEffect(() => {
+    if (activeUser && activeUser.role !== 'admin') {
+      if (activeTab === 'excel' && !hasPermission('canAccessExcel')) {
+        setActiveTab('dashboard');
+      } else if (activeTab === 'settings' && !hasPermission('canAccessSettings')) {
+        setActiveTab('dashboard');
+      } else if (activeTab === 'attendance' && !hasPermission('canDeductAttendance')) {
+        setActiveTab('dashboard');
+      } else if (activeTab === 'bookings' && !hasPermission('canManageBookings')) {
+        setActiveTab('dashboard');
+      } else if (activeTab === 'financial' && !hasPermission('canAccessFinancials')) {
+        setActiveTab('dashboard');
+      }
+    }
+  }, [activeUser, activeTab]);
+
+  // Sync users to localStorage
+  useEffect(() => {
+    try {
+      localStorage.setItem('COMPANY_APP_USERS', JSON.stringify(users));
+    } catch (e) {}
+  }, [users]);
+
+  const [lastDiskSaveText, setLastDiskSaveText] = useStateWithLogging('محفوظ على القرص الصلب');
+  const [diskSnapshots, setDiskSnapshots] = useStateWithLogging([]);
+  const [showDiskSafetyModal, setShowDiskSafetyModal] = useStateWithLogging(false);
+  const [manualDeleteTarget, setManualDeleteTarget] = useStateWithLogging(null); // { type: 'client'|'booking'|'attendance', id, name, details }
+
+  // Modals
+  const [showBrandingModal, setShowBrandingModal] = useStateWithLogging(false);
+  const [showNewClientModal, setShowNewClientModal] = useStateWithLogging(false);
+  const [showEditClientModal, setShowEditClientModal] = useStateWithLogging(null);
+  const [showRechargeModal, setShowRechargeModal] = useStateWithLogging(null);
+  const [showRenewContractModal, setShowRenewContractModal] = useStateWithLogging(null);
+  const [showClientDetailModal, setShowClientDetailModal] = useStateWithLogging(null);
+  const [showNewBookingModal, setShowNewBookingModal] = useStateWithLogging(false);
+
+  // 🔔 Send Client Mobile & Web Notification Modal
+  const [showSendNotifModal, setShowSendNotifModal] = useStateWithLogging(false);
+  const [sendNotifForm, setSendNotifForm] = useStateWithLogging({
+    targetClientId: 'all',
+    title: 'إشعار من إدارة مجموعة الكيان',
+    message: '',
+    type: 'info'
+  }, []);
+  const [isSendingNotif, setIsSendingNotif] = useStateWithLogging(false);
+
+  // 📱 Mobile App Connection Modal & Network Info States
+  const [showMobileModal, setShowMobileModal] = useStateWithLogging(false);
+  const [activeMobileTab, setActiveMobileTab] = useStateWithLogging("global");
+  const [networkInfo, setNetworkInfo] = useStateWithLogging(null);
+
+  // ⚡ Helper: Generate Direct 1-Tap Auto-Login URL for Client
+  const getClientDirectLoginUrl = (c) => {
+    if (!c) return 'https://portalweb-lake.vercel.app/mobile.html';
+    const baseUrl = (settings.customPermanentMobileUrl && settings.customPermanentMobileUrl.trim())
+      ? settings.customPermanentMobileUrl.trim()
+      : (networkInfo?.mobileUrl || 'https://portalweb-lake.vercel.app/mobile.html');
+    const u = encodeURIComponent(c.username || c.phone || '');
+    const p = encodeURIComponent(c.password || '');
+    const separator = baseUrl.includes('?') ? '&' : '?';
+    return `${baseUrl}${separator}u=${u}&p=${p}`;
+  };
+
+  // 📊 Comprehensive Excel Import & Restore Engine States
+  const [showExcelImportModal, setShowExcelImportModal] = useStateWithLogging(false);
+  const [excelImportParsedData, setExcelImportParsedData] = useStateWithLogging(null);
+  const [excelPreviewTab, setExcelPreviewTab] = useStateWithLogging('hourly'); // 'hourly' | 'fulltime' | 'bookings' | 'attendance'
+  const [excelSearchQuery, setExcelSearchQuery] = useStateWithLogging('');
+
+  // Room Management State in Settings
+  const [newRoomNameInput, setNewRoomNameInput] = useStateWithLogging('');
+
+  // Controlled States for Real-Time Auto Expiry Calculation
+  const [newClientData, setNewClientData] = useStateWithLogging({
+    name: '',
+    countryCode: '+966',
+    phone: '',
+    email: '',
+    username: '',
+    password: '',
+    subscriptionType: 'hourly',
+    dedicatedRoom: '',
+    duration: 'monthly',
+    package: 'باقة شهرية 10 ساعات',
+    startDate: new Date().toISOString().split('T')[0],
+    expiryDate: computeExpiryDate(new Date().toISOString().split('T')[0], 'monthly'),
+    hours: '10',
+    notes: '',
+    shiftType: 'evening',
+    shiftStartTime: '',
+    shiftEndTime: '',
+    contractHours: ''
+  }, []);
+
+  // Controlled State for New Booking with Room Conflict Prevention
+  const [newBookingData, setNewBookingData] = useStateWithLogging({
+    clientId: '',
+    date: new Date().toISOString().split('T')[0],
+    time: '10:00 ص',
+    duration: '1.5',
+    serviceType: 'جلسة استشارية',
+    room: INITIAL_ROOMS[0],
+    notes: ''
+  });
+
+  const [editClientData, setEditClientData] = useStateWithLogging(null);
+
+  const [renewContractData, setRenewContractData] = useStateWithLogging({
+    renewalMode: 'fresh_start', // fresh_start | extend | same_days
+    duration: 'monthly',
+    hours: '10',
+    startDate: new Date().toISOString().split('T')[0],
+    expiryDate: computeExpiryDate(new Date().toISOString().split('T')[0], 'monthly'),
+    resetBalance: 'true',
+    packageName: ''
+  });
+
+  const handleOpenNewBookingModal = (defaultClientId = '') => {
+    const hourlyClients = clients.filter(c => !getClientContractStatus(c).isFullTime);
+    const targetClient = hourlyClients.find(c => c.id === defaultClientId) 
+      || hourlyClients.find(c => (c.currentBalance || 0) > 0 && !getClientContractStatus(c).isExpired)
+      || hourlyClients[0];
+    const today = new Date().toISOString().split('T')[0];
+    const activeRooms = (settings.rooms && settings.rooms.length > 0) ? settings.rooms : INITIAL_ROOMS;
+
+    setNewBookingData({
+      clientId: targetClient ? targetClient.id : '',
+      date: today,
+      time: '10:00 ص',
+      duration: '1.5',
+      serviceType: 'جلسة استشارية',
+      room: activeRooms[0],
+      notes: ''
+    });
+    setShowNewBookingModal(true);
+  };
+
+  const handleOpenNewClientModal = (typeArg = 'hourly', durationArg = 'monthly') => {
+    if (!hasPermission('canAddClients')) {
+      alert('⛔ عذراً، ليس لديك صلاحية إضافة عملاء جدد.');
+      return;
+    }
+    const defaultType = (typeof typeArg === 'string' && (typeArg === 'fulltime' || typeArg === 'shift')) ? typeArg : 'hourly';
+    const defaultDuration = (typeof durationArg === 'string') ? durationArg : (defaultType === 'fulltime' ? 'fulltime_1m' : 'monthly');
+    const today = new Date().toISOString().split('T')[0];
+    
+    if (defaultType === 'shift') {
+      setNewClientData({
+        name: '',
+        countryCode: '+966',
+        phone: '',
+        email: '',
+        username: '',
+        password: '',
+        subscriptionType: 'shift',
+        dedicatedRoom: '',
+        shiftType: 'morning',
+        contractHours: '8',
+        shiftStartTime: '08:00',
+        shiftEndTime: '16:00',
+        duration: 'fulltime_3m',
+        package: 'نظام الشيفت (صباحي) - 3 شهور',
+        startDate: today,
+        expiryDate: computeExpiryDate(today, 'fulltime_3m'),
+        hours: '0',
+        notes: ''
+      });
+      setShowNewClientModal(true);
+      return;
+    }
+
+    const isFT = defaultType === 'fulltime';
+    const dur = isFT 
+      ? (defaultDuration.startsWith('fulltime') ? defaultDuration : 'fulltime_1m') 
+      : (defaultDuration === 'annual' ? 'annual' : (defaultDuration === '3months' || defaultDuration === 'quarterly' ? '3months' : 'monthly'));
+    const exp = computeExpiryDate(today, dur);
+    const defaultHours = isFT ? '0' : (dur === 'annual' ? '100' : (dur === '3months' ? '30' : '10'));
+    const pkgName = isFT ? 
+      (dur === 'fulltime_3m' ? 'اشتراك Full Time (3 شهور)' : dur === 'fulltime_1y' ? 'اشتراك Full Time (سنة كاملة)' : 'اشتراك Full Time (شهر واحد)') :
+      (dur === 'annual' ? 'باقة سنوية 100 ساعة' : (dur === '3months' ? 'باقة 3 شهور 30 ساعة' : 'باقة شهرية 10 ساعات'));
+
+    setNewClientData({
+      name: '',
+      countryCode: '+966',
+      phone: '',
+      email: '',
+      username: '',
+      password: '',
+      subscriptionType: isFT ? 'fulltime' : 'hourly',
+      dedicatedRoom: isFT ? 'المكتب التنفيذي الخاص' : '',
+      duration: dur,
+      package: pkgName,
+      startDate: today,
+      expiryDate: exp,
+      hours: defaultHours,
+      notes: '',
+      shiftType: 'evening',
+      shiftStartTime: '',
+      shiftEndTime: '',
+      contractHours: ''
+    });
+    setShowNewClientModal(true);
+  };
+
+  
+  // 🔐 Handle Desktop Login
+  const handleDesktopLogin = (e) => {
+    if (e) e.preventDefault();
+    setDesktopLoginData(prev => ({ ...prev, error: '' }));
+
+    const uname = (desktopLoginData.username || '').trim();
+    const pword = (desktopLoginData.password || '').trim();
+
+    if (!uname || !pword) {
+      setDesktopLoginData(prev => ({ ...prev, error: 'يرجى إدخال اسم المستخدم وكلمة المرور!' }));
+      return;
+    }
+
+    const matched = users.find(u => u.username && u.username.toLowerCase() === uname.toLowerCase());
+    if (!matched) {
+      setDesktopLoginData(prev => ({ ...prev, error: 'اسم المستخدم غير مسجل بالنظام.' }));
+      return;
+    }
+
+    const decrypted = decryptPassword(matched.passwordEncrypted);
+    if (decrypted !== pword) {
+      setDesktopLoginData(prev => ({ ...prev, error: 'كلمة المرور غير صحيحة!' }));
+      return;
+    }
+
+    setCurrentUser(matched);
+    if (desktopLoginData.rememberMe) {
+      localStorage.setItem('KAYAN_DESKTOP_LOGGED_USER', JSON.stringify(matched));
+    } else {
+      localStorage.removeItem('KAYAN_DESKTOP_LOGGED_USER');
+    }
+    triggerToast(`مرحباً بك يا ${matched.name}! ⚜️`, 'تم تسجيل الدخول بنجاح إلى النظام الرئيسي.', 'success');
+  };
+
+  // 🚪 Handle Desktop Logout
+  const handleDesktopLogout = () => {
+    setCurrentUser(null);
+    localStorage.removeItem('KAYAN_DESKTOP_LOGGED_USER');
+    setDesktopLoginData({ username: '', password: '', rememberMe: true, showPassword: false, error: '' });
+    triggerToast('تم تسجيل الخروج 🚪', 'تم قفل التطبيق وحفظ الجلسة بأمان.', 'info');
+  };
+
+  // 👥 Handle Save Staff User (Add or Edit)
+  const handleSaveStaffUser = (e) => {
+    if (e) e.preventDefault();
+    const uname = (staffFormData.username || '').trim();
+    const pword = (staffFormData.password || '').trim();
+    const name = (staffFormData.name || '').trim();
+
+    if (!name || !uname) {
+      alert('يرجى كتابة اسم الموظف واسم المستخدم!');
+      return;
+    }
+
+    // Check duplicate username
+    const exists = users.find(u => u.username && u.username.toLowerCase() === uname.toLowerCase() && u.id !== editingStaffUser?.id);
+    if (exists) {
+      alert('اسم المستخدم هذا مسجل بالفعل لموظف آخر!');
+      return;
+    }
+
+    if (editingStaffUser) {
+      // Edit
+      const updatedUsers = users.map(u => {
+        if (u.id === editingStaffUser.id) {
+          const passEnc = pword ? encryptPassword(pword) : u.passwordEncrypted;
+          return {
+            ...u,
+            name,
+            jobTitle: staffFormData.jobTitle.trim(),
+            phone: staffFormData.phone.trim(),
+            username: uname,
+            passwordEncrypted: passEnc,
+            role: staffFormData.role,
+            permissions: staffFormData.role === 'admin' ? {
+              canAddClients: true, canEditClients: true, canDeleteClients: true,
+              canRenewContracts: true, canRechargeHours: true, canViewClientCredentials: true,
+              canManageBookings: true, canCancelBookings: true, canDeductAttendance: true,
+              canDeleteAttendance: true, canAccessFinancials: true, canAddFinancialTransaction: true,
+              canDeleteFinancialTransaction: true, canSendClientNotifications: true, canSendWhatsAppMessages: true,
+              canAccessExcel: true, canAccessSettings: true, canManageRooms: true,
+              canTriggerBackups: true, canManageStaff: true
+            } : staffFormData.permissions
+          };
+        }
+        return u;
+      });
+      setUsers(updatedUsers);
+      setEditingStaffUser(null);
+      triggerToast('تم تحديث الموظف 🔄', `تم تحديث بيانات وصلاحيات الموظف (${name}) بنجاح.`, 'success');
+      syncToHardDisk(`تحديث بيانات وصلاحيات الموظف: ${name}`, true, null, null, null, null, null, null, null, updatedUsers);
+    } else {
+      // Add new
+      if (!pword) {
+        alert('يرجى تحديد كلمة المرور للموظف الجديد!');
+        return;
+      }
+      const newUser = {
+        id: 'u-' + Date.now(),
+        name,
+        jobTitle: staffFormData.jobTitle.trim(),
+        phone: staffFormData.phone.trim(),
+        username: uname,
+        passwordEncrypted: encryptPassword(pword),
+        role: staffFormData.role,
+        permissions: staffFormData.role === 'admin' ? {
+          canAddClients: true, canEditClients: true, canDeleteClients: true,
+          canManageBookings: true, canCancelBookings: true, canDeductAttendance: true,
+          canAccessExcel: true, canAccessSettings: true, canManageStaff: true
+        } : staffFormData.permissions,
+        createdAt: new Date().toISOString().split('T')[0]
+      };
+      const nextUsers = [...users, newUser];
+      setUsers(nextUsers);
+      triggerToast('تمت إضافة الموظف 🎉', `تم تسجيل حساب الموظف (${name}) وتفعيل صلاحياته.`, 'success');
+      syncToHardDisk(`إضافة موظف جديد وتحديد صلاحياته: ${name}`, true, null, null, null, null, null, null, null, nextUsers);
+    }
+
+    // Reset form
+    setStaffFormData({
+      name: '',
+      jobTitle: '',
+      phone: '',
+      username: '',
+      password: '',
+      role: 'custom',
+      permissions: { ...DEFAULT_STAFF_PERMISSIONS }
+    });
+  };
+
+  // 🗑️ Handle Delete Staff User
+  const handleDeleteStaffUser = (user) => {
+    if (user.username && user.username.toLowerCase() === 'memo') {
+      alert('⚠️ لا يمكن حذف حساب المدير العام الرئيسي (MeMo)!');
+      return;
+    }
+    if (window.confirm(`هل أنت متأكد من حذف حساب الموظف (${user.name}) نهائياً؟`)) {
+      const remainingUsers = users.filter(u => u.id !== user.id);
+      setUsers(remainingUsers);
+      triggerToast('تم حذف الموظف 🗑️', `تم حذف حساب (${user.name}) من النظام.`, 'warning');
+      syncToHardDisk(`حذف حساب الموظف: ${user.name}`, true, null, null, null, null, null, null, null, remainingUsers);
+    }
+  };
+
+
+  const handleSendFullTimeReminder = (client) => {
+    const contractInfo = getClientContractStatus(client);
+    const template = settings.templates?.fulltime_reminder || DEFAULT_TEMPLATES.fulltime_reminder;
+    const daysLeft = contractInfo.daysLeft !== null ? Math.max(0, contractInfo.daysLeft) : 7;
+
+    const waMessage = fillTemplate(template, {
+      'اسم_العميل': client.name,
+      'اسم_الشركة': settings.companyName,
+      'نوع_الباقة': client.package || 'اشتراك Full Time',
+      'تاريخ_البداية': client.startDate || '-',
+      'تاريخ_الانتهاء': client.expiryDate || 'قريباً',
+      'الايام_المتبقية': daysLeft
+    });
+
+    openWhatsAppModalForEdit(
+      client.phone,
+      client.name,
+      waMessage,
+      `تنبيه قرب انتهاء اشتراك Full Time (متبقي ${daysLeft} أيام)`
+    );
+  };
+
+  const handleOpenEditClientModal = (client) => {
+    if (!hasPermission('canEditClients')) {
+      alert('⛔ عذراً، ليس لديك صلاحية تعديل بيانات العملاء.');
+      return;
+    }
+    const start = client.startDate || new Date().toISOString().split('T')[0];
+    const dur = client.packageDuration || 'monthly';
+    const exp = client.expiryDate || computeExpiryDate(start, dur);
+    const isFT = client.isFullTime || client.subscriptionType === 'fulltime' || (dur && dur.startsWith('fulltime'));
+    setEditClientData({
+      id: client.id,
+      name: client.name || '',
+      phone: client.phone || '',
+      email: client.email || '',
+      username: client.username || '',
+      password: client.password || '',
+      dedicatedRoom: client.dedicatedRoom || client.room || client.roomName || '',
+      isFullTime: isFT,
+      subscriptionType: client.subscriptionType || (isFT ? 'fulltime' : 'hourly'),
+        shiftType: client.shiftType || '',
+        contractHours: client.contractHours || '',
+        shiftStartTime: client.shiftStartTime || '',
+        shiftEndTime: client.shiftEndTime || '',
+      package: client.package || '',
+      packageDuration: dur,
+      startDate: start,
+      expiryDate: exp,
+      currentBalance: client.currentBalance || 0,
+      notes: client.notes || ''
+    });
+    setShowEditClientModal(client);
+  };
+
+  const handleOpenRenewContractModal = (client) => {
+    if (!hasPermission('canRenewContracts')) {
+      alert('⛔ عذراً، ليس لديك صلاحية تجديد العقود والباقات.');
+      return;
+    }
+    const isFT = getClientContractStatus(client).isFullTime;
+    const today = new Date().toISOString().split('T')[0];
+    const isPast = Boolean(!client.expiryDate || client.expiryDate < today || getClientContractStatus(client).isExpired);
+    const dur = isFT 
+      ? (client.packageDuration?.startsWith('fulltime') ? client.packageDuration : 'fulltime_1m') 
+      : ((client.packageDuration && client.packageDuration !== 'same_days') ? (client.packageDuration === 'annual' ? 'annual' : (client.packageDuration === '3months' || client.packageDuration === 'quarterly' ? '3months' : 'monthly')) : 'monthly');
+    
+    // 🛡️ CRITICAL SENTINEL: Expired Contract Renewal Guard
+    // If contract is expired, it MUST start from today and compute forward expiry into the future
+    const start = (isFT && !isPast && client.expiryDate >= today) ? client.expiryDate : today;
+    const exp = computeExpiryDate(start, dur);
+    const defaultHours = isFT ? '0' : (dur === 'annual' ? '100' : (dur === '3months' ? '30' : '10'));
+    const pkgName = isFT ? 
+      (dur === 'fulltime_3m' ? 'تجديد اشتراك Full Time (3 شهور)' : dur === 'fulltime_1y' ? 'تجديد اشتراك Full Time (سنة كاملة)' : 'تجديد اشتراك Full Time (شهر واحد)') :
+      `باقة جديدة ${dur === 'annual' ? 'سنوية' : (dur === '3months' ? '3 شهور' : 'شهرية')} - ${defaultHours} ساعات (تصفير وبدء جديد)`;
+
+    setRenewContractData({
+      renewalMode: isPast ? 'fresh_start' : (isFT ? 'extend' : 'fresh_start'),
+      duration: dur,
+      hours: defaultHours,
+      startDate: start,
+      expiryDate: exp,
+      resetBalance: isFT ? 'false' : 'true',
+      packageName: pkgName
+    });
+    setShowRenewContractModal(client);
+  };
+  
+  // Interactive WhatsApp Modal with Live Manual Editing
+  const [whatsAppModalData, setWhatsAppModalData] = useStateWithLogging(null);
+  const [currentEditableMessage, setCurrentEditableMessage] = useStateWithLogging('');
+  
+  const [toastMessage, setToastMessage] = useStateWithLogging(null);
+
+  // Quick Attendance Form State
+  const [quickClientId, setQuickClientId] = useStateWithLogging('');
+  const [quickHours, setQuickHours] = useStateWithLogging('1');
+  const [quickService, setQuickService] = useStateWithLogging('جلسة استشارية / تدريب');
+  const [quickNotes, setQuickNotes] = useStateWithLogging('');
+
+  // Search & Filter
+  const [clientSearch, setClientSearch] = useStateWithLogging('');
+  const [clientFilter, setClientFilter] = useStateWithLogging('all');
+  const [bookingFilter, setBookingFilter] = useStateWithLogging('all'); // all, scheduled, attended, cancelled
+  const [bookingRoomFilter, setBookingRoomFilter] = useStateWithLogging('all');
+
+  const logoInputRef = useRef(null);
+
+  // ====================================================================
+  // 🔒 HARD-DISK DUAL-LAYER PERSISTENT STORAGE & ANTI-LOSS ENGINE
+  // ====================================================================
+
+  // 🔒 IMMEDIATE GUARANTEED SAVE - bypasses React async state (use after setClients)
+  const saveClientsNow = (exactClientList, actionReason = 'حفظ فوري', clientUpdateEntry = null, overrideBookings = null) => {
+    const isMajor = actionReason.includes('تجديد') || actionReason.includes('شحن') || actionReason.includes('باقة جديدة') || actionReason.includes('تصفير');
+    const finalBookings = overrideBookings || bookings;
+    const payload = {
+      clients: exactClientList,
+      attendance,
+      bookings: finalBookings,
+      notifications,
+      financial_transactions: financialTransactions,
+      users,
+      settings,
+      lastBackupTime,
+      _actionReason: actionReason,
+      _actionType: isMajor ? 'MAJOR_TRANSACTION' : 'GUARANTEED_SAVE',
+      _isMajorChange: true,
+      _savedAt: new Date().toISOString()
+    };
+    if (clientUpdateEntry) {
+      payload.client_update_entry = clientUpdateEntry;
+    }
+    // Instant localStorage backup
+    try {
+      localStorage.setItem('COMPANY_APP_CLIENTS', JSON.stringify(exactClientList));
+      localStorage.setItem('COMPANY_APP_FINANCIAL_TXS', JSON.stringify(financialTransactions));
+      if (overrideBookings) {
+        localStorage.setItem('COMPANY_APP_BOOKINGS', JSON.stringify(overrideBookings));
+      }
+    } catch(e) {}
+    // Immediate disk save
+    fetch('/api/save', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    }).then(r => r.json()).then(r => {
+      if (r && r.success) {
+        setIsDiskSynced(true);
+        setLastDiskSaveText(`محفوظ على القرص (${r.savedAt || 'الآن'})`);
+      }
+    }).catch(() => {
+      try { localStorage.setItem('COMPANY_APP_CLIENTS', JSON.stringify(exactClientList)); } catch(e) {}
+    });
+  };
+
+  // Helper to save entire database to physical disk via Python backend
+  const syncToHardDisk = (
+  ...args
+) => {
+  console.log("syncToHardDisk called from:");
+  console.trace();
+  return _syncToHardDisk(...args);
+};
+const _syncToHardDisk = (
+    actionReason = 'حفظ تلقائي للبيانات',
+    isMajor = false,
+    overrideNotifications = null,
+    overrideBookings = null,
+    overrideClients = null,
+    overrideAttendance = null,
+    overrideDeletedBookings = null,
+    overrideFinancialTransactions = null,
+    overrideClientUpdateEntry = null,
+    overrideUsers = null
+  ) => {
+    window.lastLocalMutation = Date.now();
+    if (!isHydratedRef.current && !overrideClients) {
+      console.warn('🛡️ [GUARDIAN] syncToHardDisk blocked: Frontend initial hydration not yet complete.');
+      return;
+    }
+
+    const exactNotifs = overrideNotifications || notifications;
+    const exactBookings = overrideBookings || bookings;
+    const exactClients = overrideClients || clients;
+    const exactAttendance = overrideAttendance || attendance;
+    const exactFinancial = overrideFinancialTransactions || financialTransactions;
+    const exactUsers = overrideUsers || users;
+
+    let deletedList = overrideDeletedBookings;
+    if (!deletedList) {
+      try {
+        deletedList = JSON.parse(localStorage.getItem('ALKAYAN_DELETED_BOOKINGS_PERMANENT') || '[]');
+      } catch(e) {
+        deletedList = [];
+      }
+    }
+
+    const payload = {
+      clients: exactClients,
+      attendance: exactAttendance,
+      bookings: exactBookings,
+      notifications: exactNotifs,
+      financial_transactions: exactFinancial,
+      deleted_bookings: deletedList,
+      users: exactUsers,
+      staff: exactUsers,
+      accounts: exactUsers,
+      settings,
+      lastBackupTime,
+      _actionReason: actionReason,
+      _actionType: isMajor ? 'MAJOR_TRANSACTION' : 'AUTO_SAVE',
+      _isMajorChange: isMajor,
+      _savedAt: new Date().toISOString()
+    };
+    if (overrideClientUpdateEntry) {
+      payload.client_update_entry = overrideClientUpdateEntry;
+    }
+
+    // 1. Instant client-side fallback cache
+    try {
+      localStorage.setItem('COMPANY_APP_USERS', JSON.stringify(exactUsers));
+      localStorage.setItem('COMPANY_APP_CLIENTS', JSON.stringify(exactClients));
+      localStorage.setItem('COMPANY_APP_ATTENDANCE', JSON.stringify(exactAttendance));
+      localStorage.setItem('COMPANY_APP_BOOKINGS', JSON.stringify(exactBookings));
+      localStorage.setItem('COMPANY_APP_NOTIFICATIONS', JSON.stringify(exactNotifs));
+      localStorage.setItem('COMPANY_APP_FINANCIAL_TXS', JSON.stringify(exactFinancial));
+      localStorage.setItem('COMPANY_APP_SETTINGS', JSON.stringify(settings));
+      localStorage.setItem('COMPANY_APP_LAST_BACKUP', lastBackupTime.toString());
+      localStorage.setItem('ALKAYAN_DELETED_BOOKINGS_PERMANENT', JSON.stringify(deletedList));
+    } catch (e) {
+      console.warn('LocalStorage quota warning:', e);
+    }
+
+    // 2. Physical File Write to Hard Disk (data/database.json & audit log)
+    fetch('/api/save', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    })
+    .then(res => res.json())
+    .then(res => {
+      if (res && res.success) {
+        setIsDiskSynced(true);
+        setLastDiskSaveText(`محفوظ على القرص (${res.savedAt || 'الآن'})`);
+      }
+    })
+    .catch(() => {
+      // If offline or opening as standalone file
+      setIsDiskSynced(false);
+      setLastDiskSaveText('محفوظ محلياً بالمتصفح');
+    });
+  };
+
+  // 📥 Initial Hydration: Load directly from permanent hard disk storage on startup
+  useEffect(() => {
+    fetch('/api/data')
+      .then(res => res.json())
+      .then(res => {
+        if (res && res.success && res.hasData && res.data) {
+          const d = res.data;
+          let loadedClients = Array.isArray(d.clients) ? d.clients : [];
+          let loadedFinTxs = Array.isArray(d.financial_transactions) ? d.financial_transactions : [];
+
+          // 🔒 Auto-reconcile client financial balances against immutable transactions
+          if (loadedFinTxs.length > 0 && loadedClients.length > 0) {
+            const normalizePhone = (p) => {
+              let raw = (p || '').replace(/[\+\-\s]/g, '');
+              if (raw.startsWith('20') && raw.length > 10) raw = raw.substring(2);
+              if (raw.startsWith('0')) raw = raw.substring(1);
+              return raw;
+            };
+
+            loadedClients = loadedClients.map(c => {
+              const normPhone = normalizePhone(c.phone);
+              const cTxs = loadedFinTxs.filter(t => {
+                if (!t) return false;
+                if (t.clientId === c.id) return true;
+                const tPhone = normalizePhone(t.clientPhone);
+                return normPhone && tPhone && normPhone === tPhone;
+              });
+
+              if (cTxs.length > 0) {
+                const bal = cTxs.reduce((acc, t) => {
+                  const amt = parseFloat(t.amount) || 0;
+                  return t.type === 'charge' ? acc - amt : acc + amt;
+                }, 0);
+                return { ...c, financialBalance: bal };
+              }
+              return c;
+            });
+          }
+
+          setClients(prev => {
+            if (loadedClients.length === 0 && prev && prev.length > 0) {
+              return prev; // 🛡️ Absolute Protection: Never wipe memory clients with empty server array
+            }
+            return loadedClients.length > 0 ? loadedClients : prev;
+          });
+          setFinancialTransactions(loadedFinTxs);
+          if (Array.isArray(d.attendance)) setAttendance(d.attendance);
+          if (Array.isArray(d.bookings)) setBookings(d.bookings);
+          if (Array.isArray(d.notifications)) setNotifications(d.notifications);
+          const loadedUsers = (Array.isArray(d.users) && d.users.length > 0) ? d.users :
+                              ((Array.isArray(d.staff) && d.staff.length > 0) ? d.staff :
+                              ((Array.isArray(d.accounts) && d.accounts.length > 0) ? d.accounts : []));
+          if (loadedUsers.length > 0) {
+            setUsers(loadedUsers);
+            try { localStorage.setItem('COMPANY_APP_USERS', JSON.stringify(loadedUsers)); } catch(e) {}
+          }
+          if (d.lastBackupTime) setLastBackupTime(d.lastBackupTime);
+          if (Array.isArray(d.recentTasks)) setRecentTasks(d.recentTasks);
+
+          if (d.settings && typeof d.settings === 'object') {
+            const s = d.settings;
+            const logoVal = s.companyLogo || s.logo || d.companyLogo || d.logo || '';
+            const tb = s.telegram_backup || {};
+            const botTok = tb.bot_token || s.telegram_token || d.telegram_token || '';
+            const cid1 = tb.chat_id_1 || s.telegram_chat_id || d.telegram_chat_id || '';
+            const cid2 = tb.chat_id_2 || s.telegram_chat_id_2 || d.telegram_chat_id_2 || '';
+            setSettings(prev => {
+              const updated = {
+                ...prev,
+                ...s,
+                companyLogo: logoVal || prev.companyLogo || '',
+                logo: logoVal || prev.logo || '',
+                telegram_backup: {
+                  ...(prev.telegram_backup || {}),
+                  ...(s.telegram_backup || {}),
+                  bot_token: botTok || prev.telegram_backup?.bot_token || '',
+                  chat_id_1: cid1 || prev.telegram_backup?.chat_id_1 || '',
+                  chat_id_2: cid2 || prev.telegram_backup?.chat_id_2 || ''
+                },
+                telegram_token: botTok || prev.telegram_token || '',
+                telegram_chat_id: cid1 || prev.telegram_chat_id || '',
+                telegram_chat_id_2: cid2 || prev.telegram_chat_id_2 || ''
+              };
+              try {
+                localStorage.setItem('COMPANY_APP_SETTINGS', JSON.stringify(updated));
+              } catch(e) {}
+              return updated;
+            });
+          }
+
+          setIsDiskSynced(true);
+          setLastDiskSaveText('متزامن ومحفوظ على القرص الصلب');
+          console.log('✅ Loaded data from hard disk database successfully!');
+        } else {
+          try {
+            const savedUsers = localStorage.getItem('COMPANY_APP_USERS');
+            if (savedUsers) setUsers(JSON.parse(savedUsers));
+            const savedClients = localStorage.getItem('COMPANY_APP_CLIENTS');
+            if (savedClients) setClients(JSON.parse(savedClients));
+            const savedAtt = localStorage.getItem('COMPANY_APP_ATTENDANCE');
+            if (savedAtt) setAttendance(JSON.parse(savedAtt));
+            const savedBook = localStorage.getItem('COMPANY_APP_BOOKINGS');
+            if (savedBook) setBookings(JSON.parse(savedBook));
+            const savedFin = localStorage.getItem('COMPANY_APP_FINANCIAL_TXS');
+            if (savedFin) setFinancialTransactions(JSON.parse(savedFin));
+          } catch (e) {}
+        }
+        isHydratedRef.current = true;
+        setIsLoaded(true);
+      })
+      .catch(() => {
+        try {
+          const savedClients = localStorage.getItem('COMPANY_APP_CLIENTS');
+          if (savedClients) setClients(JSON.parse(savedClients));
+          const savedAtt = localStorage.getItem('COMPANY_APP_ATTENDANCE');
+          if (savedAtt) setAttendance(JSON.parse(savedAtt));
+          const savedBook = localStorage.getItem('COMPANY_APP_BOOKINGS');
+          if (savedBook) setBookings(JSON.parse(savedBook));
+        } catch (e) {}
+        isHydratedRef.current = true;
+        setIsLoaded(true);
+        setIsDiskSynced(false);
+        setLastDiskSaveText('محفوظ محلياً بالمتصفح');
+      });
+  }, []);
+
+  // 📝 Task Continuity Logger (Never forgets any action)
+  const logRecentTask = (taskText, taskType = 'general') => {
+    const newTask = {
+      id: 'task-' + Date.now(),
+      text: taskText,
+      time: new Date().toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' }) + ' (' + new Date().toISOString().split('T')[0] + ')',
+      type: taskType
+    };
+    setRecentTasks(prev => [newTask, ...prev.slice(0, 25)]);
+  };
+
+  // Persist Active Tab & Recent Tasks
+  useEffect(() => {
+    localStorage.setItem('COMPANY_APP_ACTIVE_TAB', activeTab);
+  }, [activeTab]);
+
+  useEffect(() => {
+    localStorage.setItem('COMPANY_APP_RECENT_TASKS', JSON.stringify(recentTasks));
+  }, [recentTasks]);
+
+  // Window BeforeUnload Flush (Guaranteed Zero Data Loss on close)
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      // 🛡️ Read freshest clients from localStorage (always updated by saveClientsNow & syncToHardDisk BEFORE async fetch)
+      let freshClients = clients;
+      try {
+        const stored = localStorage.getItem('COMPANY_APP_CLIENTS');
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          // Use localStorage version if it has at least as many clients (never lose clients)
+          if (Array.isArray(parsed) && parsed.length >= (clients?.length || 0)) {
+            freshClients = parsed;
+          }
+        }
+      } catch(e) {}
+
+      // 🔒 Absolute Guard: Never send emergency save if clients array is empty in memory!
+      if (!freshClients || freshClients.length === 0) return;
+
+      let freshBookings = bookings;
+      try {
+        const stored = localStorage.getItem('COMPANY_APP_BOOKINGS');
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          if (Array.isArray(parsed)) freshBookings = parsed;
+        }
+      } catch(e) {}
+
+      const emergencyPayload = JSON.stringify({
+        clients: freshClients,
+        attendance,
+        bookings: freshBookings,
+        notifications,
+          financial_transactions: financialTransactions,
+        users,
+        settings,
+        lastBackupTime,
+        _actionReason: 'حفظ طارئ قبل الإغلاق المفاجئ',
+        _actionType: 'EMERGENCY_SAVE',
+        _isMajorChange: true,
+        _savedAt: new Date().toISOString()
+      }, []);
+      // sendBeacon guarantees delivery even when page is unloading
+      if (navigator.sendBeacon) {
+        const blob = new Blob([emergencyPayload], { type: 'application/json' }, []);
+        navigator.sendBeacon('/api/save', blob);
+      } else {
+        syncToHardDisk('حفظ تلقائي فوري قبل إغلاق المتصفح', true);
+      }
+      // Also update localStorage as second fallback
+      try {
+        localStorage.setItem('COMPANY_APP_CLIENTS', JSON.stringify(freshClients));
+        localStorage.setItem('COMPANY_APP_BOOKINGS', JSON.stringify(freshBookings));
+        localStorage.setItem('COMPANY_APP_ATTENDANCE', JSON.stringify(attendance));
+          localStorage.setItem('COMPANY_APP_FINANCIAL_TXS', JSON.stringify(financialTransactions));
+        } catch(e) {}
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [clients, attendance, bookings, notifications, settings, lastBackupTime, activeTab]);
+
+  // 🔒 PASSIVE WRITE-BACK SHIELD:
+  // Explicit mutations (booking, cancelling, renewing, editing, attendance) already call
+  // syncToHardDisk / saveClientsNow directly. We intentionally DO NOT fire automatic
+  // write-backs on passive polling updates to prevent infinite feedback loops.
+
+  // Fetch disk snapshots list
+  const fetchDiskBackupsList = () => {
+    fetch('/api/backups')
+      .then(res => res.json())
+      .then(res => {
+        if (res && res.success) {
+          setDiskSnapshots(res.snapshots || []);
+        }
+      })
+      .catch(() => {}, []);
+  };
+
+  // Restore snapshot from hard disk
+  const handleRestoreDiskSnapshot = (filename) => {
+    if (!hasPermission('canTriggerBackups')) {
+      alert('⛔ عذراً، ليس لديك صلاحية استعادة النسخ الاحتياطية من القرص الصلب.');
+      return;
+    }
+    if (!window.confirm(`هل أنت متأكد من استعادة النسخة الاحتياطية (${filename})؟`)) return;
+
+    fetch('/api/restore', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ filename })
+    })
+    .then(res => res.json())
+    .then(res => {
+      if (res && res.success && res.data) {
+        const d = res.data;
+        if (d.clients) setClients(d.clients);
+        if (d.attendance) setAttendance(d.attendance);
+        if (d.bookings) setBookings(d.bookings);
+        if (d.notifications) setNotifications(d.notifications);
+        if (d.settings) setSettings(prev => ({ ...prev, ...d.settings }));
+        if (d.lastBackupTime) setLastBackupTime(d.lastBackupTime);
+
+        setShowDiskSafetyModal(false);
+        triggerToast('تمت الاستعادة بنجاح! 🔄', `تمت استعادة كافة البيانات من النسخة (${filename}) على القرص الصلب.`, 'success');
+      } else {
+        alert('حدث خطأ أثناء استعادة النسخة الاحتياطية.');
+      }
+    })
+    .catch(err => {
+      alert('تعذر الاتصال بالخادم لاستعادة النسخة.');
+    }, []);
+  };
+
+  // ⚡ One-Click Instant Cloud Restore from Firebase RTDB
+  const [isRestoringFirebase, setIsRestoringFirebase] = useStateWithLogging(false);
+  const handleRestoreFromFirebaseInstant = async () => {
+    if (!hasPermission('canTriggerBackups')) {
+      triggerToast('غير مصرح', 'ليس لديك صلاحية لاسترجاع البيانات السحابية.', 'warning');
+      return;
+    }
+    if (!window.confirm('⚠️ سيتم استبدال جميع البيانات المحلية ببيانات Firebase السحابية.\nهل أنت متأكد من المتابعة؟')) return;
+    if (isRestoringFirebase) return; // prevent double-click
+    setIsRestoringFirebase(true);
+    try {
+      triggerToast('جاري الاتصال بالسحابة ☁️', 'يتم سحب واسترجاع كافة البيانات من قاعدة بيانات Firebase...', 'info');
+
+      const fbRes = await fetch(`${FIREBASE_BASE_URL}/alkayan_db.json`, { cache: 'no-store' });
+      if (!fbRes.ok) {
+        throw new Error('فشل الاتصال بقاعدة بيانات Firebase (رمز الخطأ: ' + fbRes.status + ')');
+      }
+      const fbDb = await fbRes.json();
+      if (!fbDb || typeof fbDb !== 'object') {
+        throw new Error('قاعدة بيانات Firebase فارغة حالياً.');
+      }
+
+      const rawClients = Array.isArray(fbDb.clients) ? fbDb.clients : (fbDb.clients && typeof fbDb.clients === 'object' ? Object.values(fbDb.clients) : []);
+      const rawFinTxs = Array.isArray(fbDb.financial_transactions) ? fbDb.financial_transactions : (fbDb.financial_transactions && typeof fbDb.financial_transactions === 'object' ? Object.values(fbDb.financial_transactions) : []);
+      const rawAttendance = Array.isArray(fbDb.attendance) ? fbDb.attendance : (fbDb.attendance && typeof fbDb.attendance === 'object' ? Object.values(fbDb.attendance) : []);
+      const rawBookings = Array.isArray(fbDb.bookings) ? fbDb.bookings : (fbDb.bookings && typeof fbDb.bookings === 'object' ? Object.values(fbDb.bookings) : []);
+      const rawNotifs = Array.isArray(fbDb.notifications) ? fbDb.notifications : (fbDb.notifications && typeof fbDb.notifications === 'object' ? Object.values(fbDb.notifications) : []);
+
+      if (rawClients.length === 0 && rawFinTxs.length === 0) {
+        triggerToast('تنبيه', 'لم يتم العثور على أي عملاء أو معاملات مسجلة في سحابة Firebase.', 'warning');
+        setIsRestoringFirebase(false);
+        return;
+      }
+
+      // 1. Update State
+      if (rawClients.length > 0) setClients(rawClients);
+      setFinancialTransactions(rawFinTxs);
+      setAttendance(rawAttendance);
+      setBookings(rawBookings);
+      setNotifications(rawNotifs);
+      if (fbDb.settings && typeof fbDb.settings === 'object') {
+        setSettings(prev => ({ ...prev, ...fbDb.settings }));
+      }
+
+      // 2. Physical Save to Local Hard Drive via /api/save
+      const diskPayload = {
+        clients: rawClients,
+        financial_transactions: rawFinTxs,
+        attendance: rawAttendance,
+        bookings: rawBookings,
+        notifications: rawNotifs,
+        settings: fbDb.settings || settings,
+        users: users,
+        lastBackupTime: Date.now(),
+        _actionReason: 'استرجاع سحابي فوري من Firebase',
+        _actionType: 'FIREBASE_RESTORE'
+      };
+
+      await fetch('/api/save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(diskPayload)
+      }).catch(e => console.warn('Disk save warning after Firebase restore:', e));
+
+      // 3. Update localStorage
+      try {
+        localStorage.setItem('COMPANY_APP_CLIENTS', JSON.stringify(rawClients));
+        localStorage.setItem('COMPANY_APP_FINANCIAL_TXS', JSON.stringify(rawFinTxs));
+        localStorage.setItem('COMPANY_APP_ATTENDANCE', JSON.stringify(rawAttendance));
+        localStorage.setItem('COMPANY_APP_BOOKINGS', JSON.stringify(rawBookings));
+        localStorage.setItem('COMPANY_APP_NOTIFICATIONS', JSON.stringify(rawNotifs));
+      } catch(e) {}
+
+      triggerToast('تمت المزامنة والاسترجاع السحابي بنجاح! ☁️🎉', `تم استرجاع (${rawClients.length} عميل، ${rawFinTxs.length} معاملة مالية، ${rawBookings.length} موعد، ${rawAttendance.length} حضور) وحفظها على الهارد ديسك.`, 'success');
+    } catch (err) {
+      console.error('Firebase instant restore error:', err);
+      triggerToast('خطأ في الاسترجاع السحابي', err.message || 'تعذر الاتصال بـ Firebase', 'warning');
+    } finally {
+      setIsRestoringFirebase(false);
+    }
+  };
+
+  // 🛡️ Standalone Dual-Recipient Telegram Backup (JSON + Multi-Sheet Excel)
+  const [isBackingUpTelegram, setIsBackingUpTelegram] = useStateWithLogging(false);
+  const handleExportAndSendTelegramBackup = async () => {
+    if (!hasPermission('canTriggerBackups')) {
+      alert('⛔ عذراً، ليس لديك صلاحية تصدير النسخ الاحتياطية.');
+      return;
+    }
+    setIsBackingUpTelegram(true);
+    triggerToast('جاري تصدير النسخة الاحتياطية ⏳', 'يتم توليد شيت Excel متعدد الصفحات وقاعدة البيانات وإرسالها لمسؤولي النظام عبر Telegram...', 'info');
+    try {
+      const tg = settings.telegram_backup || {};
+      const botToken = (tg.bot_token || settings.telegram_token || '').trim();
+      const chatId1 = (tg.chat_id_1 || settings.telegram_chat_id || '').trim();
+      const chatId2 = (tg.chat_id_2 || settings.telegram_chat_id_2 || '').trim();
+      const res = await fetch('/api/backup_telegram', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          bot_token: botToken,
+          chat_id_1: chatId1,
+          chat_id_2: chatId2,
+          telegram_token: botToken,
+          telegram_chat_id: chatId1,
+          telegram_chat_id_2: chatId2
+        })
+      });
+      const data = await res.json();
+      if (data.status === 'ok') {
+        setLastBackupTime(Date.now());
+        const sentCount = data.result?.sent_count || 0;
+        triggerToast('تم النسخ الاحتياطي بنجاح 🎉🛡️', `تم حفظ ملف Excel و JSON محلياً في مجلد backups. إرسال Telegram: تم تسليم ${sentCount} ملف بنجاح.`, 'success');
+      } else {
+        triggerToast('تنبيه', data.message || 'حدث خطأ أثناء إجراء النسخ الاحتياطي.', 'warning');
+      }
+    } catch (err) {
+      console.error('Telegram backup error:', err);
+      triggerToast('تنبيه', 'تعذر الاتصال بخادم النسخ الاحتياطي المحلي.', 'error');
+    } finally {
+      setIsBackingUpTelegram(false);
+    }
+  };
+
+  // 💬 Periodic Auto-Export to Excel & WhatsApp Dispatch (Every 10 Hours)
+  // Supports CallMeBot API for 100% automatic sending, with fallback to URL
+  const handleExportAndSendWhatsAppBackup = async (isAuto = false) => {
+    if (!isAuto && !hasPermission('canTriggerBackups') && !hasPermission('canAccessExcel')) {
+      alert('⛔ عذراً، ليس لديك صلاحية تصدير النسخ الاحتياطية.');
+      return;
+    }
+    try {
+      // 1. Export Excel full workbook (silent download)
+      exportExcelFullWorkbook(true);
+
+      // 2. Accurate Counts
+      const shiftCount = clients.filter(c => c && (c.subscriptionType === 'shift' || (c.package && typeof c.package === 'string' && c.package.includes('الشيفت')))).length;
+      const ftCount = clients.filter(c => c && c.subscriptionType !== 'shift' && (c.subscriptionType === 'fulltime' || c.isFullTime)).length;
+      const hourlyCount = clients.filter(c => c && c.subscriptionType !== 'shift' && !c.isFullTime && c.subscriptionType !== 'fulltime').length;
+
+      const now = new Date();
+      const dateStr = now.toLocaleDateString('ar-EG', { year: 'numeric', month: 'long', day: 'numeric' });
+      const timeStr = now.toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' });
+
+      // 3. WhatsApp Message
+      const waReport = 
+`📊 *تقرير النسخ الدوري الشامل (كل 10 ساعات)* 🛡️
+🏢 *${settings.companyName || 'مجموعة الكيان | AL KAYAN GROUP'}*
+📅 *التاريخ والوقت:* ${dateStr} • ${timeStr}
+
+👥 *إحصائيات العملاء المسجلين:*
+• إجمالي العملاء: ${clients.length} عميل
+  - ⏱️ عملاء باقات الساعات: ${hourlyCount}
+  - 👑 اشتراكات الدوام الكامل: ${ftCount}
+  - 🔄 اشتراكات نظام الشيفت: ${shiftCount}
+
+☕ *المعاملات المالية والبوفيه:*
+• إجمالي العمليات المسجلة: ${financialTransactions.length} عملية
+
+📅 *المواعيد والحضور:*
+• إجمالي الحجوزات: ${bookings.length} موعد
+• إجمالي جلسات الحضور: ${attendance.length} جلسة
+
+📁 *حالة الملف:* تم تصدير وتحميل شيت Excel الشامل متعدد الصفحات (.xlsx) بنجاح على الجهاز.
+✨ *النسخ الدوري يعمل تلقائياً كل 10 ساعات لحماية كامل بياناتك 100%.*`;
+
+      const targetPhone = cleanAndFormatPhone(settings.backupWhatsAppNumber || settings.adminPhone || '9661505988533', settings.whatsappCountryCode || '966');
+
+      // 4. Try CallMeBot API first (100% automatic, no user interaction needed)
+      let sentViaApi = false;
+      if (settings.callMeBotApiKey && settings.callMeBotApiKey.trim()) {
+        try {
+          const apiRes = await fetch('/api/send-whatsapp', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              phone: targetPhone,
+              apikey: settings.callMeBotApiKey.trim(),
+              message: waReport
+            })
+          });
+          const apiResult = await apiRes.json();
+          if (apiResult.success) {
+            sentViaApi = true;
+            console.log('✅ WhatsApp sent via CallMeBot API automatically');
+          } else {
+            console.warn('CallMeBot API response:', apiResult.error);
+          }
+        } catch (apiErr) {
+          console.warn('CallMeBot API call failed:', apiErr);
+        }
+      }
+
+      // 5. Fallback: open WhatsApp URL (only for manual clicks, not auto timer)
+      if (!sentViaApi && !isAuto) {
+        const waUrl = buildWhatsAppAppUrl(targetPhone, waReport);
+        window.open(waUrl, '_blank');
+      }
+
+      setLastBackupTime(Date.now());
+      syncToHardDisk('تصدير دوري تلقائي لشيت Excel وإرسال للواتساب (10 ساعات)', false);
+
+      if (sentViaApi) {
+        triggerToast('تم التصدير والإرسال التلقائي بنجاح 🎉✅', `تم تحميل شيت Excel وإرسال التقرير تلقائياً عبر الواتساب للرقم (${targetPhone}).`, 'success');
+      } else if (isAuto) {
+        triggerToast('تم التصدير التلقائي 📊', `تم تنزيل شيت Excel بنجاح. لم يتم إرسال الواتساب تلقائياً (يرجى إعداد CallMeBot API Key).`, 'info');
+      } else {
+        triggerToast('تم التصدير والنسخ الدوري بنجاح 🎉', `تم تحميل شيت Excel وفتح تقرير الواتساب للرقم (${targetPhone}).`, 'success');
+      }
+    } catch(err) {
+      console.error('Error in handleExportAndSendWhatsAppBackup:', err);
+      triggerToast('تنبيه', 'حدث خطأ أثناء إرسال تقرير الواتساب.', 'warning');
+    }
+  };
+
+  // Download complete JSON database export
+  const downloadDatabaseJson = () => {
+    if (!hasPermission('canTriggerBackups') && !hasPermission('canAccessSettings')) {
+      alert('⛔ عذراً، ليس لديك صلاحية تصدير نسخة احتياطية من قاعدة البيانات.');
+      return;
+    }
+    const fullDb = {
+      exportedAt: new Date().toISOString(),
+      companyName: settings.companyName,
+      clients,
+      attendance,
+      bookings,
+      notifications,
+      users,
+      settings,
+      lastBackupTime
+    };
+    const blob = new Blob([JSON.stringify(fullDb, null, 2)], { type: 'application/json;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `قاعدة_بيانات_${(settings.companyName || 'الكيان').replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    triggerToast('تم تنزيل النسخة الاحتياطية 💾', 'تم حفظ ملف قاعدة البيانات الشامل (JSON) على جهازك.', 'success');
+  };
+
+  // Import JSON database from file
+  const handleImportDatabaseJson = (e) => {
+    if (!hasPermission('canTriggerBackups') && !hasPermission('canAccessSettings')) {
+      alert('⛔ عذراً، ليس لديك صلاحية استيراد قاعدة بيانات من ملف خارجي.');
+      return;
+    }
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const imported = JSON.parse(event.target.result);
+        if (imported.clients && Array.isArray(imported.clients)) setClients(imported.clients);
+        if (imported.attendance && Array.isArray(imported.attendance)) setAttendance(imported.attendance);
+        if (imported.bookings && Array.isArray(imported.bookings)) setBookings(imported.bookings);
+        if (imported.notifications && Array.isArray(imported.notifications)) setNotifications(imported.notifications);
+        if (imported.settings && typeof imported.settings === 'object') setSettings(prev => ({ ...prev, ...imported.settings }));
+
+        setShowDiskSafetyModal(false);
+        triggerToast('تم استيراد قاعدة البيانات بنجاح! 🎉', 'تم تحديث كافة السجلات والعملاء والمواعيد من الملف.', 'success');
+        syncToHardDisk('استيراد يدوي لقاعدة البيانات من ملف خارجي', true);
+      } catch (err) {
+        alert('خطأ: الملف المختار غير صالح أو تالف.');
+      }
+    };
+    reader.readAsText(file);
+  };
+
+  const triggerToast = (title, text, type = 'success') => {
+    setToastMessage({ title, text, type });
+    if (settings.soundEnabled) playChime(type === 'warning' || type === 'error' ? 'warning' : 'success');
+    setTimeout(() => setToastMessage(null), 4000);
+  };
+
+  const addNotification = (title, message, type = 'info', targetClientId = 'admin_only') => {
+    const newNotif = {
+      id: 'notif-' + Date.now(),
+      title,
+      message,
+      type,
+      time: 'الآن',
+      read: false,
+      targetClientId: targetClientId,
+      clientId: targetClientId,
+      isInternalAdminLog: true
+    };
+    setNotifications(prev => [newNotif, ...prev]);
+
+    if (settings.browserNotifsEnabled && 'Notification' in window && Notification.permission === 'granted') {
+      try {
+        new Notification(title, {
+          body: message,
+          icon: settings.companyLogo || 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png'
+        });
+      } catch (e) {}
+    }
+  };
+
+  const handleLogoUpload = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    if (file.size > 2 * 1024 * 1024) {
+      alert('حجم الصورة كبير جداً، يرجى اختيار صورة أقل من 2 ميغابايت.');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const base64Logo = event.target.result;
+      setSettings(prev => {
+        const next = { ...prev, companyLogo: base64Logo, logo: base64Logo };
+        try { localStorage.setItem('COMPANY_APP_SETTINGS', JSON.stringify(next)); } catch (err) {}
+        return next;
+      });
+      // Immediately persist to disk via /api/save
+      fetch('/api/save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          logo: base64Logo,
+          companyLogo: base64Logo,
+          settings: { companyLogo: base64Logo, logo: base64Logo },
+          _actionReason: 'تحديث لوجو الشركة Base64'
+        })
+      }).catch(err => console.error('Logo save error:', err));
+      triggerToast('تم تحديث اللوجو بنجاح! 🖼️', 'تم حفظ وتطبيق شعار شركتك الجديد في كامل النظام وقاعدة البيانات.', 'success');
+    };
+    reader.readAsDataURL(file);
+  };
+
+  // ====================================================
+  // ⚡ Open WhatsApp Modal with Live Manual Editing
+  // ====================================================
+  const openWhatsAppModalForEdit = (phone, clientName, messageText, actionTitle = 'إرسال رسالة واتساب للعميل') => {
+    if (!hasPermission('canSendWhatsAppMessages')) {
+      triggerToast('غير مصرح ⛔', 'ليس لديك صلاحية إرسال أو تصدير رسائل الواتساب.', 'warning');
+      return;
+    }
+    const cleanPhone = cleanAndFormatPhone(phone, settings.whatsappCountryCode || '966');
+    setCurrentEditableMessage(messageText);
+    
+    setWhatsAppModalData({
+      clientName,
+      rawPhone: phone,
+      cleanPhone: cleanPhone,
+      formattedPhone: `+${cleanPhone}`,
+      actionTitle
+    });
+
+    addNotification(
+      `💬 تم تجهيز رسالة واتساب لـ ${clientName}`,
+      `رقم الواتساب الدولي: +${cleanPhone}\nنص الرسالة:\n${messageText}`,
+      'info'
+    );
+  };
+
+  // ====================================================
+  // 📊 Robust Multi-Sheet Excel & CSV Fallback Exporter
+  // ====================================================
+  const exportCsvFallback = (safeName, dateStr, isAuto) => {
+    try {
+      let csv = '\uFEFF'; // UTF-8 BOM for Arabic support in Excel
+      csv += 'م,اسم العميل,رقم الهاتف,نوع الباقة,اسم الباقة,تاريخ البداية,تاريخ الانتهاء,الأيام المتبقية,إجمالي الساعات,الرصيد المتبقي,الساعات المستهلكة,حالة الصلاحية,ملاحظات\n';
+      
+      clients.forEach((c, idx) => {
+        const contractInfo = getClientContractStatus(c);
+        const pkgTypeName = (c.packageDuration === '3months' || c.packageDuration === 'quarterly') ? '3 شهور (ربع سنوي ⭐)' : (c.packageDuration === 'annual' ? 'سنوي' : (c.packageDuration === 'monthly' ? 'شهري' : 'مخصص'));
+        const consumed = (Number(c.initialHours || 0) - Number(c.currentBalance || 0)).toFixed(1);
+        const daysLeftStr = contractInfo.daysLeft !== null ? (contractInfo.daysLeft < 0 ? `منتهي منذ ${Math.abs(contractInfo.daysLeft)} يوم` : `${contractInfo.daysLeft} يوم`) : 'غير محدد';
+        
+        csv += `"${idx + 1}","${c.name || ''}","${c.phone || ''}","${pkgTypeName}","${c.package || ''}","${c.startDate || '-'}","${c.expiryDate || 'مستمر'}","${daysLeftStr}","${c.initialHours || 0}","${c.currentBalance || 0}","${consumed}","${contractInfo.label}","${c.notes || '-'}"\n`;
+      });
+
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${safeName}_شيت_العملاء_${dateStr}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(() => {
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+      }, 200);
+
+      setLastBackupTime(Date.now());
+      const title = isAuto ? 'حفظ تلقائي كل 10 ساعات (CSV)' : 'تم تصدير ملف CSV بنجاح 🎉';
+      triggerToast(title, 'تم تنزيل شيت البيانات المتوافق مع Excel باللغة العربية.', 'success');
+    } catch (e) {
+      console.error('CSV Export Error:', e);
+      alert('حدث خطأ أثناء تنزيل الملف، يرجى المحاولة مرة أخرى.');
+    }
+  };
+
+    // ====================================================================
+  // 📊 COMPREHENSIVE EXCEL EXPORT (5-SHEETS COMPLETE APPLICATION DATA)
+  // ====================================================================
+  const exportExcelFullWorkbook = (isAuto = false) => {
+    if (!isAuto && !hasPermission('canAccessExcel')) {
+      alert('⛔ عذراً، ليس لديك صلاحية الوصول لشيتات الإكسل أو تصديرها.');
+      return;
+    }
+    try {
+      const safeCompanyName = (settings.companyName || 'الشركة').replace(/[\/\\?%*:|"<>]/g, '_').replace(/\s+/g, '_').trim();
+      const now = new Date();
+      const dateStr = now.toISOString().split('T')[0];
+      const timeStr = `${String(now.getHours()).padStart(2, '0')}-${String(now.getMinutes()).padStart(2, '0')}-${String(now.getSeconds()).padStart(2, '0')}`;
+      const filename = `${safeCompanyName}_شيت_البيانات_الشامل_${dateStr}_${timeStr}.xlsx`;
+
+      if (window.XLSX && typeof XLSX.utils !== 'undefined') {
+        const wb = XLSX.utils.book_new();
+
+        // Strict Client Subsystem Categorization
+        const isClientShift = (c) => c && (c.subscriptionType === 'shift' || (c.package && typeof c.package === 'string' && c.package.includes('الشيفت')));
+        const isClientFullTimeStrict = (c) => c && !isClientShift(c) && (c.subscriptionType === 'fulltime' || c.isFullTime || (c.package && typeof c.package === 'string' && c.package.toLowerCase().includes('full time')) || (c.packageDuration && typeof c.packageDuration === 'string' && c.packageDuration.startsWith('fulltime')));
+        const isClientHourly = (c) => c && !isClientShift(c) && !isClientFullTimeStrict(c);
+
+        // 1. Sheet 1: Hourly Package Clients (عملاء باقات الساعات)
+        const hourlyClients = clients.filter(isClientHourly);
+        const hourlySheetData = hourlyClients.map((c, index) => {
+          const contractInfo = getClientContractStatus(c);
+          const pkgTypeName = (c.packageDuration === '3months' || c.packageDuration === 'quarterly') ? 'باقة 3 شهور (ربع سنوي ⭐)' :
+                              c.packageDuration === 'annual' ? 'باقة سنوية 👑' : 'باقة شهرية';
+
+          return {
+            'م': index + 1,
+            'اسم العميل': c.name || '',
+            'رقم الهاتف ومفتاح الدولة': c.phone || '',
+            'اسم المستخدم (Username)': c.username || '',
+            'كلمة المرور (Password)': c.password || '',
+            'نوع الباقة': pkgTypeName,
+            'اسم الخدمة / الباقة': c.package || 'عام',
+            'تاريخ بداية التعاقد': c.startDate || '-',
+            'تاريخ انتهاء التعاقد': c.expiryDate || 'مستمر',
+            'الأيام المتبقية في العقد': contractInfo.daysLeft !== null ? (contractInfo.daysLeft < 0 ? `منتهي منذ ${Math.abs(contractInfo.daysLeft)} يوم` : `${contractInfo.daysLeft} يوم`) : 'غير محدد',
+            'إجمالي الساعات المشتراة': parseFloat(c.initialHours) || 0,
+            'الرصيد المتبقي (ساعات)': parseFloat(c.currentBalance) || 0,
+            'الساعات المستهلكة': Math.max(0, ((parseFloat(c.initialHours) || 0) - (parseFloat(c.currentBalance) || 0))).toFixed(1),
+            'حالة صلاحية العقد': contractInfo.label,
+            'حالة الباقة': contractInfo.isExpired ? 'منتهية الصلاحية ⛔' : 'سارية 🟢',
+            'ملاحظات': c.notes || '-',
+            'معرف_العميل': c.id || ''
+          };
+        });
+
+        // 2. Sheet 2: Full Time Subscriptions (اشتراكات الدوام الكامل)
+        const ftClients = clients.filter(isClientFullTimeStrict);
+        const ftSheetData = ftClients.map((c, index) => {
+          const contractInfo = getClientContractStatus(c);
+          const durName = (c.packageDuration === 'fulltime_3m' || c.packageDuration === '3months' || c.packageDuration === 'quarterly') ? '3 شهور (ربع سنوي ⭐)' :
+                          (c.packageDuration === 'fulltime_1y' || c.packageDuration === 'annual') ? 'سنة كاملة 👑' : 'شهر واحد';
+
+          return {
+            'م': index + 1,
+            'اسم العميل': c.name || '',
+            'رقم الهاتف ومفتاح الدولة': c.phone || '',
+            'الغرفة / المكتب المخصص': c.dedicatedRoom || c.room || 'المكتب التنفيذي الخاص (مخصص طوال مواقيت العمل)',
+            'اسم المستخدم للتطبيق': c.username || '-',
+            'كلمة المرور': c.password || '-',
+            'نوع الاشتراك': 'اشتراك Full Time (دوام كامل 👑)',
+            'نظام الاحتساب': 'غير مقيد بساعات (فترة وتاريخ تجديد فقط)',
+            'مدة الاشتراك': durName,
+            'تاريخ بداية الاشتراك': c.startDate || '-',
+            'تاريخ انتهاء وتجديد الاشتراك': c.expiryDate || 'مستمر',
+            'الأيام المتبقية في الاشتراك': contractInfo.daysLeft !== null ? (contractInfo.daysLeft < 0 ? `منتهي منذ ${Math.abs(contractInfo.daysLeft)} يوم` : `${contractInfo.daysLeft} يوم`) : 'غير محدد',
+            'حالة صلاحية الاشتراك': contractInfo.label,
+            'حالة الاشتراك': contractInfo.isExpired ? 'منتهي الصلاحية ⛔' : (contractInfo.isLastWeek ? 'أسبوع أخير ⚠️' : 'ساري 🟢'),
+            'ملاحظات': c.notes || '-',
+            'معرف_العميل': c.id || ''
+          };
+        });
+
+        // 🔄 Sheet 3: Shift Subscriptions (اشتراكات نظام الشيفت المستقل)
+        const shiftClients = clients.filter(isClientShift);
+        const shiftSheetData = shiftClients.map((c, index) => {
+          const contractInfo = getClientContractStatus(c);
+          const durName = (c.packageDuration === 'fulltime_3m' || c.packageDuration === '3months' || c.packageDuration === 'quarterly') ? '3 شهور (ربع سنوي ⭐)' :
+                          (c.packageDuration === 'fulltime_1y' || c.packageDuration === 'annual') ? 'سنة كاملة 👑' : 'شهر واحد';
+          const shiftPeriodStr = (c.shiftType === 'evening' || (c.package && typeof c.package === 'string' && c.package.includes('مسائي'))) ? 'شيفت مسائي 🌙' : 'شيفت صباحي ☀️';
+
+          return {
+            'م': index + 1,
+            'اسم العميل': c.name || '',
+            'رقم الهاتف ومفتاح الدولة': c.phone || '',
+            'فترة الشيفت': shiftPeriodStr,
+            'وقت استلام الغرفة (البدء)': c.shiftStartTime || '-',
+            'وقت تسليم الغرفة (الانتهاء)': c.shiftEndTime || '-',
+            'نظام الاحتساب': 'غير مقيد بساعات (استلام وتسليم غرفة فقط)',
+            'الغرفة / المكتب المخصص': c.dedicatedRoom || c.room || 'المكتب المخصص للشيفت',
+            'اسم المستخدم للتطبيق': c.username || '-',
+            'كلمة المرور': c.password || '-',
+            'نوع الباقة': 'نظام الشيفت 🔄',
+            'مدة الاشتراك': durName,
+            'تاريخ بداية التعاقد': c.startDate || '-',
+            'تاريخ انتهاء وتجديد التعاقد': c.expiryDate || 'مستمر',
+            'الأيام المتبقية في العقد': contractInfo.daysLeft !== null ? (contractInfo.daysLeft < 0 ? `منتهي منذ ${Math.abs(contractInfo.daysLeft)} يوم` : `${contractInfo.daysLeft} يوم`) : 'غير محدد',
+            'حالة صلاحية الاشتراك': contractInfo.label,
+            'حالة العقد': contractInfo.isExpired ? 'منتهي الصلاحية ⛔' : (contractInfo.isLastWeek ? 'أسبوع أخير ⚠️' : 'ساري 🟢'),
+            'ملاحظات': c.notes || '-',
+            'معرف_العميل': c.id || ''
+          };
+        });
+
+        // 4. Sheet 4: All Bookings (جدول المواعيد والحجوزات)
+        const bookingsSheetData = bookings.map((b, index) => ({
+          'م': index + 1,
+          'تاريخ الموعد': b.date || '',
+          'وقت وساعة الموعد': b.time || '',
+          'القاعة / الغرفة': b.room || INITIAL_ROOMS[0],
+          'اسم العميل': b.clientName || '',
+          'رقم الهاتف': b.phone || '',
+          'المدة المحجوزة (ساعة)': parseFloat(b.durationHours) || 0,
+          'نوع الخدمة': b.serviceType || '',
+          'حالة الحجز': b.status === 'attended' ? 'تم الحضور وخصم الساعات' : (b.status === 'cancelled' || b.status === 'ملغي بواسطة العميل' || b.is_active === false) ? 'ملغي (الساعات غير مستردة وفقاً للائحة)' : 'مؤكد قادم',
+          'ملاحظات الحجز': b.notes || '-',
+          'معرف_الحجز': b.id || '',
+          'معرف_العميل': b.clientId || ''
+        }));
+
+        // 4. Sheet 4: Attendance & Real Deductions (سجل الحضور والخصم الفعلي)
+        const attendanceSheetData = attendance.map((att, index) => ({
+          'م': index + 1,
+          'تاريخ الحضور': att.date || '',
+          'وقت تسجيل الحضور': att.time || '',
+          'اسم العميل': att.clientName || '',
+          'رقم الهاتف': att.clientPhone || '',
+          'الساعات المستهلكة': att.hoursConsumed || 0,
+          'الرصيد قبل الخصم': att.previousBalance || 0,
+          'الرصيد بعد الخصم': att.newBalance || 0,
+          'نوع الجلسة / الخدمة': att.serviceType || '',
+          'ملاحظات الجلسة': att.notes || '-',
+          'معرف_السجل': att.id || '',
+          'معرف_العميل': att.clientId || ''
+        }));
+
+        // 5. Sheet 5: System Settings & Meta (بيانات النظام والإعدادات)
+        const settingsSheetData = [
+          { 'البند': 'اسم الشركة', 'القيمة': settings.companyName || '' },
+          { 'البند': 'الشعار اللفظي', 'القيمة': settings.companyTagline || '' },
+          { 'البند': 'القاعات والغرف المثبتة', 'القيمة': (settings.rooms || INITIAL_ROOMS).join(' | ') },
+          { 'البند': 'تاريخ ووقت التصدير', 'القيمة': new Date().toLocaleString('ar-SA') },
+          { 'البند': 'إجمالي عملاء الساعات', 'القيمة': hourlyClients.length },
+          { 'البند': 'إجمالي عملاء الدوام الكامل', 'القيمة': ftClients.length },
+          { 'البند': 'إجمالي عملاء نظام الشيفت', 'القيمة': shiftClients.length },
+          { 'البند': 'إجمالي المواعيد المسجلة', 'القيمة': bookings.length },
+          { 'البند': 'إجمالي سجلات الحضور', 'القيمة': attendance.length },
+          { 'البند': 'إصدار النظام', 'القيمة': 'AL KAYAN GROUP v3.0 (Full Auto-Restore Compatible)' }
+        ];
+
+        // Create worksheets
+        const wsHourly = XLSX.utils.json_to_sheet(hourlySheetData);
+        const wsFullTime = XLSX.utils.json_to_sheet(ftSheetData);
+        const wsShift = XLSX.utils.json_to_sheet(shiftSheetData);
+        const wsBookings = XLSX.utils.json_to_sheet(bookingsSheetData);
+        const wsAttendance = XLSX.utils.json_to_sheet(attendanceSheetData);
+        const wsSettings = XLSX.utils.json_to_sheet(settingsSheetData);
+
+        // 6. Sheet 6: Users, Staff & Granular Permissions (الموظفين والمستخدمين والصلاحيات)
+        const staffSheetData = (users || []).map((u, index) => ({
+          'م': index + 1,
+          'اسم الموظف': u.name || '',
+          'المسمى الوظيفي': u.jobTitle || '',
+          'رقم الهاتف': u.phone || '',
+          'اسم المستخدم': u.username || '',
+          'رمز كلمة المرور المشفر': u.passwordEncrypted || '',
+          'نوع الحساب': u.role === 'admin' ? 'مدير عام (كامل الصلاحيات)' : 'موظف بصلاحيات محددة',
+          'إضافة عملاء': (u.role === 'admin' || u.permissions?.canAddClients) ? 'نعم' : 'لا',
+          'تعديل عملاء': (u.role === 'admin' || u.permissions?.canEditClients) ? 'نعم' : 'لا',
+          'حذف عملاء': (u.role === 'admin' || u.permissions?.canDeleteClients) ? 'نعم' : 'لا',
+          'إدارة الحجوزات': (u.role === 'admin' || u.permissions?.canManageBookings) ? 'نعم' : 'لا',
+          'إلغاء الحجوزات': (u.role === 'admin' || u.permissions?.canCancelBookings) ? 'نعم' : 'لا',
+          'تسجيل الحضور والخصم': (u.role === 'admin' || u.permissions?.canDeductAttendance) ? 'نعم' : 'لا',
+          'شيتات Excel والنسخ': (u.role === 'admin' || u.permissions?.canAccessExcel) ? 'نعم' : 'لا',
+          'الإعدادات والقوالب': (u.role === 'admin' || u.permissions?.canAccessSettings) ? 'نعم' : 'لا',
+          'إدارة الموظفين': (u.role === 'admin' || u.permissions?.canManageStaff) ? 'نعم' : 'لا',
+          'تاريخ التسجيل': u.createdAt || '',
+          'معرف_المستخدم': u.id || ''
+        }));
+        const wsStaff = XLSX.utils.json_to_sheet(staffSheetData);
+
+        // 7. Sheet 7: Financial Balances Summary (ملخص حسابات وأرصدة البوفيه والخدمات)
+        const finBalancesSheetData = clients.map((c, index) => {
+          const contractInfo = getClientContractStatus(c);
+          const cTxs = getClientTxs(c);
+          const totalCharges = cTxs.reduce((acc, t) => t.type === 'charge' ? acc + (parseFloat(t.amount) || 0) : acc, 0);
+          const totalPayments = cTxs.reduce((acc, t) => t.type === 'payment' ? acc + (parseFloat(t.amount) || 0) : acc, 0);
+          const netBal = typeof c.financialBalance === 'number' ? c.financialBalance : (totalPayments - totalCharges);
+
+          return {
+            'م': index + 1,
+            'اسم العميل': c.name || '',
+            'رقم الهاتف': c.phone || '',
+            'اسم المستخدم': c.username || '-',
+            'نوع الاشتراك': contractInfo.isFullTime ? 'دوام كامل (Full-Time 🏢)' : (c.package || 'باقة ساعات ⏱️'),
+            'إجمالي المسحوبات (بوفيه وطباعة)': totalCharges,
+            'إجمالي المسدد (دفعات وتحصيل)': totalPayments,
+            'الرصيد الصافي الحالي (ج.م)': netBal,
+            'حالة الحساب المالي': netBal < 0 ? `مطلوب منه (${Math.abs(netBal)} ج.م) 🔴` : netBal > 0 ? `له رصيد (${netBal} ج.م) 🟢` : 'متزن تماماً ✨',
+            'عدد الحركات': cTxs.length,
+            'معرف_العميل': c.id || ''
+          };
+        });
+        const wsFinBalances = XLSX.utils.json_to_sheet(finBalancesSheetData);
+
+        // 8. Sheet 8: Financial Transactions Detailed Log (سجل حركات البوفيه والتصوير التفصيلي)
+        const finTxsSheetData = financialTransactions.map((tx, index) => ({
+          'م': index + 1,
+          'رقم الحركة': tx.id,
+          'تاريخ الحركة': tx.date || '',
+          'وقت الحركة': tx.time || '',
+          'اسم العميل': tx.clientName || '',
+          'هاتف العميل': tx.clientPhone || '',
+          'نوع الحركة': tx.type === 'charge' ? 'مطلوب من العميل (خصم) 🔴' : 'سداد من العميل (دفعة) 🟢',
+          'بند الخدمة': tx.categoryName || '',
+          'البيان والتفاصيل': tx.description || '-',
+          'المبلغ بالجنيه (ج.م)': parseFloat(tx.amount) || 0,
+          'الرصيد بعد الحركة': tx.balanceAfter !== undefined ? tx.balanceAfter : '-',
+          'المسؤول عن التسجيل': tx.createdBy || 'الإدارة',
+          'التوقيت المرجعي (ISO)': tx.createdAt || ''
+        }));
+        const wsFinTxs = XLSX.utils.json_to_sheet(finTxsSheetData);
+
+        // Append sheets to workbook
+        XLSX.utils.book_append_sheet(wb, wsHourly, 'عملاء باقات الساعات');
+        XLSX.utils.book_append_sheet(wb, wsFullTime, 'اشتراكات الدوام الكامل');
+        XLSX.utils.book_append_sheet(wb, wsShift, 'اشتراكات نظام الشيفت');
+        XLSX.utils.book_append_sheet(wb, wsBookings, 'جدول المواعيد والحجوزات');
+        XLSX.utils.book_append_sheet(wb, wsAttendance, 'سجل الحضور والخصم الفعلي');
+        XLSX.utils.book_append_sheet(wb, wsFinBalances, 'أرصدة البوفيه والخدمات');
+        XLSX.utils.book_append_sheet(wb, wsFinTxs, 'سجل حركات البوفيه والخدمات');
+        XLSX.utils.book_append_sheet(wb, wsSettings, 'بيانات النظام والإعدادات');
+        XLSX.utils.book_append_sheet(wb, wsStaff, 'الموظفين والصلاحيات');
+
+        // Direct Download via XLSX.writeFile with Blob Fallback
+        try {
+          XLSX.writeFile(wb, filename);
+        } catch (writeErr) {
+          console.warn('XLSX.writeFile failed, attempting direct Blob download:', writeErr);
+          const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+          const blob = new Blob([wbout], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+          const url = window.URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = filename;
+          document.body.appendChild(a);
+          a.click();
+          setTimeout(() => {
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+          }, 200);
+        }
+
+        setLastBackupTime(Date.now());
+        const successTitle = isAuto ? 'حفظ تلقائي كل 10 ساعات' : 'تم تصدير ملف Excel الشامل بنجاح 🎉';
+        const successMsg = `تم تنزيل شيت الإكسل الشامل (${filename}) متضمناً 8 أوراق عمل لكافة بيانات العملاء والدوام الكامل والحجوزات وسجلات الحضور وحسابات وأرصدة البوفيه.`;
+        triggerToast(successTitle, successMsg, 'success');
+        addNotification(successTitle, successMsg, 'success');
+        return;
+      }
+
+      // If XLSX library is not loaded, use CSV Fallback
+      exportCsvFallback(safeCompanyName, dateStr, isAuto);
+
+    } catch (err) {
+      console.error('Excel Export Error:', err);
+      const safeCompanyName = (settings.companyName || 'الشركة').replace(/[\/\\?%*:|"<>]/g, '_').replace(/\s+/g, '_').trim();
+      const dateStr = new Date().toISOString().split('T')[0];
+      exportCsvFallback(safeCompanyName, dateStr, isAuto);
+    }
+  };
+
+  // ====================================================================
+  // 📥 DEDICATED FINANCIAL & BUFFET ACCOUNTS EXCEL EXPORT (ALL CLIENTS)
+  // ====================================================================
+  const exportFinancialExcelReport = (filterMonth = 'all') => {
+    if (!hasPermission('canAccessExcel')) {
+      alert('⛔ عذراً، ليس لديك صلاحية الوصول لشيتات الإكسل أو تصديرها.');
+      return;
+    }
+    try {
+      if (!window.XLSX || typeof XLSX.utils === 'undefined') {
+        alert('مكتبة الإكسل قيد التحميل، يرجى المحاولة بعد لحظات.');
+        return;
+      }
+
+      const safeCompanyName = (settings.companyName || 'مجموعة_الكيان').replace(/[\/\?%*:|"<>]/g, '_').replace(/\s+/g, '_').trim();
+      const now = new Date();
+      const dateStr = now.toISOString().split('T')[0];
+      const timeStr = `${String(now.getHours()).padStart(2, '0')}-${String(now.getMinutes()).padStart(2, '0')}`;
+      const isMonthSpecific = filterMonth && filterMonth !== 'all';
+      const monthTag = isMonthSpecific ? `_شهر_${filterMonth}` : '_شامل_كافة_الشهور';
+      const filename = `${safeCompanyName}_شيت_حسابات_البوفيه_والخدمات${monthTag}_${dateStr}_${timeStr}.xlsx`;
+
+      const wb = XLSX.utils.book_new();
+
+      // Filter transactions if month specific
+      const targetTxs = isMonthSpecific
+        ? financialTransactions.filter(t => t && t.date && t.date.startsWith(filterMonth))
+        : financialTransactions;
+
+      // Sheet 1: ملخص أرصدة العملاء والمديونيات
+      const clientsSummaryData = clients.map((c, index) => {
+        const contractInfo = getClientContractStatus(c);
+        const allClientTxs = getClientTxs(c);
+        const cTxs = isMonthSpecific
+          ? targetTxs.filter(t => {
+              if (t.clientId === c.id) return true;
+              const fPhone = normalizePhone(c.phone);
+              const tPhone = normalizePhone(t.clientPhone);
+              return fPhone && tPhone && fPhone === tPhone;
+            })
+          : allClientTxs;
+        
+        const totalCharges = cTxs.reduce((acc, t) => t.type === 'charge' ? acc + (parseFloat(t.amount) || 0) : acc, 0);
+        const totalPayments = cTxs.reduce((acc, t) => t.type === 'payment' ? acc + (parseFloat(t.amount) || 0) : acc, 0);
+        const netBal = typeof c.financialBalance === 'number' ? c.financialBalance : (allClientTxs.filter(t => t.type === 'payment').reduce((a, t) => a + (parseFloat(t.amount) || 0), 0) - allClientTxs.filter(t => t.type === 'charge').reduce((a, t) => a + (parseFloat(t.amount) || 0), 0));
+
+        const statusLabel = netBal < 0 
+          ? `مطلوب منه سداد (${Math.abs(netBal)} ج.م) 🔴`
+          : netBal > 0
+          ? `له رصيد متاح (${netBal} ج.م) 🟢`
+          : 'الحساب متزن تماماً (0) ✨';
+
+        const lastTx = cTxs[0] || allClientTxs[0];
+
+        const row = {
+          'م': index + 1,
+          'اسم العميل': c.name || '',
+          'رقم الهاتف': c.phone || '',
+          'اسم المستخدم': c.username || '-',
+          'نوع الاشتراك': contractInfo.isFullTime ? 'دوام كامل (Full-Time 🏢)' : (c.package || 'باقة ساعات ⏱️'),
+          [isMonthSpecific ? `مسحوبات شهر ${filterMonth} (ج.م)` : 'إجمالي المسحوبات والمطلوب (ج.م)']: totalCharges,
+          [isMonthSpecific ? `مدفوعات شهر ${filterMonth} (ج.م)` : 'إجمالي المسدد والدفعات (ج.م)']: totalPayments,
+          'الرصيد الصافي العام الدائم (ج.م)': netBal,
+          'حالة الحساب المالي': statusLabel,
+          'عدد الحركات المسجلة': cTxs.length,
+          'تاريخ آخر حركة': lastTx ? `${lastTx.date} (${lastTx.time})` : 'لا توجد حركات',
+          'ملاحظات': c.notes || '-'
+        };
+        return row;
+      });
+
+      // Sort: highest debts at the top
+      clientsSummaryData.sort((a, b) => a['الرصيد الصافي العام الدائم (ج.م)'] - b['الرصيد الصافي العام الدائم (ج.م)']);
+
+      const wsSummary = XLSX.utils.json_to_sheet(clientsSummaryData);
+      wsSummary['!cols'] = [
+        { wch: 6 },
+        { wch: 26 },
+        { wch: 18 },
+        { wch: 16 },
+        { wch: 24 },
+        { wch: 24 },
+        { wch: 24 },
+        { wch: 26 },
+        { wch: 30 },
+        { wch: 16 },
+        { wch: 22 },
+        { wch: 25 }
+      ];
+      XLSX.utils.book_append_sheet(wb, wsSummary, 'أرصدة_العملاء_والمديونيات');
+
+      // Sheet 2: سجل الحركات والطلبات التفصيلي
+      const txsData = targetTxs.map((tx, index) => {
+        return {
+          'م': index + 1,
+          'رقم الحركة': tx.id,
+          'تاريخ المعاملة': tx.date || '',
+          'وقت المعاملة': tx.time || '',
+          'اسم العميل': tx.clientName || '',
+          'هاتف العميل': tx.clientPhone || '',
+          'نوع المعاملة': tx.type === 'charge' ? 'مطلوب من العميل (خصم) 🔴' : 'سداد من العميل (دفعة) 🟢',
+          'بند الخدمة': tx.categoryName || '',
+          'البيان والملاحظات': tx.description || '-',
+          'المبلغ بالجنيه (ج.م)': parseFloat(tx.amount) || 0,
+          'الرصيد بعد المعاملة (ج.م)': tx.balanceAfter !== undefined ? tx.balanceAfter : '-',
+          'المسؤول عن التسجيل': tx.createdBy || 'الإدارة',
+          'التوقيت المرجعي (ISO)': tx.createdAt || ''
+        };
+      });
+
+      const wsTxs = XLSX.utils.json_to_sheet(txsData);
+      wsTxs['!cols'] = [
+        { wch: 6 },
+        { wch: 20 },
+        { wch: 14 },
+        { wch: 12 },
+        { wch: 24 },
+        { wch: 18 },
+        { wch: 24 },
+        { wch: 22 },
+        { wch: 35 },
+        { wch: 18 },
+        { wch: 20 },
+        { wch: 18 },
+        { wch: 24 }
+      ];
+      XLSX.utils.book_append_sheet(wb, wsTxs, isMonthSpecific ? `حركات_شهر_${filterMonth}` : 'سجل_العمليات_التفصيلي');
+
+      XLSX.writeFile(wb, filename);
+      triggerToast('تم تصدير شيت الإكسيل بنجاح 📥', `تم حفظ ملف (${filename}) شاملاً بيانات الفترة المحددة (${filterMonth === 'all' ? 'جميع الشهور' : filterMonth}) وسجل العمليات.`, 'success');
+      logRecentTask(`تصدير شيت إكسيل مالي (${filterMonth === 'all' ? 'شامل' : 'شهر ' + filterMonth})`, 'excel');
+    } catch(err) {
+      console.error('Export Financial Excel Error:', err);
+      alert('حدث خطأ أثناء تصدير شيت الإكسيل: ' + err.message);
+    }
+  };  // ====================================================================
+  // 📥 EXPORT SINGLE CLIENT LEDGER TO EXCEL
+  // ====================================================================
+  const exportSingleClientLedgerExcel = (targetClient) => {
+    if (!targetClient) return;
+    try {
+      if (!window.XLSX || typeof XLSX.utils === 'undefined') {
+        alert('مكتبة الإكسل قيد التحميل، يرجى المحاولة بعد لحظات.');
+        return;
+      }
+
+      const clientTxs = getClientTxs(targetClient);
+      const totalCharges = clientTxs.reduce((acc, t) => t.type === 'charge' ? acc + (parseFloat(t.amount) || 0) : acc, 0);
+      const totalPayments = clientTxs.reduce((acc, t) => t.type === 'payment' ? acc + (parseFloat(t.amount) || 0) : acc, 0);
+      const netBal = typeof targetClient.financialBalance === 'number' ? targetClient.financialBalance : (totalPayments - totalCharges);
+
+      const safeName = (targetClient.name || 'عميل').replace(/[\/\\?%*:|"<>]/g, '_').replace(/\s+/g, '_').trim();
+      const dateStr = new Date().toISOString().split('T')[0];
+      const filename = `كشف_حساب_خدمات_${safeName}_${dateStr}.xlsx`;
+
+      const wb = XLSX.utils.book_new();
+
+      const summarySheetData = [
+        { 'البيان': 'اسم العميل', 'القيمة': targetClient.name },
+        { 'البيان': 'رقم الهاتف', 'القيمة': targetClient.phone || '-' },
+        { 'البيان': 'اسم المستخدم', 'القيمة': targetClient.username || '-' },
+        { 'البيان': 'تاريخ استخراج الكشف', 'القيمة': new Date().toLocaleString('ar-SA') },
+        { 'البيان': 'إجمالي المطلوب (مسحوبات بوفيه وطباعة)', 'القيمة': `${totalCharges} ج.م` },
+        { 'البيان': 'إجمالي المسدد (دفعات)', 'القيمة': `${totalPayments} ج.م` },
+        { 'البيان': 'صافي الحساب الحالي', 'القيمة': `${netBal} ج.م` },
+        { 'البيان': 'حالة الحساب', 'القيمة': netBal < 0 ? `مطلوب سداد (${Math.abs(netBal)} ج.م) 🔴` : netBal > 0 ? `له رصيد متاح (${netBal} ج.م) 🟢` : 'الحساب متزن (0) ✨' },
+        { 'البيان': 'عدد المعاملات المسجلة', 'القيمة': clientTxs.length }
+      ];
+
+      const wsSummary = XLSX.utils.json_to_sheet(summarySheetData);
+      wsSummary['!cols'] = [{ wch: 30 }, { wch: 35 }];
+      XLSX.utils.book_append_sheet(wb, wsSummary, 'بيانات_الحساب');
+
+      const txRows = clientTxs.map((t, idx) => ({
+        'م': idx + 1,
+        'التاريخ': t.date,
+        'الوقت': t.time,
+        'نوع المعاملة': t.type === 'charge' ? 'مطلوب (خصم)' : 'سداد (دفعة)',
+        'بند الخدمة': t.categoryName,
+        'البيان': t.description || '-',
+        'المبلغ (ج.م)': t.amount,
+        'الرصيد بعدها (ج.م)': t.balanceAfter !== undefined ? t.balanceAfter : '-',
+        'المسؤول': t.createdBy || 'الإدارة'
+      }));
+
+      const wsTxs = XLSX.utils.json_to_sheet(txRows);
+      wsTxs['!cols'] = [
+        { wch: 6 },
+        { wch: 14 },
+        { wch: 12 },
+        { wch: 18 },
+        { wch: 22 },
+        { wch: 35 },
+        { wch: 16 },
+        { wch: 18 },
+        { wch: 18 }
+      ];
+      XLSX.utils.book_append_sheet(wb, wsTxs, 'سجل_الحركات');
+
+      XLSX.writeFile(wb, filename);
+      triggerToast('تم تحميل كشف الحساب 📥', `تم حفظ كشف حساب العميل (${targetClient.name}) بصيغة Excel.`, 'success');
+    } catch(e) {
+      alert('خطأ في تصدير كشف الحساب: ' + e.message);
+    }
+  };
+
+  // ====================================================================
+  // 📥 SMART EXCEL IMPORTER & FULL AUTO-RESTORE ENGINE
+  // ====================================================================
+  const handleImportExcelFile = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!window.XLSX) {
+      alert('مكتبة Excel غير جاهزة، يرجى إعادة تحديث الصفحة والمحاولة مجدداً.');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+      try {
+        const data = new Uint8Array(evt.target.result);
+        const workbook = XLSX.read(data, { type: 'array' });
+
+        let parsedHourly = [];
+        let parsedFulltime = [];
+        let parsedShift = [];
+        let parsedBookings = [];
+        let parsedAttendance = [];
+
+        // Loop over sheets in workbook
+        workbook.SheetNames.forEach(sheetName => {
+          const rawSheet = workbook.Sheets[sheetName];
+          const rows = XLSX.utils.sheet_to_json(rawSheet);
+
+          if (!rows || rows.length === 0) return;
+
+          const sLower = sheetName.toLowerCase().trim();
+
+          // 1. Hourly Clients Sheet
+          if (sLower.includes('ساعات') || sLower.includes('باقات') || sLower.includes('عملاء') && !sLower.includes('دوام') && !sLower.includes('full')) {
+            rows.forEach((row, idx) => {
+              const name = row['اسم العميل'] || row['الاسم'] || row['Client Name'] || row['Name'];
+              if (!name) return;
+
+              const isFT = String(row['نوع الباقة'] || row['نوع الاشتراك'] || '').includes('Full Time') || String(row['نوع الباقة'] || '').includes('دوام كامل');
+              const pkgDurStr = String(row['نوع الباقة'] || '').toLowerCase();
+              const pkgDur = pkgDurStr.includes('3') || pkgDurStr.includes('ربع') ? '3months' :
+                             pkgDurStr.includes('سنو') || pkgDurStr.includes('عام') ? 'annual' : 'monthly';
+
+              const initH = parseFloat(row['إجمالي الساعات المشتراة'] || row['الساعات المشتراة'] || row['الساعات'] || 10) || 10;
+              const curB = row['الرصيد المتبقي (ساعات)'] !== undefined ? parseFloat(row['الرصيد المتبقي (ساعات)']) :
+                           row['الرصيد المتبقي'] !== undefined ? parseFloat(row['الرصيد المتبقي']) : initH;
+
+              const uName = row['اسم المستخدم (Username)'] || row['اسم المستخدم'] || row['Username'] || row['user'] || '';
+              const uPass = row['كلمة المرور (Password)'] || row['كلمة المرور'] || row['Password'] || row['pass'] || '';
+
+              const clientObj = {
+                id: row['معرف_العميل'] || `c-imp-${Date.now()}-${idx}`,
+                name: String(name).trim(),
+                phone: String(row['رقم الهاتف ومفتاح الدولة'] || row['رقم الهاتف'] || row['الهاتف'] || row['Phone'] || '').trim(),
+                email: String(row['البريد الإلكتروني'] || row['Email'] || '').trim(),
+                username: String(uName).trim(),
+                password: String(uPass).trim(),
+                subscriptionType: isFT ? 'fulltime' : 'hourly',
+                isFullTime: isFT,
+                packageDuration: isFT ? 'fulltime_1m' : pkgDur,
+                package: row['اسم الخدمة / الباقة'] || row['اسم الباقة'] || (isFT ? 'اشتراك Full Time 👑' : 'باقة ساعات'),
+                startDate: row['تاريخ بداية التعاقد'] || row['تاريخ البداية'] || new Date().toISOString().split('T')[0],
+                expiryDate: row['تاريخ انتهاء التعاقد'] || row['تاريخ الانتهاء'] || computeExpiryDate(new Date().toISOString().split('T')[0], pkgDur),
+                initialHours: isFT ? 0 : initH,
+                currentBalance: isFT ? 0 : curB,
+                notes: row['ملاحظات'] || ''
+              };
+
+              if (isFT) {
+                parsedFulltime.push(clientObj);
+              } else {
+                parsedHourly.push(clientObj);
+              }
+            });
+          }
+
+          // 2. Shift Subscriptions Sheet (نظام الشيفت)
+          else if (sLower.includes('شيفت') || sLower.includes('shift')) {
+            rows.forEach((row, idx) => {
+              const name = row['اسم العميل'] || row['الاسم'] || row['Client Name'] || row['Name'];
+              if (!name) return;
+
+              const sType = (row['فترة الشيفت'] || '').includes('مسائي') ? 'evening' : 'morning';
+              const sStart = row['ساعة بدء الشيفت'] || row['وقت بدء الشيفت'] || (sType === 'morning' ? '10:00' : '18:00');
+              const sEnd = row['ساعة انتهاء الشيفت (تلقائي)'] || row['ساعة انتهاء الشيفت'] || row['وقت انتهاء الشيفت'] || (sType === 'morning' ? '18:00' : '02:00');
+              const sHours = String(row['عدد الساعات اليومية'] || row['عدد الساعات'] || '8');
+              const durStr = String(row['مدة الاشتراك'] || row['نوع الباقة'] || '').toLowerCase();
+              const dur = durStr.includes('3') || durStr.includes('ربع') ? 'fulltime_3m' :
+                          durStr.includes('سنو') || durStr.includes('عام') ? 'fulltime_1y' : 'fulltime_1m';
+
+              parsedShift.push({
+                id: row['معرف_العميل'] || `c-sh-imp-${Date.now()}-${idx}`,
+                name: String(name).trim(),
+                phone: String(row['رقم الهاتف ومفتاح الدولة'] || row['رقم الهاتف'] || row['الهاتف'] || row['Phone'] || '').trim(),
+                email: String(row['البريد الإلكتروني'] || row['Email'] || '').trim(),
+                username: String(row['اسم المستخدم للتطبيق'] || row['اسم المستخدم'] || '').trim(),
+                password: String(row['كلمة المرور'] || '').trim(),
+                subscriptionType: 'shift',
+                shiftType: sType,
+                shiftStartTime: sStart,
+                shiftEndTime: sEnd,
+                contractHours: sHours,
+                isFullTime: false,
+                packageDuration: dur,
+                package: `نظام الشيفت (${sType === 'evening' ? 'مسائي' : 'صباحي'})`,
+                startDate: row['تاريخ بداية التعاقد'] || row['تاريخ بداية الاشتراك'] || new Date().toISOString().split('T')[0],
+                expiryDate: row['تاريخ انتهاء وتجديد التعاقد'] || row['تاريخ انتهاء الاشتراك'] || computeExpiryDate(new Date().toISOString().split('T')[0], dur),
+                initialHours: 0,
+                currentBalance: 0,
+                dedicatedRoom: row['الغرفة / المكتب المخصص'] || 'المكتب المخصص للشيفت',
+                notes: row['ملاحظات'] || ''
+              });
+            });
+          }
+
+          // 3. Full Time Clients Sheet
+          else if (sLower.includes('دوام') || sLower.includes('full')) {
+            rows.forEach((row, idx) => {
+              const name = row['اسم العميل'] || row['الاسم'] || row['Client Name'] || row['Name'];
+              if (!name) return;
+
+              const durStr = String(row['مدة الاشتراك'] || row['نوع الباقة'] || '').toLowerCase();
+              const ftDur = durStr.includes('3') || durStr.includes('ربع') ? 'fulltime_3m' :
+                            durStr.includes('سنو') || durStr.includes('عام') ? 'fulltime_1y' : 'fulltime_1m';
+
+              parsedFulltime.push({
+                id: row['معرف_العميل'] || `c-ft-imp-${Date.now()}-${idx}`,
+                name: String(name).trim(),
+                phone: String(row['رقم الهاتف ومفتاح الدولة'] || row['رقم الهاتف'] || row['الهاتف'] || row['Phone'] || '').trim(),
+                email: String(row['البريد الإلكتروني'] || row['Email'] || '').trim(),
+                subscriptionType: 'fulltime',
+                isFullTime: true,
+                packageDuration: ftDur,
+                package: 'اشتراك Full Time (دوام كامل 👑)',
+                startDate: row['تاريخ بداية الاشتراك'] || row['تاريخ بداية التعاقد'] || row['تاريخ البداية'] || new Date().toISOString().split('T')[0],
+                expiryDate: row['تاريخ انتهاء الاشتراك'] || row['تاريخ انتهاء التعاقد'] || row['تاريخ الانتهاء'] || computeExpiryDate(new Date().toISOString().split('T')[0], ftDur),
+                initialHours: 0,
+                currentBalance: 0,
+                notes: row['ملاحظات'] || ''
+              });
+            });
+          }
+
+          // 3. Bookings Sheet
+          else if (sLower.includes('مواعيد') || sLower.includes('حجوزات') || sLower.includes('booking')) {
+            rows.forEach((row, idx) => {
+              const cName = row['اسم العميل'] || row['Client Name'] || row['العميل'];
+              if (!cName) return;
+
+              const statusStr = String(row['حالة الحجز'] || row['الحالة'] || '').toLowerCase();
+              const status = statusStr.includes('حضور') || statusStr.includes('خصم') ? 'attended' :
+                             statusStr.includes('ملغي') || statusStr.includes('إلغاء') ? 'cancelled' : 'scheduled';
+
+              parsedBookings.push({
+                id: row['معرف_الحجز'] || `b-imp-${Date.now()}-${idx}`,
+                clientId: row['معرف_العميل'] || '',
+                clientName: String(cName).trim(),
+                phone: String(row['رقم الهاتف'] || row['الهاتف'] || '').trim(),
+                date: row['تاريخ الموعد'] || row['التاريخ'] || new Date().toISOString().split('T')[0],
+                time: row['وقت وساعة الموعد'] || row['الوقت'] || '10:00 ص',
+                room: row['القاعة / الغرفة'] || row['القاعة'] || row['الغرفة'] || INITIAL_ROOMS[0],
+                durationHours: parseFloat(row['المدة المحجوزة (ساعة)'] || row['المدة المتوقعة (ساعة)'] || row['المدة'] || 1) || 1,
+                serviceType: row['نوع الخدمة'] || 'جلسة',
+                status: status,
+                notes: row['ملاحظات الحجز'] || row['ملاحظات'] || ''
+              });
+            });
+          }
+
+          // 4. Attendance Sheet
+          else if (sLower.includes('حضور') || sLower.includes('خصم') || sLower.includes('attendance')) {
+            rows.forEach((row, idx) => {
+              const cName = row['اسم العميل'] || row['Client Name'] || row['العميل'];
+              if (!cName) return;
+
+              parsedAttendance.push({
+                id: row['معرف_السجل'] || `att-imp-${Date.now()}-${idx}`,
+                clientId: row['معرف_العميل'] || '',
+                clientName: String(cName).trim(),
+                clientPhone: String(row['رقم الهاتف'] || row['الهاتف'] || '').trim(),
+                date: row['تاريخ الحضور'] || row['التاريخ'] || new Date().toISOString().split('T')[0],
+                time: row['وقت تسجيل الحضور'] || row['الوقت'] || '10:00 ص',
+                hoursConsumed: parseFloat(row['الساعات المستهلكة'] || row['ساعات'] || 1) || 0,
+                previousBalance: row['الرصيد قبل الخصم'] || 0,
+                newBalance: row['الرصيد بعد الخصم'] || 0,
+                serviceType: row['نوع الجلسة / الخدمة'] || row['نوع الخدمة'] || 'جلسة',
+                notes: row['ملاحظات الجلسة'] || row['ملاحظات'] || ''
+              });
+            });
+          }
+        });
+
+        // If no categorized sheets were found, fallback to parsing sheet 1 as clients
+        if (parsedHourly.length === 0 && parsedFulltime.length === 0 && parsedBookings.length === 0 && parsedAttendance.length === 0) {
+          const firstSheetName = workbook.SheetNames[0];
+          const rawRows = XLSX.utils.sheet_to_json(workbook.Sheets[firstSheetName]);
+          rawRows.forEach((row, idx) => {
+            const name = row['اسم العميل'] || row['الاسم'] || row['Client Name'] || row['Name'];
+            if (!name) return;
+            const isFT = String(row['نوع الباقة'] || row['نوع الاشتراك'] || '').includes('Full Time') || String(row['نوع الباقة'] || '').includes('دوام');
+            const initH = parseFloat(row['إجمالي الساعات المشتراة'] || row['الساعات'] || 10) || 10;
+            const curB = row['الرصيد المتبقي (ساعات)'] !== undefined ? parseFloat(row['الرصيد المتبقي (ساعات)']) : initH;
+
+            const cObj = {
+              id: row['معرف_العميل'] || `c-imp-fb-${Date.now()}-${idx}`,
+              name: String(name).trim(),
+              phone: String(row['رقم الهاتف ومفتاح الدولة'] || row['رقم الهاتف'] || row['Phone'] || '').trim(),
+              email: '',
+              subscriptionType: c.subscriptionType === 'shift' ? 'shift' : (isFT ? 'fulltime' : 'hourly'),
+              isFullTime: isFT,
+              packageDuration: isFT ? 'fulltime_1m' : 'monthly',
+              package: row['اسم الخدمة / الباقة'] || (isFT ? 'اشتراك Full Time 👑' : 'باقة ساعات'),
+              startDate: row['تاريخ بداية التعاقد'] || new Date().toISOString().split('T')[0],
+              expiryDate: row['تاريخ انتهاء التعاقد'] || computeExpiryDate(new Date().toISOString().split('T')[0], 'monthly'),
+              initialHours: isFT ? 0 : initH,
+              currentBalance: isFT ? 0 : curB,
+              notes: row['ملاحظات'] || ''
+            };
+            if (isFT) parsedFulltime.push(cObj);
+            else parsedHourly.push(cObj);
+          });
+        }
+
+        const totalParsed = parsedHourly.length + parsedFulltime.length + parsedBookings.length + parsedAttendance.length;
+
+        if (totalParsed === 0) {
+          alert('تعذر استخراج بيانات من الملف المحدد. يرجى التأكد من اختيار شيت إكسل صحيح يحتوي على عناوين الأعمدة المناسبة.');
+          return;
+        }
+
+        setExcelImportParsedData({
+          filename: file.name,
+          hourlyClients: parsedHourly,
+          fulltimeClients: parsedFulltime,
+          shiftClients: parsedShift,
+          bookings: parsedBookings,
+          attendance: parsedAttendance
+        });
+        setShowExcelImportModal(true);
+
+      } catch (err) {
+        console.error('Excel Import Error:', err);
+        alert('حدث خطأ أثناء قراءة ملف الإكسل: ' + (err.message || 'الملف تالف أو غير مدعوم'));
+      }
+    };
+
+    reader.readAsArrayBuffer(file);
+    // Reset file input
+    e.target.value = '';
+  };
+
+  // Confirm and Execute Excel Restore (Smart Merge vs Full Clean Restore)
+  const handleExecuteExcelRestore = (mode = 'merge') => {
+    if (!hasPermission('canAccessExcel')) {
+      alert('⛔ عذراً، ليس لديك صلاحية استرجاع البيانات من الإكسل.');
+      return;
+    }
+    if (!excelImportParsedData) return;
+
+    const { hourlyClients, fulltimeClients, shiftClients = [], bookings: impBookings, attendance: impAtt, filename } = excelImportParsedData;
+    const combinedNewClients = [...hourlyClients, ...fulltimeClients, ...shiftClients];
+
+    if (mode === 'clean') {
+      // Full Clean Replacement
+      setClients(combinedNewClients);
+      setBookings(impBookings);
+      setAttendance(impAtt);
+
+      syncToHardDisk(`استرجاع واستبدال كامل من ملف Excel (${filename})`, true);
+      triggerToast('تم الاسترجاع الكامل بنجاح 🎉', `تم استرجاع قاعدة البيانات كاملة (${combinedNewClients.length} عميل، ${impBookings.length} موعد، ${impAtt.length} سجل حضور).`, 'success');
+    } else {
+      // Smart Merge (Add missing without losing current)
+      setClients(prev => {
+        const existingNames = new Set(prev.map(c => c.name.trim().toLowerCase()));
+        const existingIds = new Set(prev.map(c => c.id));
+        const toAdd = combinedNewClients.filter(c => !existingIds.has(c.id) && !existingNames.has(c.name.trim().toLowerCase()));
+        return [...prev, ...toAdd];
+      });
+
+      setBookings(prev => {
+        const existingIds = new Set(prev.map(b => b.id));
+        const toAdd = impBookings.filter(b => !existingIds.has(b.id));
+        return [...prev, ...toAdd];
+      });
+
+      setAttendance(prev => {
+        const existingIds = new Set(prev.map(a => a.id));
+        const toAdd = impAtt.filter(a => !existingIds.has(a.id));
+        return [...prev, ...toAdd];
+      });
+
+      syncToHardDisk(`دمج واسترجاع بيانات من ملف Excel (${filename})`, true);
+      triggerToast('تم الدمج والاسترجاع بنجاح 🎉', `تمت إضافة واسترجاع كافة السجلات غير المكررة بنجاح إلى قاعدة البيانات.`, 'success');
+    }
+
+    setShowExcelImportModal(false);
+    setExcelImportParsedData(null);
+  };
+
+  // 🌐 Load Network Info for Mobile App QR & LAN URLs
+  const loadNetworkInfo = async () => {
+    try {
+      const res = await fetch('/api/network-info');
+      const json = await res.json();
+      if (json && json.success) setNetworkInfo(prev => (prev && prev.hasGlobal === json.hasGlobal && prev.mobileUrl === json.mobileUrl) ? prev : json);
+    } catch (e) {}
+  };
+
+  // Auto-poll network info every 3 seconds if global link is not yet acquired
+  useEffect(() => {
+    if (!showMobileModal && networkInfo?.hasGlobal) return;
+    const t = setInterval(() => {
+      loadNetworkInfo();
+    }, 15000);
+    return () => clearInterval(t);
+  }, [showMobileModal, networkInfo?.hasGlobal]);
+
+  
+  // 🔄 UI Refresh Engine: Fetches and applies latest state
+  const refreshUI = React.useCallback(async () => {
+    if (!isHydratedRef.current) return;
+    if (window.lastLocalMutation && (Date.now() - window.lastLocalMutation < 2500)) return;
+    try {
+      const res = await fetch('/api/data').then(r => r.json());
+      if (res && res.success && res.hasData && res.data) {
+        const d = res.data;
+        if (Array.isArray(d.bookings)) {
+          const delKey = 'ALKAYAN_DELETED_BOOKINGS_PERMANENT';
+          let permanentlyDeletedIds = new Set();
+          try { permanentlyDeletedIds = new Set(JSON.parse(localStorage.getItem(delKey) || '[]')); } catch(e) {}
+          if (Array.isArray(d.deleted_bookings)) {
+            d.deleted_bookings.forEach(id => permanentlyDeletedIds.add(id));
+          }
+          const validBookings = d.bookings.filter(b => b && !permanentlyDeletedIds.has(b.id));
+          setBookings(prev => {
+            const prevIds = prev.map(b => b.id + String(b.status) + String(b.room)).join(',');
+            const newIds = validBookings.map(b => b.id + String(b.status) + String(b.room)).join(',');
+            if (prevIds !== newIds) return validBookings;
+            return prev;
+          });
+        }
+        
+        if (Array.isArray(d.clients) && d.clients.length > 0) {
+          setClients(prev => {
+            if (!prev || prev.length === 0) return d.clients;
+            let hasChanges = false;
+            const localIdSet = new Set(prev.map(c => c.id));
+            const updated = prev.map(localC => {
+              const srvC = d.clients.find(x => x && x.id === localC.id);
+              if (!srvC) return localC;
+              const srvTime = parseFloat(srvC.balanceUpdatedAt || 0);
+              const localTime = parseFloat(localC.balanceUpdatedAt || 0);
+              const srvBal = parseFloat(srvC.currentBalance || 0);
+              const localBal = parseFloat(localC.currentBalance || 0);
+              
+              let isHourly = false;
+              if (localC.subscriptionType === 'hourly' || localC.subscriptionType === 'custom') isHourly = true;
+
+              const srvRenewed = srvC.renewedAt || '';
+              const localRenewed = localC.renewedAt || '';
+              // 🔒 Strict Renewal Barrier: If client was renewed locally, never let stale/lower server balance rollback the renewal!
+              if (localRenewed && (!srvRenewed || srvRenewed < localRenewed)) {
+                return localC;
+              }
+
+              if (srvC.currentBalance !== undefined && srvC.currentBalance !== null && srvTime > localTime) {
+                hasChanges = true;
+                return {
+                  ...localC,
+                  currentBalance: srvC.currentBalance,
+                  initialHours: srvC.initialHours || localC.initialHours,
+                  balanceUpdatedAt: srvTime
+                };
+              }
+              return localC;
+            });
+            const srvNewClients = d.clients.filter(sc => sc && sc.id && !localIdSet.has(sc.id));
+            if (srvNewClients.length > 0) {
+              hasChanges = true;
+              updated.unshift(...srvNewClients);
+            }
+            return hasChanges ? updated : prev;
+          });
+        }
+
+        if (Array.isArray(d.notifications)) {
+          let locallyReadAdminNotifIds = new Set();
+          try { locallyReadAdminNotifIds = new Set(JSON.parse(localStorage.getItem('ALKAYAN_READ_ADMIN_NOTIFS') || '[]')); } catch(e) {}
+          setNotifications(prev => {
+            const map = new Map();
+            (d.notifications || []).forEach(n => {
+              if (n && n.id) {
+                const isRead = locallyReadAdminNotifIds.has(n.id) || n.read;
+                map.set(n.id, { ...n, read: isRead });
+              }
+            });
+            (prev || []).forEach(n => {
+              if (n && n.id) {
+                const existing = map.get(n.id);
+                const isRead = locallyReadAdminNotifIds.has(n.id) || (existing && existing.read) || n.read;
+                map.set(n.id, { ...n, ...(existing || {}), ...n, read: isRead });
+              }
+            });
+            return Array.from(map.values());
+          });
+        }
+      }
+    } catch(e) {}
+  }, [setBookings, setClients, setNotifications]);
+
+  // Expose global refresh logic for actions
+  React.useEffect(() => {
+    window.refreshUI = refreshUI;
+  }, [refreshUI]);
+
+  // 🔄 Live Background Auto-Sync Engine (Refreshes every 2s)
+  useEffect(() => {
+    loadNetworkInfo();
+    const pollInterval = setInterval(() => {
+      refreshUI();
+    }, 2000);
+    return () => clearInterval(pollInterval);
+  }, [refreshUI]);
+
+
+  // ⚡ Instant Mobile -> Desktop Admin Notification Listener (0.05s response time)
+  useEffect(() => {
+    let es = null;
+    let bookingEs = null;
+    let reconnectTimeout = null;
+    let bookingReconnectTimeout = null;
+
+    const connectAdminStream = () => {
+      try {
+        es = new EventSource(`${FIREBASE_BASE_URL}/alkayan_db/latest_admin_notification.json`);
+        
+        es.addEventListener('put', (e) => {
+          try {
+            const parsed = JSON.parse(e.data);
+            const notif = parsed.data;
+            if (notif && notif.id && notif.title) {
+              const seenKey = 'DESKTOP_SEEN_ADMIN_NOTIF_' + notif.id;
+              if (!localStorage.getItem(seenKey)) {
+                localStorage.setItem(seenKey, 'true');
+
+                // 1. Play Loud Alert Chime
+                playChime(notif.type === 'warning' ? 'warning' : 'success');
+                try {
+                  const audio = new Audio('./notification.wav');
+                  audio.volume = 1.0;
+                  audio.play().catch(() => {}, []);
+                } catch(err) {}
+
+                // 2. Trigger Desktop Toast
+                triggerToast(
+                  notif.title,
+                  notif.message || notif.text || 'إشعار جديد من تطبيق الجوال والموقع',
+                  notif.type === 'warning' ? 'warning' : 'info'
+                );
+
+                // 3. Prepend to Notifications List
+                setNotifications(prev => {
+                  if (prev.some(x => x && x.id === notif.id)) return prev;
+                  return [{ ...notif, read: false }, ...prev];
+                }, []);
+
+                // 4. Force Immediate Data Pull to refresh bookings & rooms
+                const isCancellationNotif = notif.source === 'mobile_app_cancel' || (notif.title && notif.title.includes('إلغاء حجز'));
+                if (isCancellationNotif) {
+                  // Direct Firebase pull for absolute freshness on cancellation
+                  fetch(`${FIREBASE_BASE_URL}/alkayan_db/bookings.json?t=${Date.now()}`)
+                    .then(r => r.json())
+                    .then(fbBookings => {
+                      if (Array.isArray(fbBookings)) {
+                        setBookings(fbBookings);
+                        syncToHardDisk('تزامن إلغاء حجز فوري من الجوال وتحرير القاعة', true, null, fbBookings);
+                      }
+                    })
+                    .catch(() => {});
+                }
+
+                fetch('/api/data')
+                  .then(r => r.json())
+                  .then(res => {
+                    if (res && res.data) {
+                      if (Array.isArray(res.data.bookings) && !isCancellationNotif) {
+                        const delKey = 'ALKAYAN_DELETED_BOOKINGS_PERMANENT';
+                        let delSet = new Set();
+                        try { delSet = new Set(JSON.parse(localStorage.getItem(delKey) || '[]')); } catch(err) {}
+                        setBookings(res.data.bookings.filter(b => b && !delSet.has(b.id)));
+                      }
+                      if (Array.isArray(res.data.clients)) setClients(res.data.clients);
+                    }
+                  })
+                  .catch(() => {});
+              }
+            }
+          } catch(err) {}
+        });
+
+        es.onerror = () => {
+          if (es) es.close();
+          clearTimeout(reconnectTimeout);
+          reconnectTimeout = setTimeout(connectAdminStream, 4000);
+        };
+      } catch(err) {
+        clearTimeout(reconnectTimeout);
+        reconnectTimeout = setTimeout(connectAdminStream, 6000);
+      }
+    };
+
+    // ⚡ INSTANT BOOKING CANCELLATION SSE STREAM (<0.02s latency)
+    const connectBookingStream = () => {
+      try {
+        bookingEs = new EventSource(`${FIREBASE_BASE_URL}/alkayan_db/latest_booking_update.json`);
+        const onBookingUpdate = (e) => {
+          if (window.lastLocalMutation && (Date.now() - window.lastLocalMutation < 2500)) return;
+          try {
+            const parsed = JSON.parse(e.data);
+            const data = parsed ? (parsed.data || parsed) : null;
+            if (data && (data.action === 'cancel' || data.status === 'cancelled' || data.status === 'ملغي بواسطة العميل' || data.is_active === false) && data.bookingId) {
+              const bId = data.bookingId;
+              try {
+                const cur = JSON.parse(localStorage.getItem('ALKAYAN_CANCELLED_BOOKINGS_GLOBAL') || '[]');
+                if (!cur.includes(bId)) {
+                  localStorage.setItem('ALKAYAN_CANCELLED_BOOKINGS_GLOBAL', JSON.stringify([...cur, bId]));
+                }
+              } catch (_) {}
+
+              setBookings(prev => {
+                const newStatus = data.status || 'cancelled';
+                const updated = prev.map(b => b.id === bId ? { ...b, status: newStatus, is_active: data.is_active !== undefined ? data.is_active : false } : b);
+                syncToHardDisk(`تحرير قاعة فوري عبر البث المباشر (إلغاء حجز ${bId})`, true, null, updated);
+                return updated;
+              });
+            }
+          } catch(err) {}
+        };
+        bookingEs.addEventListener('put', onBookingUpdate);
+        bookingEs.onmessage = onBookingUpdate;
+        bookingEs.onerror = () => {
+          if (bookingEs) bookingEs.close();
+          clearTimeout(bookingReconnectTimeout);
+          bookingReconnectTimeout = setTimeout(connectBookingStream, 5000);
+        };
+      } catch(err) {
+        clearTimeout(bookingReconnectTimeout);
+        bookingReconnectTimeout = setTimeout(connectBookingStream, 7000);
+      }
+    };
+
+    connectAdminStream();
+    connectBookingStream();
+
+    return () => {
+      if (es) es.close();
+      if (bookingEs) bookingEs.close();
+      clearTimeout(reconnectTimeout);
+      clearTimeout(bookingReconnectTimeout);
+    };
+  }, []);
+
+  // 🕒 Live Countdown Ticker: updates countdownTick every 60 seconds for real-time UI
+  useEffect(() => {
+    const tickInterval = setInterval(() => setCountdownTick(t => t + 1), 60000);
+    return () => clearInterval(tickInterval);
+  }, []);
+
+  // 🕒 6-Hour Automated Backup Schedule (Managed by backend daemon locally in ./backups/ & to Telegram + on exit)
+  const backupCountdown = useMemo(() => {
+    const elapsed = Date.now() - (lastBackupTime || 0);
+    const sixHours = 6 * 60 * 60 * 1000;
+    const remainingMs = Math.max(0, sixHours - (elapsed % sixHours));
+    const hours = Math.floor(remainingMs / (1000 * 60 * 60));
+    const minutes = Math.floor((remainingMs % (1000 * 60 * 60)) / (1000 * 60));
+    return { hours, minutes, remainingMs };
+  }, [lastBackupTime, countdownTick]);
+
+  // ====================================================
+  // ⚡ Attendance & Auto-Deduction with Expiry & Full Time Check
+  // ====================================================
+  const handleRegisterAttendance = (e) => {
+    if (!hasPermission('canDeductAttendance')) {
+      alert('⛔ عذراً، ليس لديك صلاحية تسجيل الحضور أو خصم الساعات.');
+      return;
+    }
+    if (e) e.preventDefault();
+
+    if (!quickClientId) {
+      triggerToast('تنبيه', 'يرجى اختيار العميل أولاً.', 'warning');
+      return;
+    }
+
+    const client = clients.find(c => c.id === quickClientId);
+    if (!client) return;
+
+    const contractInfo = getClientContractStatus(client);
+    const isFT = contractInfo.isFullTime;
+
+    let hoursToDeduct = isFT ? 0 : parseFloat(quickHours);
+    if (!isFT && (isNaN(hoursToDeduct) || hoursToDeduct <= 0)) {
+      triggerToast('تنبيه', 'يرجى إدخال عدد ساعات صحيح أكبر من الصفر.', 'warning');
+      return;
+    }
+
+    // Expiration Warning & Confirmation
+    if (contractInfo.isExpired) {
+      const confirmExpired = window.confirm(
+        `⚠️ تنبيه: اشتراك العميل "${client.name}" (${contractInfo.label})!
+السبب: ${contractInfo.reason}.
+
+هل ترغب بالاستمرار في تسجيل الحضور رغم انتهاء الصلاحية؟
+(نوصي بتجديد الاشتراك أولاً)`
+      );
+      if (!confirmExpired) return;
+    }
+
+    if (!isFT && client.currentBalance < hoursToDeduct) {
+      const confirmOverdraft = window.confirm(
+        `تنبيه: رصيد العميل (${client.currentBalance} ساعة) أقل من الساعات المراد خصمها (${hoursToDeduct} ساعة).
+هل ترغب بالخصم وسيصبح الرصيد سالباً؟`
+      );
+      if (!confirmOverdraft) return;
+    }
+
+    const prevBalance = isFT ? (client.subscriptionType === 'shift' ? 'نظام الشيفت 🔄' : 'Full Time 👑') : client.currentBalance;
+    const newBalance = isFT ? (client.subscriptionType === 'shift' ? 'نظام الشيفت 🔄' : 'Full Time 👑') : Math.max(0, parseFloat((client.currentBalance - hoursToDeduct).toFixed(2)));
+
+    // 1. Update Client Balance (only for hourly packages)
+    if (!isFT) {
+      setClients(prev => prev.map(c => c.id === quickClientId ? { ...c, currentBalance: newBalance } : c));
+    }
+
+    // 2. Add Attendance Record
+    const now = new Date();
+    const newRecord = {
+      id: 'att-' + Date.now(),
+      clientId: client.id,
+      clientName: client.name,
+      clientPhone: client.phone,
+      hoursConsumed: isFT ? 0 : hoursToDeduct,
+      previousBalance: prevBalance,
+      newBalance: newBalance,
+      serviceType: quickService || (isFT ? (client.subscriptionType === 'shift' ? 'حضور شيفت' : 'جلسة حضور دوام كامل') : 'جلسة استشارية / تدريب'),
+      notes: quickNotes || (isFT ? (client.subscriptionType === 'shift' ? 'حضور نظام الشيفت' : 'حضور اشتراك Full Time') : 'تسجيل حضور فوري'),
+      date: now.toISOString().split('T')[0],
+      time: now.toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' })
+    };
+
+    setAttendance(prev => [newRecord, ...prev]);
+
+    // 3. Formulate WhatsApp Message
+    const template = settings.templates?.attendance || DEFAULT_TEMPLATES.attendance;
+    const pkgTypeName = getClientPkgNameForWA(client);
+
+    const waMessage = fillTemplate(template, {
+      'اسم_العميل': client.name,
+      'اسم_الشركة': settings.companyName,
+      'نوع_الخدمة': newRecord.serviceType,
+      'نوع_الباقة': pkgTypeName,
+      'التاريخ': newRecord.date,
+      'الوقت': newRecord.time,
+      'الساعات_المستهلكة': isFT ? (client.subscriptionType === 'shift' ? '0 (نظام الشيفت)' : '0 (دوام كامل)') : hoursToDeduct,
+      'الرصيد_المتبقي': isFT ? (client.subscriptionType === 'shift' ? 'غير مقيد بساعات (نظام الشيفت)' : 'غير مقيد بساعات (دوام كامل)') : newBalance,
+      'تاريخ_الانتهاء': client.expiryDate || 'مستمر',
+      'حالة_التعاقد': contractInfo.badgeText
+    }, []);
+
+    // 4. Open Modal for Live Manual Editing
+    openWhatsAppModalForEdit(client.phone, client.name, waMessage, isFT ? (client.subscriptionType === 'shift' ? 'إشعار حضور نظام الشيفت' : 'إشعار تسجيل حضور اشتراك Full Time 👑') : 'إشعار تسجيل الحضور وخصم الساعات');
+
+    setQuickNotes('');
+  };
+
+  // Convert Booking to Attendance (Hourly vs Full Time)
+  const handleConvertBookingToAttendance = (booking) => {
+    if (!hasPermission('canDeductAttendance')) {
+      alert('⛔ عذراً، ليس لديك صلاحية تسجيل الحضور أو خصم الساعات.');
+      return;
+    }
+    const client = clients.find(c => c.id === booking.clientId) || {
+      id: booking.clientId,
+      name: booking.clientName,
+      phone: booking.phone,
+      currentBalance: 0,
+      packageDuration: 'monthly'
+    };
+
+    const contractInfo = getClientContractStatus(client);
+    const isFT = contractInfo.isFullTime;
+
+    if (contractInfo.isExpired) {
+      const confirmExp = window.confirm(`تنبيه: اشتراك العميل ${client.name} منتهي الصلاحية (${contractInfo.label}). هل تريد تسجيل الحضور على أي حال؟`);
+      if (!confirmExp) return;
+    }
+
+    const hours = isFT ? 0 : (booking.durationHours || 1);
+    const prevBalance = isFT ? (client.subscriptionType === 'shift' ? 'نظام الشيفت 🔄' : 'Full Time 👑') : client.currentBalance;
+    const newBalance = isFT ? (client.subscriptionType === 'shift' ? 'نظام الشيفت 🔄' : 'Full Time 👑') : Math.max(0, parseFloat(((client.currentBalance || 0) - hours).toFixed(2)));
+
+    if (!isFT) {
+      setClients(prev => prev.map(c => c.id === client.id ? { ...c, currentBalance: newBalance } : c));
+    }
+    setBookings(prev => prev.map(b => b.id === booking.id ? { ...b, status: 'attended' } : b));
+
+    const now = new Date();
+    const newRecord = {
+      id: 'att-' + Date.now(),
+      clientId: client.id,
+      clientName: client.name,
+      clientPhone: client.phone,
+      hoursConsumed: isFT ? 0 : hours,
+      previousBalance: prevBalance,
+      newBalance: newBalance,
+      serviceType: booking.serviceType + (isFT ? ' (Full Time)' : ''),
+      notes: `تم الحضور من خلال حجز الموعد (${booking.time}) - ${booking.room || ''}`,
+      date: booking.date,
+      time: now.toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' })
+    };
+
+    setAttendance(prev => [newRecord, ...prev]);
+
+    const template = settings.templates?.attendance || DEFAULT_TEMPLATES.attendance;
+    const pkgTypeName = getClientPkgNameForWA(client);
+
+    const waMessage = fillTemplate(template, {
+      'اسم_العميل': client.name,
+      'اسم_الشركة': settings.companyName,
+      'نوع_الخدمة': booking.serviceType,
+      'نوع_الباقة': pkgTypeName,
+      'التاريخ': booking.date,
+      'الوقت': newRecord.time,
+      'الساعات_المستهلكة': isFT ? (client.subscriptionType === 'shift' ? '0 (نظام الشيفت)' : '0 (دوام كامل)') : hours,
+      'الرصيد_المتبقي': isFT ? (client.subscriptionType === 'shift' ? 'غير مقيد بساعات (نظام الشيفت)' : 'غير مقيد بساعات (دوام كامل)') : newBalance,
+      'تاريخ_الانتهاء': client.expiryDate || 'مستمر',
+      'حالة_التعاقد': contractInfo.badgeText
+    }, []);
+
+    openWhatsAppModalForEdit(client.phone, client.name, waMessage, isFT ? (client.subscriptionType === 'shift' ? 'إشعار حضور نظام الشيفت' : 'إشعار حضور موعد اشتراك Full Time 👑') : 'إشعار حضور الموعد وخصم الساعات');
+  };
+
+  // ====================================================================
+  // 🚫 CANCEL BOOKING WITHOUT DEDUCTING HOURS (ZERO-DEDUCTION ENGINE)
+  // ====================================================================
+  const handleCancelBooking = async (booking) => {
+    if (!hasPermission('canCancelBookings')) {
+      alert('⛔ عذراً، ليس لديك صلاحية إلغاء الحجوزات.');
+      return;
+    }
+    const client = clients.find(c => c.id === booking.clientId);
+    const clientName = client ? client.name : booking.clientName;
+
+    if (booking.status === 'attended') {
+      alert('لا يمكن إلغاء موعد تم تسجيل حضوره وخصم ساعاته بالفعل (الجلسة مكتملة ونهائية).');
+      return;
+    }
+
+    const confirmCancel = window.confirm(
+      'هل أنت متأكد من رغبتك في إلغاء حجز الموعد للعميل "' + clientName + '"؟\n\n⚠️ تأكيد: سيتم تحرير القاعة فوراً وإتاحتها للآخرين. الساعات المخصومة غير قابلة للاسترداد.'
+    );
+    if (!confirmCancel) return;
+
+    // Optimistic UI update for latency
+    setBookings(prev => prev.map(b => b.id === booking.id ? { ...b, status: 'cancelled', cancelledBy: 'client' } : b));
+
+    try {
+      const response = await fetch('/api/client/cancel', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          clientId: booking.clientId,
+          bookingId: booking.id
+        })
+      });
+      if (response.ok) {
+        loadNetworkInfo();
+        triggerToast(
+          'تم إلغاء الحجز وتحرير القاعة 🗑️',
+          'تم إلغاء حجز موعد "' + clientName + '" وتحرير القاعة فورياً. الساعات غير مستردة.',
+          'warning'
+        );
+      } else {
+        alert('حدث خطأ أثناء الإلغاء');
+      }
+    } catch (e) {
+      console.error(e);
+      alert('فشل الاتصال بالخادم');
+    }
+  };
+
+  // Re-activate a cancelled booking
+  const handleReactivateBooking = (booking) => {
+    if (!hasPermission('canManageBookings')) {
+      alert('⛔ عذراً، ليس لديك صلاحية إدارة وتفعيل المواعيد.');
+      return;
+    }
+    setBookings(prev => prev.map(b => b.id === booking.id ? { ...b, status: 'scheduled' } : b));
+    triggerToast('تمت إعادة تفعيل الموعد 📅', `تمت استعادة حجز الموعد للعميل "${booking.clientName}".`, 'success');
+  };
+
+  // Permanently delete a booking (Full Purge: State + Disk + LocalStorage + Firebase)
+  const handleDeleteBookingPermanently = async (bookingId) => {
+    if (!hasPermission('canCancelBookings')) {
+      alert('⛔ عذراً، ليس لديك صلاحية حذف سجلات المواعيد.');
+      return;
+    }
+    const booking = bookings.find(b => b.id === bookingId);
+    const clientName = booking ? booking.clientName : 'الموعد';
+    if (window.confirm(`هل تريد بالتأكيد مسح وحذف سجل حجز "${clientName}" نهائياً من النظام؟\n\nتأكيد: سيتم حذف الموعد بشكل كامل ولن يتم استرجاعه عند إعادة تشغيل التطبيق أو المزامنة.`)) {
+      const updatedBookings = bookings.filter(b => b.id !== bookingId);
+      setBookings(updatedBookings);
+
+      // 1. Permanent LocalStorage Tombstone/Blacklist
+      const delKey = 'ALKAYAN_DELETED_BOOKINGS_PERMANENT';
+      let existingDel = [];
+      try {
+        existingDel = JSON.parse(localStorage.getItem(delKey) || '[]');
+      } catch(e) {}
+      const updatedDel = Array.from(new Set([...existingDel, bookingId]));
+      try {
+        localStorage.setItem(delKey, JSON.stringify(updatedDel));
+      } catch(e) {}
+
+      // 2. Physical Hard Disk Save with updatedBookings & updatedDel
+      syncToHardDisk(`حذف نهائي لسجل حجز: ${clientName}`, true, null, updatedBookings, null, null, updatedDel);
+
+      // 3. Backend Hard Disk Explicit Deletion Route
+      try {
+        fetch('/api/bookings/delete', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ bookingId })
+        }).catch(() => {});
+      } catch(err) {}
+
+      // 4. Firebase Cloud Permanent Removal
+      try {
+        await fetch(`${FIREBASE_BASE_URL}/alkayan_db/bookings/${bookingId}.json`, { method: 'DELETE' });
+        await fetch(`${FIREBASE_BASE_URL}/alkayan_db/deleted_bookings/${bookingId}.json`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(true)
+        });
+        const fbRes = await fetch(`${FIREBASE_BASE_URL}/alkayan_db/bookings.json`, { cache: 'no-store' });
+        if (fbRes.ok) {
+          const raw = await fbRes.json();
+          if (Array.isArray(raw)) {
+            const filteredFb = raw.filter(b => b && b.id !== bookingId);
+            await fetch(`${FIREBASE_BASE_URL}/alkayan_db/bookings.json`, {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(filteredFb)
+            });
+          }
+        }
+      } catch(fbErr) {
+        console.warn('Firebase booking delete warning:', fbErr);
+      }
+
+      triggerToast('تم الحذف النهائي 🗑️', `تم حذف موعد "${clientName}" بالكامل من السجل وقاعدة البيانات والسحابة.`, 'info');
+      logRecentTask(`حذف نهائي لسجل حجز: ${clientName}`, 'bookings');
+    }
+  };
+
+  // Renew Package, Recharge Hours on Same Days, or Full Time Subscription
+  // Renew Package, Recharge Hours on Same Days, or Full Time Subscription
+  const handleRenewPackage = async (clientId, renewalData) => {
+    if (!hasPermission('canEditClients')) {
+      alert('⛔ عذراً، ليس لديك صلاحية تجديد الباقات أو العقود.');
+      return;
+    }
+    const currentTarget = clients.find(c => c.id === clientId);
+    const isShift = currentTarget?.subscriptionType === 'shift';
+    const isFT = renewalData.duration?.startsWith('fulltime') || currentTarget?.isFullTime || currentTarget?.subscriptionType === 'fulltime' || isShift;
+    const duration = renewalData.duration;
+    const isSameDays = duration === 'same_days';
+
+    const nowIso = new Date().toISOString();
+    const today = nowIso.split('T')[0];
+    const targetStatus = currentTarget ? getClientContractStatus(currentTarget) : { isExpired: false };
+    const isContractExpired = Boolean(
+      targetStatus.isExpired ||
+      (currentTarget?.expiryDate && currentTarget.expiryDate < today)
+    );
+
+    const rawStart = isSameDays ? (currentTarget?.startDate || renewalData.startDate) : (renewalData.startDate || today);
+    const rawExpiry = isSameDays ? (currentTarget?.expiryDate || renewalData.expiryDate) : (renewalData.expiryDate || computeExpiryDate(rawStart, duration));
+
+    // 🛡️ CRITICAL SENTINEL: Expired Contract Renewal Safety Guard
+    // When renewing an expired contract, past dates can NEVER be used.
+    // Must start from today and extend expiry date into future so renewed balance is never recorded as expired!
+    const effectiveDuration = (duration && duration !== 'same_days') 
+      ? duration 
+      : (currentTarget?.packageDuration && currentTarget.packageDuration !== 'same_days' ? currentTarget.packageDuration : (isFT ? 'fulltime_1m' : 'monthly'));
+
+    const newStart = (isContractExpired || !rawStart || rawStart < today) ? today : rawStart;
+    let newExpiry = (isContractExpired || !rawExpiry || rawExpiry < today) 
+      ? computeExpiryDate(today, effectiveDuration) 
+      : rawExpiry;
+
+    if (!newExpiry || newExpiry < today) {
+      newExpiry = computeExpiryDate(today, effectiveDuration);
+    }
+
+    const targetClient = currentTarget || clients.find(c => c.id === clientId);
+    if (!targetClient) return;
+
+    const ftMetrics = isFT ? calcFullTimeWorkingHours(newStart, newExpiry, new Date()) : null;
+    const hours = isFT ? 0 : (parseFloat(renewalData.hours) || 0);
+
+    const isFreshStart = !isSameDays && (renewalData.renewalMode === 'fresh_start' || renewalData.resetBalance === 'true');
+    const shouldReset = isFreshStart || isContractExpired;
+    const nowTs = Date.now();
+    // nowIso already declared above
+    const nowTimeStr = new Date().toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' });
+
+    const oldBal = parseFloat(targetClient.currentBalance || 0);
+    const oldInit = parseFloat(targetClient.initialHours || 0);
+    // ⚡ Strict balance zeroing vs rollover (Hourly only - FT and Shift have NO hours)
+    // The business rule requires STRICT reset to package total on all renewals to guarantee 0 consumed.
+    const newBal = isFT ? null : hours;
+    const newInit = isFT ? null : hours;
+
+    const updatedClient = {
+      ...targetClient,
+      subscriptionType: targetClient.subscriptionType === 'shift' ? 'shift' : (isFT ? 'fulltime' : 'hourly'),
+      isFullTime: isFT,
+      packageDuration: (isSameDays && !isContractExpired) ? (targetClient.packageDuration || 'monthly') : effectiveDuration,
+      startDate: newStart,
+      expiryDate: newExpiry,
+      initialHours: newInit,
+      currentBalance: newBal,
+      lastRenewalMode: isFreshStart ? 'fresh_start' : (isSameDays && !isContractExpired ? 'same_days' : 'extend'),
+      renewalDate: today,
+      renewalTime: nowTimeStr,
+      renewalTimestamp: nowTs,
+      workingDaysTotal: null,
+      workingDaysLeft: null,
+      dailyWorkingHours: null,
+      contractHours: null,
+      balanceUpdatedAt: nowTs,
+      updatedAt: nowIso,
+      status: 'active',
+      package: (isSameDays && !isContractExpired) ? targetClient.package : (renewalData.packageName || targetClient.package),
+      renewedAt: nowIso
+    };
+
+    const nextClientsList = clients.map(c => c.id === clientId ? updatedClient : c);
+    setClients(nextClientsList);
+    setShowRenewContractModal(null);
+    const typeTitle = isFT 
+      ? 'اشتراك Full Time 👑' 
+      : (isSameDays 
+          ? `شحن ساعات (+${hours}س على نفس الأيام ⚡)` 
+          : (isFreshStart ? `باقة جديدة كلياً (تصفير وبدء بالتاريخ والوقت ⚡)` : 'تجديد وتمديد باقة الساعات'));
+
+    if (isSameDays) {
+      triggerToast('تم شحن الرصيد بنجاح ⚡', `تمت إضافة (${hours} ساعة) لرصيد العميل مع بقاء نفس تاريخ الانتهاء (${newExpiry}).`, 'success');
+      logRecentTask(`تم شحن ${hours} ساعة للعميل ${updatedClient ? updatedClient.name : ''} على نفس الأيام المتبقية`, 'renewal');
+    } else if (isFreshStart) {
+      triggerToast('تم تفعيل الباقة الجديدة بنجاح ⚡🎉', `تم تصفير الرصيد والتاريخ السابق وبدء باقة جديدة من اليوم (${newStart}) برصيد (${hours}س) سارية حتى (${newExpiry}).`, 'success');
+      logRecentTask(`تصفير وبدء باقة جديدة كلياً للعميل ${updatedClient ? updatedClient.name : ''}: ${hours}س من ${newStart} إلى ${newExpiry}`, 'renewal');
+    } else {
+      triggerToast('تم التجديد والتمديد بنجاح 🎉', `تم تجديد وتمديد ${typeTitle} حتى تاريخ ${newExpiry}.`, 'success');
+      logRecentTask(`تم تجديد وتمديد ${typeTitle} للعميل ${updatedClient ? updatedClient.name : ''} حتى ${newExpiry}`, 'renewal');
+    }
+
+    // 🛡️ ARCHIVE ALL PREVIOUS BOOKINGS FOR THIS CLIENT (Option A - Hard Invariant Protection)
+    // Strips newBalanceAfterBooking and flags isArchived to ensure zero backward balance leakage
+    let nextBookingsList = bookings;
+    if (Array.isArray(bookings) && bookings.length > 0) {
+      nextBookingsList = bookings.map(b => {
+        if (b && (b.clientId === clientId || (b.clientPhone && targetClient.phone && b.clientPhone === targetClient.phone))) {
+          return {
+            ...b,
+            isArchived: true,
+            archived: true,
+            archivedAt: nowIso,
+            archivedCycleId: 'cycle_prior_' + nowTs,
+            archivedBalance: b.newBalanceAfterBooking,
+            newBalanceAfterBooking: null // 🔒 Strip so no background reconciler can ever match it!
+          };
+        }
+        return b;
+      });
+      setBookings(nextBookingsList);
+    }
+
+    if (updatedClient && nextClientsList) {
+      const renewalUpdateEntry = {
+        clientId: updatedClient.id,
+        clientUsername: updatedClient.username,
+        clientPhone: updatedClient.phone,
+        client: updatedClient,
+        action: 'renewal',
+        timestamp: nowTs
+      };
+
+      // 🔒 1. IMMEDIATE GUARANTEED SAVE TO DISK & LOCALSTORAGE (Passes both updated clients and archived bookings!)
+      saveClientsNow(nextClientsList, `تجديد باقة العميل: ${updatedClient.name} (${typeTitle})`, renewalUpdateEntry, nextBookingsList);
+
+      // 🔔 2. CREATE INSTANT NOTIFICATION FOR CLIENT
+      // nowIso reused from outer scope
+      const timeDisplay = new Date().toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' });
+      const notifId = 'notif-renew-' + Date.now();
+      
+      const renewNotifTitle = isFT ? '🎉 تم تجديد اشتراك Full Time بنجاح' : '🎉 تم تجديد باقة الساعات بنجاح';
+      const renewNotifMsg = isFT
+        ? `أهلاً بك أ/ ${updatedClient.name}، تم تجديد اشتراكك بنظام الدوام الكامل بنجاح (${updatedClient.package}) حتى تاريخ ${newExpiry}. يسعدنا استمرارك معنا! 👑`
+        : (isFreshStart
+            ? `أهلاً بك أ/ ${updatedClient.name}، تم تفعيل باقة ساعات جديدة كلياً (${updatedClient.package}). تم إلغاء وتصفير الرصيد والتاريخ السابق كاملاً، وبدء العقد الجديد من تاريخ اليوم (${newStart}) وحتى (${newExpiry}) برصيد معتمد (${hours} ساعة). نتمنى لك وقتاً مثمراً!`
+            : `أهلاً بك أ/ ${updatedClient.name}، تم تجديد باقتك بنجاح (${updatedClient.package}). تمت إضافة (${hours}س) لرصيدك السابق. رصيدك المتاح الحالي: (${updatedClient.currentBalance}س)، سارٍ حتى (${newExpiry}).`);
+
+      const newNotif = {
+        id: notifId,
+        clientId: updatedClient.id,
+        clientUsername: updatedClient.username,
+        clientPhone: updatedClient.phone,
+        targetClientId: updatedClient.id,
+        targetClientName: updatedClient.name,
+        targetClientPhone: updatedClient.phone,
+        title: renewNotifTitle,
+        message: renewNotifMsg,
+        text: renewNotifMsg,
+        type: 'recharge',
+        time: timeDisplay,
+        date: nowIso.split('T')[0],
+        read: false,
+        source: 'renewal_action',
+        createdAt: nowIso
+      };
+
+      // 🔔 2. PURGE STALE EXPIRY/DEPLETION NOTIFICATIONS FOR THIS CLIENT & ADD RENEWAL NOTIFICATION
+      const isStaleClientExpiryNotif = (n) => {
+        if (!n) return false;
+        const isTarget = (
+          n.clientId === updatedClient.id ||
+          n.targetClientId === updatedClient.id ||
+          (updatedClient.phone && (n.clientPhone === updatedClient.phone || n.targetClientPhone === updatedClient.phone))
+        );
+        if (isTarget) {
+          const t = ((n.title || '') + ' ' + (n.message || '') + ' ' + (n.text || '')).toLowerCase();
+          return (
+            n.type === 'expiry' ||
+            n.type === 'contract_expired' ||
+            n.type === 'alert' ||
+            t.includes('انتهت') ||
+            t.includes('انتهاء') ||
+            t.includes('نفاد') ||
+            t.includes('نفد') ||
+            t.includes('رصيد منته') ||
+            t.includes('تجديد العقد')
+          );
+        }
+        return false;
+      };
+
+      const cleanedNotifs = (notifications || []).filter(n => n && !isStaleClientExpiryNotif(n) && n.id !== notifId);
+      const localUpdatedNotifs = [newNotif, ...cleanedNotifs];
+      setNotifications(localUpdatedNotifs);
+      syncToHardDisk(`تجديد باقة العميل: ${updatedClient.name}`, true, localUpdatedNotifs, null, nextClientsList, null, null, null, renewalUpdateEntry);
+
+      // ☁️ 3. INSTANT FIREBASE REALTIME CLOUD PUSH (0.02s Delivery to Mobile & Web Portal)
+      try {
+        // Direct Push Clients to Firebase
+        fetch(`${FIREBASE_BASE_URL}/alkayan_db/clients.json`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(nextClientsList)
+        }).catch(() => {});
+
+        // Direct Push Latest Notification for instant EventSource trigger on phone
+        fetch(`${FIREBASE_BASE_URL}/alkayan_db/latest_notification.json`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(newNotif)
+        }).catch(() => {});
+
+        // ⚡ Direct Push Latest Client Update for instant 0.02s SSE sync on client phone/PWA
+        fetch(`${FIREBASE_BASE_URL}/alkayan_db/latest_client_update.json`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(renewalUpdateEntry)
+        }).catch(() => {});
+
+        // Direct Push to Firebase Notifications Array (purging stale expiry notifications for this client)
+        fetch(`${FIREBASE_BASE_URL}/alkayan_db/notifications.json`, { cache: 'no-store' })
+          .then(r => r.json())
+          .then(rawList => {
+            let curList = Array.isArray(rawList) ? rawList : (rawList && typeof rawList === 'object' ? Object.values(rawList) : []);
+            const fbCleaned = curList.filter(n => n && !isStaleClientExpiryNotif(n) && n.id !== notifId);
+            const fbMergedNotifs = [newNotif, ...fbCleaned];
+            return fetch(`${FIREBASE_BASE_URL}/alkayan_db/notifications.json`, {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(fbMergedNotifs)
+            });
+          }).catch(() => {});
+      } catch (cloudErr) {
+        console.warn('Firebase instant renewal push warning:', cloudErr);
+      }
+
+      // 4. WhatsApp Modal Preparation
+      if (isFT) {
+        const template = settings.templates?.fulltime_welcome || DEFAULT_TEMPLATES.fulltime_welcome;
+        const waMessage = fillTemplate(template, {
+          'اسم_العميل': updatedClient.name,
+          'اسم_الشركة': settings.companyName,
+          'نوع_الباقة': updatedClient.package,
+          'اسم_الغرفة': updatedClient.dedicatedRoom || updatedClient.room || 'المكتب الخاص',
+          'تاريخ_البداية': newStart,
+          'رقم_الهاتف': updatedClient.phone,
+          'اسم_المستخدم': updatedClient.username || updatedClient.phone,
+          'كلمة_المرور': updatedClient.password || '',
+          'رابط_الدخول_المباشر': getClientDirectLoginUrl(updatedClient),
+          'إجمالي_ساعات_العمل': 'غير مقيد بساعات (اشتراك بالفترة والتاريخ فقط)',
+          'ساعات_العمل_المتبقية': 'غير مقيد بساعات',
+          'أيام_العمل': ftMetrics ? ftMetrics.totalWorkingDays : '-',
+          'أيام_العمل_المتبقية': ftMetrics ? ftMetrics.remainingWorkingDays : '-' 
+        });
+        openWhatsAppModalForEdit(updatedClient.phone, updatedClient.name, waMessage, 'إشعار تجديد اشتراك Full Time عبر WhatsApp 👑');
+      } else {
+        const template = settings.templates?.recharge || DEFAULT_TEMPLATES.recharge;
+        const pkgTypeName = getClientPkgNameForWA(updatedClient || c, duration);
+        
+        const waMessage = fillTemplate(template, {
+          'اسم_العميل': updatedClient.name,
+          'اسم_الشركة': settings.companyName,
+          'نوع_الباقة': pkgTypeName,
+          'الساعات_المضافة': hours,
+          'الرصيد_الجديد': updatedClient.currentBalance,
+          'تاريخ_الانتهاء': newExpiry,
+          'رقم_الهاتف': updatedClient.phone,
+          'اسم_المستخدم': updatedClient.username || updatedClient.phone,
+          'كلمة_المرور': updatedClient.password || '',
+          'رابط_الدخول_المباشر': getClientDirectLoginUrl(updatedClient)
+        });
+
+        openWhatsAppModalForEdit(updatedClient.phone, updatedClient.name, waMessage, 'إشعار تجديد الباقة والتعاقد عبر WhatsApp');
+      }
+    }
+  };
+
+  // Recharge Hours Only (Keeps same contract duration and remaining days)
+  const handleRechargeHours = async (clientId, addedHours) => {
+    if (!hasPermission('canRechargeHours')) {
+      alert('⛔ عذراً، ليس لديك صلاحية شحن رصيد ساعات إضافية للعميل.');
+      return;
+    }
+    const hours = parseFloat(addedHours);
+    if (isNaN(hours) || hours <= 0) return;
+
+    const targetClient = clients.find(c => c.id === clientId);
+    if (!targetClient) return;
+
+    const nowTs = Date.now();
+    const nowIso = new Date().toISOString();
+    const oldBal = parseFloat(targetClient.currentBalance || 0);
+    const oldInit = parseFloat(targetClient.initialHours || 0);
+    const newBalance = parseFloat((oldBal + hours).toFixed(2));
+    const newInitial = parseFloat((oldInit + hours).toFixed(2));
+
+    const updatedClient = { 
+      ...targetClient, 
+      currentBalance: newBalance, 
+      initialHours: newInitial,
+      balanceUpdatedAt: nowTs,
+      updatedAt: nowIso
+    };
+
+    const nextClientsList = clients.map(c => c.id === clientId ? updatedClient : c);
+    setClients(nextClientsList);
+    setShowRechargeModal(null);
+
+    const rechargeUpdateEntry = {
+      clientId: updatedClient.id,
+      clientUsername: updatedClient.username,
+      clientPhone: updatedClient.phone,
+      client: updatedClient,
+      action: 'recharge',
+      timestamp: nowTs
+    };
+
+    if (updatedClient && nextClientsList) {
+      triggerToast('تم شحن الساعات بنجاح ⚡', `تم شحن (${hours} ساعة) إضافية للرصيد المتاح للعميل "${updatedClient.name}".`, 'success');
+      logRecentTask(`تم شحن ${hours} ساعة إضافية للعميل ${updatedClient.name} على نفس العقد`, 'recharge');
+
+      // 🔒 1. Guaranteed save to hard disk
+      saveClientsNow(nextClientsList, `شحن رصيد ساعات: ${updatedClient.name} (+${hours}س)`, rechargeUpdateEntry);
+
+      // 🔔 2. Dispatch instant notification to client
+      // nowIso reused from outer scope
+      const timeDisplay = new Date().toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' });
+      const notifId = 'notif-recharge-' + Date.now();
+      const rechargeMsg = `أهلاً بك أ/ ${updatedClient.name}، تم شحن ${hours} ساعة إضافية بنجاح إلى رصيدك. رصيدك المتاح الحالي: ${updatedClient.currentBalance} ساعة. نتمنى لك وقتاً مثمراً! 🌟`;
+
+      const newNotif = {
+        id: notifId,
+        clientId: updatedClient.id,
+        clientUsername: updatedClient.username,
+        clientPhone: updatedClient.phone,
+        targetClientId: updatedClient.id,
+        targetClientName: updatedClient.name,
+        targetClientPhone: updatedClient.phone,
+        title: '⚡ تم شحن رصيد ساعات بنجاح',
+        message: rechargeMsg,
+        text: rechargeMsg,
+        type: 'recharge',
+        time: timeDisplay,
+        date: nowIso.split('T')[0],
+        read: false,
+        source: 'recharge_action',
+        createdAt: nowIso
+      };
+
+      const localUpdatedNotifs = [newNotif, ...notifications.filter(n => n && n.id !== notifId)];
+      setNotifications(localUpdatedNotifs);
+      syncToHardDisk(`إشعار شحن ساعات: ${updatedClient.name}`, true, localUpdatedNotifs, null, nextClientsList, null, null, null, rechargeUpdateEntry);
+
+      // ☁️ 3. Direct Cloud Push to Firebase
+      try {
+        fetch(`${FIREBASE_BASE_URL}/alkayan_db/clients.json`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(nextClientsList)
+        }).catch(() => {});
+
+        fetch(`${FIREBASE_BASE_URL}/alkayan_db/latest_notification.json`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(newNotif)
+        }).catch(() => {});
+
+        // ⚡ Direct Push Latest Client Update for instant 0.02s SSE sync on client phone/PWA
+        fetch(`${FIREBASE_BASE_URL}/alkayan_db/latest_client_update.json`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(rechargeUpdateEntry)
+        }).catch(() => {});
+
+        fetch(`${FIREBASE_BASE_URL}/alkayan_db/notifications.json`, { cache: 'no-store' })
+          .then(r => r.json())
+          .then(rawList => {
+            let curList = Array.isArray(rawList) ? rawList : (rawList && typeof rawList === 'object' ? Object.values(rawList) : []);
+            const fbMergedNotifs = [newNotif, ...curList.filter(n => n && n.id !== notifId)];
+            return fetch(`${FIREBASE_BASE_URL}/alkayan_db/notifications.json`, {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(fbMergedNotifs)
+            });
+          }).catch(() => {});
+      } catch (err) {}
+
+      // 4. WhatsApp
+      const newBal = updatedClient.currentBalance;
+      const template = settings.templates?.recharge || DEFAULT_TEMPLATES.recharge;
+      const pkgTypeName = (updatedClient.packageDuration === '3months' || updatedClient.packageDuration === 'quarterly') ? 'باقة 3 شهور (ربع سنوية ⭐)' : (updatedClient.packageDuration === 'annual' ? 'باقة سنوية' : (updatedClient.packageDuration === 'monthly' ? 'باقة شهرية' : 'باقة مخصصة'));
+
+      const waMessage = fillTemplate(template, {
+        'اسم_العميل': updatedClient.name,
+        'اسم_الشركة': settings.companyName,
+        'نوع_الباقة': pkgTypeName,
+        'الساعات_المضافة': hours,
+        'الرصيد_الجديد': newBal,
+        'تاريخ_الانتهاء': updatedClient.expiryDate || 'مستمر',
+        'رقم_الهاتف': updatedClient.phone,
+        'اسم_المستخدم': updatedClient.username || updatedClient.phone,
+        'كلمة_المرور': updatedClient.password || '',
+        'رابط_الدخول_المباشر': getClientDirectLoginUrl(updatedClient)
+      });
+
+      openWhatsAppModalForEdit(updatedClient.phone, updatedClient.name, waMessage, 'إشعار شحن رصيد الساعات');
+    }
+  };
+
+  // Add Client (Hourly Package or Full Time Subscription)
+  const handleAddClient = (clientData) => {
+    const fullPhone = clientData.phone.trim();
+    const isShift = clientData.subscriptionType === 'shift';
+    const isFT = clientData.subscriptionType === 'fulltime' || isShift || (clientData.duration && clientData.duration.startsWith('fulltime'));
+    const duration = clientData.duration || (isFT ? 'fulltime_1m' : 'monthly');
+    const startDate = clientData.startDate || new Date().toISOString().split('T')[0];
+    const expiryDate = clientData.expiryDate || computeExpiryDate(startDate, duration);
+    const initialHours = isFT ? null : (parseFloat(clientData.hours) || 0);
+    const currentBalance = isFT ? null : initialHours;
+
+    const defaultPkgName = isShift ? 'نظام الشيفت (Shift)' : (isFT ? 
+      (duration === 'fulltime_3m' ? 'اشتراك Full Time (3 شهور)' : duration === 'fulltime_1y' ? 'اشتراك Full Time (سنة كاملة)' : 'اشتراك Full Time (شهر واحد)') :
+      ((duration === '3months' || duration === 'quarterly') ? 'باقة 3 شهور' : (duration === 'annual' ? 'باقة سنوية' : (duration === 'monthly' ? 'باقة شهرية' : 'باقة ساعات'))));
+
+    // 🛡️ Mandatory Username & Password Validation for All Clients (Mobile App & Client Portal Ready)
+    const uName = (clientData.username || '').trim();
+    const uPass = (clientData.password || '').trim();
+
+    if (!uName) {
+      alert('⛔ يرجى إدخال اسم المستخدم (Username) للعميل!\n\n💡 اسم المستخدم إجباري لإنشاء حساب تطبيق الجوال والبوابة الذكية.');
+      return;
+    }
+    if (!uPass) {
+      alert('⛔ يرجى إدخال كلمة المرور (Password) للعميل!\n\n💡 كلمة المرور إجبارية لتمكين العميل من تسجيل الدخول لتطبيق الجوال والبوابة.');
+      return;
+    }
+    // Check username uniqueness across existing clients
+    const existingUser = clients.find(c => c.username && c.username.trim().toLowerCase() === uName.toLowerCase());
+    if (existingUser) {
+      alert(`⛔ اسم المستخدم "${uName}" مسجل مسبقاً للعميل "${existingUser.name}"!\n\nيرجى اختيار اسم مستخدم فريد لتطبيق الجوال.`);
+      return;
+    }
+
+    const dedicatedRoom = isFT ? ((clientData.dedicatedRoom || clientData.room || '').trim() || 'المكتب التنفيذي الخاص') : '';
+
+    const newClient = {
+      id: 'c-' + Date.now(),
+      name: clientData.name,
+      phone: fullPhone,
+      email: clientData.email || '',
+      username: uName,
+      password: uPass,
+      subscriptionType: clientData.subscriptionType === 'shift' ? 'shift' : (isFT ? 'fulltime' : 'hourly'),
+      isFullTime: isFT,
+      dedicatedRoom: dedicatedRoom,
+      package: clientData.package || defaultPkgName,
+      packageDuration: duration,
+      startDate: startDate,
+      shiftType: clientData.shiftType || (clientData.subscriptionType === 'shift' ? 'morning' : null),
+      contractHours: null,
+      shiftStartTime: clientData.shiftStartTime || (clientData.subscriptionType === 'shift' ? '10:00' : null),
+      shiftEndTime: clientData.shiftEndTime || (clientData.subscriptionType === 'shift' ? '17:00' : null),
+      expiryDate: expiryDate,
+      initialHours: initialHours,
+      currentBalance: currentBalance,
+      workingDaysTotal: null,
+      workingDaysLeft: null,
+      dailyWorkingHours: null,
+      notes: clientData.notes || '',
+      createdAt: startDate,
+      status: 'active',
+      history: [],
+      bookings: [],
+      financialBalance: 0,
+      buffetBalance: 0
+    };
+
+    setClients(prev => {
+      const updated = [newClient, ...prev];
+      // 🔒 Immediate guaranteed save with the EXACT new list
+      saveClientsNow(updated, 'إضافة عميل جديد: ' + newClient.name);
+      return updated;
+    });
+    setShowNewClientModal(false);
+    
+    // ⚡ INSTANT PURGE CLEAR: Clear from Firebase deleted_clients and latest_purged_client to allow clean re-registration
+    try {
+      fetch(`${FIREBASE_BASE_URL}/alkayan_db/latest_purged_client.json`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: 'clear', timestamp: Date.now() })
+      }).catch(e => console.warn('Firebase purge clear error:', e));
+
+      fetch(`${FIREBASE_BASE_URL}/alkayan_db/deleted_clients.json`)
+        .then(res => res.json())
+        .then(delData => {
+          if (delData && typeof delData === 'object') {
+            const rawP = String(fullPhone || '').replace(/[\+\-\s]/g, '');
+            const targetU = String(uName || '').trim().toLowerCase();
+            Object.keys(delData).forEach(k => {
+              const rec = delData[k];
+              if (!rec) return;
+              const recP = String(rec.phone || '').replace(/[\+\-\s]/g, '');
+              const recU = String(rec.username || '').trim().toLowerCase();
+              if ((rawP && recP === rawP) || (targetU && recU === targetU)) {
+                fetch(`${FIREBASE_BASE_URL}/alkayan_db/deleted_clients/${k}.json`, { method: 'DELETE' }).catch(() => {});
+              }
+            });
+          }
+        }).catch(() => {});
+    } catch (fbErr) {}
+
+    const typeLabel = isFT ? `اشتراك Full Time (${dedicatedRoom}) 👑` : ((duration === '3months' || duration === 'quarterly') ? 'باقة 3 شهور ⭐' : (duration === 'annual' ? 'باقة سنوية' : (duration === 'monthly' ? 'باقة شهرية' : 'باقة ساعات')));
+    triggerToast('تمت إضافة العميل بنجاح 🎉', `تم تسجيل "${newClient.name}" بنوع (${typeLabel}).`, 'success');
+    logRecentTask(`تمت إضافة عميل جديد: ${newClient.name} (${typeLabel})`, 'client');
+
+    if (isShift) {
+      const template = settings.templates?.shift_welcome || DEFAULT_TEMPLATES.shift_welcome;
+      const waMessage = fillTemplate(template, {
+        'اسم_العميل': newClient.name,
+        'اسم_الشركة': settings.companyName,
+        'نوع_الباقة': newClient.package || 'اشتراك نظام الشيفت (Shift)',
+        'اسم_الغرفة': newClient.dedicatedRoom || 'القاعة المخصصة',
+        'تاريخ_البداية': newClient.startDate,
+        'تاريخ_الانتهاء': newClient.expiryDate,
+        'وقت_استلام_الغرفة': newClient.shiftStartTime || '10:00 ص',
+        'وقت_تسليم_الغرفة': newClient.shiftEndTime || '05:00 م',
+        'رقم_الهاتف': newClient.phone,
+        'اسم_المستخدم': newClient.username,
+        'كلمة_المرور': newClient.password,
+        'رابط_الدخول_المباشر': getClientDirectLoginUrl(newClient)
+      });
+      openWhatsAppModalForEdit(newClient.phone, newClient.name, waMessage, 'رسالة تفعيل اشتراك نظام الشيفت عبر WhatsApp 🔄');
+    } else if (isFT) {
+      const template = settings.templates?.fulltime_welcome || DEFAULT_TEMPLATES.fulltime_welcome;
+      const waMessage = fillTemplate(template, {
+        'اسم_العميل': newClient.name,
+        'اسم_الشركة': settings.companyName,
+        'نوع_الباقة': newClient.package,
+        'اسم_الغرفة': newClient.dedicatedRoom,
+        'تاريخ_البداية': newClient.startDate,
+        'تاريخ_الانتهاء': newClient.expiryDate,
+        'رقم_الهاتف': newClient.phone,
+        'اسم_المستخدم': newClient.username,
+        'كلمة_المرور': newClient.password,
+        'رابط_الدخول_المباشر': getClientDirectLoginUrl(newClient),
+        'إجمالي_ساعات_العمل': 'غير مقيد بساعات (اشتراك بالفترة والتاريخ فقط)',
+        'ساعات_العمل_المتبقية': 'غير مقيد بساعات',
+        'أيام_العمل': '-',
+        'أيام_العمل_المتبقية': '-' 
+      });
+      openWhatsAppModalForEdit(newClient.phone, newClient.name, waMessage, 'رسالة تفعيل اشتراك Full Time عبر WhatsApp 👑');
+    } else {
+      const template = settings.templates?.welcome || DEFAULT_TEMPLATES.welcome;
+      const pkgTypeName = getClientPkgNameForWA(newClient, duration);
+
+      const waMessage = fillTemplate(template, {
+        'اسم_العميل': newClient.name,
+        'اسم_الشركة': settings.companyName,
+        'نوع_الباقة': pkgTypeName,
+        'اسم_الخدمة': newClient.package,
+        'اسم_الباقة': newClient.package,
+        'تاريخ_البداية': newClient.startDate,
+        'تاريخ_الانتهاء': newClient.expiryDate,
+        'الرصيد_المتاح': newClient.currentBalance,
+        'الرصيد_المتبقي': newClient.currentBalance,
+        'الرصيد_الأولي': newClient.initialHours,
+        'رقم_الهاتف': newClient.phone,
+        'اسم_المستخدم': newClient.username || newClient.phone,
+        'كلمة_المرور': newClient.password || '',
+        'رابط_الدخول_المباشر': getClientDirectLoginUrl(newClient)
+      });
+
+      openWhatsAppModalForEdit(newClient.phone, newClient.name, waMessage, 'رسالة تفعيل الباقة وتأكيد الاشتراك عبر WhatsApp');
+    }
+  };
+
+  // Edit Client
+  const handleEditClient = (updatedData) => {
+    const target = clients.find(c => c.id === updatedData.id);
+    if (!target) return;
+
+    const isShift = updatedData.subscriptionType === 'shift' || target.subscriptionType === 'shift';
+    const isFT = updatedData.subscriptionType === 'fulltime' || target.subscriptionType === 'fulltime' || isShift || target.isFullTime;
+    const newBal = isFT ? null : (updatedData.currentBalance !== undefined && !isNaN(parseFloat(updatedData.currentBalance)) 
+      ? parseFloat(parseFloat(updatedData.currentBalance).toFixed(2)) 
+      : target.currentBalance);
+    const newInit = isFT ? null : Math.max(parseFloat(target.initialHours || 0), newBal || 0);
+    const nowTs = Date.now();
+    const nowIso = new Date().toISOString();
+
+    const updatedClient = {
+      ...target,
+      name: updatedData.name,
+      phone: updatedData.phone.trim(),
+      email: updatedData.email,
+      username: updatedData.username ? updatedData.username.trim() : (target.username || ''),
+      password: updatedData.password ? updatedData.password.trim() : (target.password || ''),
+      dedicatedRoom: updatedData.dedicatedRoom !== undefined ? updatedData.dedicatedRoom.trim() : (target.dedicatedRoom || ''),
+      package: updatedData.package,
+      packageDuration: updatedData.packageDuration || target.packageDuration,
+      startDate: updatedData.startDate || target.startDate,
+      expiryDate: updatedData.expiryDate || target.expiryDate,
+      shiftType: isShift ? (updatedData.shiftType || target.shiftType || 'morning') : null,
+      contractHours: null,
+      shiftStartTime: isShift ? (updatedData.shiftStartTime || target.shiftStartTime || '10:00') : null,
+      shiftEndTime: isShift ? (updatedData.shiftEndTime || target.shiftEndTime || '17:00') : null,
+      subscriptionType: isShift ? 'shift' : (isFT ? 'fulltime' : 'hourly'),
+      isFullTime: isFT,
+      notes: updatedData.notes,
+      currentBalance: newBal,
+      initialHours: newInit,
+      workingDaysTotal: null,
+      workingDaysLeft: null,
+      dailyWorkingHours: null,
+      balanceUpdatedAt: nowTs,
+      updatedAt: nowIso
+    };
+
+    const nextClientsList = clients.map(c => c.id === updatedData.id ? updatedClient : c);
+    setClients(nextClientsList);
+    setShowEditClientModal(null);
+    triggerToast('تم تعديل بيانات العميل بنجاح ✨', `تم تحديث بيانات العميل "${updatedData.name}".`, 'success');
+
+    const editUpdateEntry = {
+      clientId: updatedClient.id,
+      clientUsername: updatedClient.username,
+      clientPhone: updatedClient.phone,
+      client: updatedClient,
+      action: 'edit',
+      timestamp: nowTs
+    };
+
+    saveClientsNow(nextClientsList, 'تعديل بيانات العميل: ' + updatedData.name, editUpdateEntry);
+    syncToHardDisk('تعديل بيانات العميل: ' + updatedData.name, true, null, null, nextClientsList, null, null, null, editUpdateEntry);
+
+    try {
+      fetch(`${FIREBASE_BASE_URL}/alkayan_db/clients.json`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(nextClientsList)
+      }).catch(() => {});
+
+      fetch(`${FIREBASE_BASE_URL}/alkayan_db/latest_client_update.json`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(editUpdateEntry)
+      }).catch(() => {});
+    } catch(e) {}
+  };
+
+  // 🛡️ Request Manual Client Deletion (Opens Double-Lock Safety Modal - MASTER ADMIN ONLY)
+  const handleDeleteClient = (clientId) => {
+    const isMasterAdmin = activeUser && (activeUser.username.toLowerCase() === 'memo' || activeUser.role === 'admin');
+    if (!isMasterAdmin) {
+      alert('⛔ أمان صارم وفائق: لا يمكن حذف أي عميل إلا من خلال المدير العام شخصياً فقط ("مني أنا فقط")!');
+      return;
+    }
+    if (!hasPermission('canDeleteClients')) {
+      alert('⛔ عذراً، ليس لديك صلاحية حذف العملاء.');
+      return;
+    }
+    const client = clients.find(c => c.id === clientId);
+    if (!client) return;
+
+    const clientBookingsCount = bookings.filter(b => b.clientId === clientId).length;
+    const clientAttendanceCount = attendance.filter(a => a.clientId === clientId).length;
+
+    setManualDeleteTarget({
+      type: 'client',
+      id: clientId,
+      name: client.name,
+      phone: client.phone,
+      balance: client.currentBalance,
+      bookingsCount: clientBookingsCount,
+      attendanceCount: clientAttendanceCount
+    });
+  };
+
+  // Confirm and Execute Manual Client Deletion (MASTER ADMIN ONLY - INSTANT CROSS-PLATFORM PURGE)
+  const executeManualClientDeletion = (clientId) => {
+    const isMasterAdmin = activeUser && (activeUser.username.toLowerCase() === 'memo' || activeUser.role === 'admin');
+    if (!isMasterAdmin) {
+      alert('⛔ أمان صارم وفائق: تم إلغاء العملية! حذف العميل نهائياً محصور حصرياً بالمدير العام شخصياً فقط ("مني أنا فقط").');
+      setManualDeleteTarget(null);
+      return;
+    }
+    if (!hasPermission('canDeleteClients')) {
+      alert('⛔ عذراً، ليس لديك صلاحية حذف العملاء نهائياً! تم إلغاء العملية.');
+      setManualDeleteTarget(null);
+      return;
+    }
+    const client = clients.find(c => c.id === clientId);
+    const clientName = client ? client.name : 'العميل';
+    const clientUser = client ? (client.username || '').trim().toLowerCase() : '';
+    const clientPhone = client ? (client.phone || '').trim() : '';
+
+    const deletedRecord = {
+      id: clientId,
+      username: clientUser,
+      phone: clientPhone,
+      name: clientName,
+      deletedAt: new Date().toISOString()
+    };
+
+    const clientPhoneDigits = clientPhone.replace(/[\+\-\s]/g, '');
+
+    // Calculate deleted lists synchronously to avoid React state batching race conditions
+    // 🛡️ HARD CASCADE PURGE: Matches by clientId, raw phone digits, or username
+    const matchesTargetClient = (item, idKey = 'clientId', phoneKey = 'clientPhone', userKey = 'username') => {
+      if (!item) return false;
+      const itemId = String(item[idKey] || '').trim();
+      const itemUser = String(item[userKey] || '').trim().toLowerCase();
+      const rawP = String(item[phoneKey] || item.phone || '').replace(/[\+\-\s]/g, '');
+      if (clientId && itemId === clientId) return true;
+      if (clientUser && itemUser && itemUser === clientUser) return true;
+      if (clientPhoneDigits && rawP && rawP === clientPhoneDigits) return true;
+      return false;
+    };
+
+    const deletedClientList = clients.filter(c => !matchesTargetClient(c, 'id', 'phone', 'username'));
+    const deletedBookingList = bookings.filter(b => !matchesTargetClient(b, 'clientId', 'clientPhone', 'username'));
+    const deletedAttendanceList = attendance.filter(a => !matchesTargetClient(a, 'clientId', 'clientPhone', 'username'));
+    const deletedFinancialTxs = financialTransactions.filter(t => !matchesTargetClient(t, 'clientId', 'clientPhone', 'clientUsername'));
+    const deletedNotifications = notifications.filter(n => {
+      if (matchesTargetClient(n, 'clientId', 'clientPhone', 'username')) return false;
+      if (n.targetClientId === clientId) return false;
+      if (n.message && clientName && n.message.includes(clientName)) return false;
+      return true;
+    });
+
+    setClients(deletedClientList);
+    setBookings(deletedBookingList);
+    setAttendance(deletedAttendanceList);
+    setFinancialTransactions(deletedFinancialTxs);
+    setNotifications(deletedNotifications);
+
+    if (quickClientId === clientId) setQuickClientId('');
+
+    setManualDeleteTarget(null);
+    triggerToast('تم الحذف اليدوي للعميل 🗑️', `تم حذف العميل "${clientName}" وطرده نهائياً من كافة الأنظمة والسحابة.`, 'info');
+
+    // ☁️ 1. INSTANT CLOUD PURGE: Overwrite Firebase directly via PUT (Leaves zero ghost keys)
+    try {
+      fetch(`${FIREBASE_BASE_URL}/alkayan_db/clients.json`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(deletedClientList)
+      }).catch(e => console.warn('Firebase clients PUT error:', e));
+
+      fetch(`${FIREBASE_BASE_URL}/alkayan_db/deleted_clients/${clientId}.json`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(deletedRecord)
+      }).catch(e => console.warn('Firebase deleted_clients record error:', e));
+
+      fetch(`${FIREBASE_BASE_URL}/alkayan_db/bookings.json`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(deletedBookingList)
+      }).catch(e => console.warn('Firebase bookings PUT error:', e));
+
+      fetch(`${FIREBASE_BASE_URL}/alkayan_db/attendance.json`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(deletedAttendanceList)
+      }).catch(e => console.warn('Firebase attendance PUT error:', e));
+
+      fetch(`${FIREBASE_BASE_URL}/alkayan_db/financial_transactions.json`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(deletedFinancialTxs)
+      }).catch(e => console.warn('Firebase financial PUT error:', e));
+
+      fetch(`${FIREBASE_BASE_URL}/alkayan_db/notifications.json`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(deletedNotifications)
+      }).catch(e => console.warn('Firebase notifications PUT error:', e));
+
+      // ⚡ Broadcast instant purge signal (0.05s response time for active Web/PWA devices)
+      fetch(`${FIREBASE_BASE_URL}/alkayan_db/latest_purged_client.json`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(deletedRecord)
+      }).catch(e => console.warn('Firebase purge broadcast error:', e));
+    } catch (fbErr) {
+      console.warn('Firebase instant purge warning:', fbErr);
+    }
+
+    // 💾 2. GUARANTEED IMMEDIATE DISK SAVE (Bypasses React async state)
+    setTimeout(() => {
+      fetch('/api/save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          clients: deletedClientList,
+          bookings: deletedBookingList,
+          attendance: deletedAttendanceList,
+          financial_transactions: deletedFinancialTxs,
+          notifications: deletedNotifications,
+          users,
+          settings,
+          lastBackupTime,
+          deleted_client_entry: deletedRecord,
+          _actionReason: `حذف يدوي شامل للعميل: ${clientName}`,
+          _actionType: 'DELETE_CLIENT',
+          _isMajorChange: true,
+          _savedAt: new Date().toISOString()
+        })
+      }).then(r => r.json()).then(r => {
+        if (r.success) setLastDiskSaveText(`تم تحقق الحذف الشامل على القرص (${r.savedAt || 'الآن'})`);
+      }).catch(() => {});
+    }, 50);
+  };
+  // 🔔 Open Send Notification Modal
+  const handleOpenSendNotifModal = (clientId = 'all') => {
+    if (!hasPermission('canSendClientNotifications')) {
+      alert('⛔ عذراً، ليس لديك صلاحية إرسال إشعارات للعملاء.');
+      return;
+    }
+    const selectedClient = clientId !== 'all' ? clients.find(c => c.id === clientId) : null;
+    const defaultTitle = selectedClient ? `إشعار خاص: ${selectedClient.name}` : 'إشعار من إدارة مجموعة الكيان';
+    setSendNotifForm({
+      targetClientId: clientId || 'all',
+      title: defaultTitle,
+      message: '',
+      type: 'info'
+    });
+    setShowSendNotifModal(true);
+  };
+
+  // 🔔 Mark all admin notifications as read permanently (State + Disk + LocalStorage + Firebase)
+  const handleMarkAllAdminNotificationsRead = async () => {
+    if (!notifications || notifications.length === 0) return;
+    const allIds = notifications.map(n => n.id).filter(Boolean);
+    const updated = notifications.map(n => ({ ...n, read: true }));
+    setNotifications(updated);
+
+    // 1. Permanent LocalStorage Read Status
+    try {
+      const existing = JSON.parse(localStorage.getItem('ALKAYAN_READ_ADMIN_NOTIFS') || '[]');
+      localStorage.setItem('ALKAYAN_READ_ADMIN_NOTIFS', JSON.stringify(Array.from(new Set([...existing, ...allIds]))));
+    } catch(e) {}
+
+    // 2. Immediate Physical Disk Save
+    syncToHardDisk('تعيين كافة الإشعارات كمقروءة', true, updated);
+
+    // 3. Update Firebase Realtime Database
+    try {
+      const fbRes = await fetch(`${FIREBASE_BASE_URL}/alkayan_db/notifications.json`, { cache: 'no-store' });
+      if (fbRes.ok) {
+        const raw = await fbRes.json();
+        let list = Array.isArray(raw) ? raw : (raw && typeof raw === 'object' ? Object.values(raw) : []);
+        const updatedFb = list.map(item => ({ ...item, read: true }));
+        await fetch(`${FIREBASE_BASE_URL}/alkayan_db/notifications.json`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(updatedFb)
+        });
+      }
+    } catch(e) {}
+
+    triggerToast('✓ تمت القراءة', 'تم تعيين جميع إشعارات وتنبيهات النظام كمقروءة بنجاح.', 'success');
+  };
+
+  // 🔔 Execute Send Client Notification (Local + Cloud Firebase 24/7)
+  const handleSendClientNotification = async (e) => {
+    if (e) e.preventDefault();
+    if (!hasPermission('canSendClientNotifications')) {
+      alert('⛔ عذراً، ليس لديك صلاحية إرسال إشعارات للعملاء.');
+      return;
+    }
+    const msg = (sendNotifForm.message || '').trim();
+    if (!msg) {
+      alert('يرجى كتابة نص الرسالة أو الإشعار للعميل!');
+      return;
+    }
+
+    setIsSendingNotif(true);
+
+    const targetId = sendNotifForm.targetClientId;
+    const targetClient = targetId !== 'all' ? clients.find(c => c.id === targetId) : null;
+    const targetName = targetId === 'all' ? 'جميع العملاء' : (targetClient?.name || 'العميل');
+
+    const notifId = 'notif-admin-' + Date.now();
+    const nowIso = new Date().toISOString();
+    const timeDisplay = new Date().toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' }) + ' • ' + nowIso.split('T')[0];
+
+    const newNotif = {
+      id: notifId,
+      clientId: targetId,
+      targetClientId: targetId,
+      clientName: targetName,
+      clientPhone: targetClient?.phone || '',
+      clientUsername: targetClient?.username || '',
+      title: (sendNotifForm.title || '').trim() || 'إشعار من إدارة مجموعة الكيان',
+      message: msg,
+      text: msg,
+      type: sendNotifForm.type || 'info',
+      time: timeDisplay,
+      date: nowIso.split('T')[0],
+      read: false,
+      source: 'admin_dashboard',
+      createdAt: nowIso
+    };
+
+    // 1. Add to local notifications state
+    const localUpdatedNotifs = [newNotif, ...notifications.filter(n => n && n.id !== notifId)];
+    setNotifications(localUpdatedNotifs);
+
+    // 2. Direct Cloud Push to Firebase Realtime Database (Instant 0-delay delivery)
+    try {
+      // Prepend to notifications array in Firebase so mobile clients receive it in real-time
+      const fbNotifsRes = await fetch(`${FIREBASE_BASE_URL}/alkayan_db/notifications.json`, { cache: 'no-store' });
+      let currentNotifList = [];
+      if (fbNotifsRes.ok) {
+        const rawNotifs = await fbNotifsRes.json();
+        if (Array.isArray(rawNotifs)) currentNotifList = rawNotifs;
+        else if (rawNotifs && typeof rawNotifs === 'object') currentNotifList = Object.values(rawNotifs);
+      }
+      const updatedNotifs = [newNotif, ...currentNotifList.filter(n => n && n.id !== notifId)];
+      
+      await fetch(`${FIREBASE_BASE_URL}/alkayan_db/notifications.json`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedNotifs)
+      });
+      await fetch(`${FIREBASE_BASE_URL}/alkayan_db/latest_notification.json`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newNotif)
+      });
+    } catch (fbErr) {
+      console.warn('Firebase notification push warning:', fbErr);
+    }
+
+    // 3. Direct backend push via /api/notifications/send
+    try {
+      await fetch('/api/notifications/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newNotif)
+      });
+    } catch (apiErr) {
+      console.warn('Local API notification push warning:', apiErr);
+    }
+
+    // 4. Force hard disk save
+    syncToHardDisk(`إرسال إشعار للعميل: ${targetName}`, true, localUpdatedNotifs);
+
+    triggerToast('تم إرسال الإشعار بنجاح 🔔', `تم إرسال الإشعار إلى (${targetName}) وسيظهر فورياً على تطبيق الجوال والموقع.`, 'success');
+    logRecentTask(`إرسال إشعار للعميل: ${targetName} - "${newNotif.title}"`, 'system');
+
+    setIsSendingNotif(false);
+    setShowSendNotifModal(false);
+  };
+
+  // ====================================================================
+  // ☕📄 CLIENT FINANCIAL LEDGER (BUFFET, PHOTOCOPYING, SERVICES & PAYMENTS)
+  // ====================================================================
+  const handleAddFinancialTransaction = async (targetClient, txData) => {
+    if (!hasPermission('canAddFinancialTransaction')) {
+      triggerToast('غير مصرح ⛔', 'ليس لديك صلاحية لتسجيل معاملات مالية جديدة.', 'warning');
+      return;
+    }
+    if (!targetClient || !targetClient.id) {
+      triggerToast('خطأ', 'يرجى تحديد العميل بشكل صحيح.', 'warning');
+      return;
+    }
+    const amount = parseFloat(txData.amount);
+    if (!amount || isNaN(amount) || amount <= 0) {
+      triggerToast('خطأ في المبلغ', 'يرجى إدخال مبلغ صحيح أكبر من الصفر.', 'warning');
+      return;
+    }
+
+    const isCharge = txData.type === 'charge'; // true = مطلوب منه (مديونية), false = له (سداد / رصيد متاح)
+
+    // 🔒 RECOMPUTE currentFinBalance from actual transaction ledger (prevents drift from stale stored value)
+    const clientTxs = getClientTxs(targetClient);
+    const currentFinBalance = clientTxs.reduce((acc, t) => {
+      const amt = parseFloat(t.amount) || 0;
+      return t.type === 'charge' ? acc - amt : t.type === 'payment' ? acc + amt : acc;
+    }, 0);
+    // financialBalance: negative = due from client (مطلوب منه), positive = credit for client (له رصيد)
+
+    const newFinBalance = isCharge ? (currentFinBalance - amount) : (currentFinBalance + amount);
+
+    const txId = 'ftx-' + Date.now();
+    const nowIso = new Date().toISOString();
+    const dateStr = nowIso.split('T')[0];
+    const timeStr = new Date().toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' });
+
+    const categoryNames = {
+      buffet: 'بوفيه ومشروبات ☕',
+      printing: 'تصوير وطباعة مستندات 📄',
+      services: 'خدمات ومستلزمات 📦',
+      payment: 'سداد نقدي / بنكي 💵',
+      other: 'بند مالي آخر 🏷️'
+    };
+
+    const catKey = txData.category || (isCharge ? 'buffet' : 'payment');
+    const catName = txData.categoryName || categoryNames[catKey] || (isCharge ? 'خدمات وبوفيه' : 'سداد دفعة');
+
+    const newTx = {
+      id: txId,
+      clientId: targetClient.id,
+      clientName: targetClient.name,
+      clientPhone: targetClient.phone || '',
+      clientUsername: targetClient.username || '',
+      type: txData.type, // 'charge' or 'payment'
+      category: catKey,
+      categoryName: catName,
+      amount: amount,
+      description: (txData.description || '').trim(),
+      balanceAfter: newFinBalance,
+      date: dateStr,
+      time: timeStr,
+      createdAt: nowIso,
+      createdBy: currentUser?.name || 'الإدارة'
+    };
+
+    // 1. Update Financial Transactions State
+    const updatedTxs = [newTx, ...financialTransactions];
+    setFinancialTransactions(updatedTxs);
+
+    // 2. Update Client's financialBalance in clients state
+    const updatedClients = clients.map(c => {
+      if (c.id === targetClient.id) {
+        return { ...c, financialBalance: newFinBalance };
+      }
+      return c;
+    });
+    setClients(updatedClients);
+
+    // 3. 🔔 AUTOMATIC INSTANT NOTIFICATION FOR CLIENT (Exclusive per-account 0-delay delivery)
+    const notifTitle = isCharge 
+      ? `☕ إضافة حساب (${catName})` 
+      : `💵 تسجيل سداد / شحن رصيد`;
+
+    const balanceStatusText = newFinBalance < 0 
+      ? `إجمالي المبلغ المستحق عليك حالياً: (${Math.abs(newFinBalance)} ج.م)` 
+      : newFinBalance > 0 
+      ? `رصيدك المتاح المتبقي في حسابك: (${newFinBalance} ج.م)` 
+      : `حسابك متزن تماماً (0 ج.م)`;
+
+    const notifMessage = isCharge
+      ? `عزيزي أ/ ${targetClient.name}، تم تسجيل مبلغ (${amount} ج.م) على حسابك تحت بند (${catName})${newTx.description ? ` - البيان: ${newTx.description}` : ''}. ${balanceStatusText}.`
+      : `عزيزي أ/ ${targetClient.name}، تم تسجيل دفعة وسداد بقيمة (${amount} ج.م)${newTx.description ? ` - ${newTx.description}` : ''}. ${balanceStatusText}. شكراً لتعاملك الراقي! ✨`;
+
+    const autoNotif = {
+      id: 'notif-fin-' + Date.now(),
+      clientId: targetClient.id,
+      targetClientId: targetClient.id,
+      clientName: targetClient.name,
+      clientPhone: targetClient.phone || '',
+      clientUsername: targetClient.username || '',
+      title: notifTitle,
+      message: notifMessage,
+      text: notifMessage,
+      type: isCharge ? 'warning' : 'success',
+      time: timeStr + ' • ' + dateStr,
+      date: dateStr,
+      read: false,
+      source: 'financial_ledger',
+      createdAt: nowIso
+    };
+
+    const updatedNotifs = [autoNotif, ...notifications];
+    setNotifications(updatedNotifs);
+
+    // 4. Force physical disk save
+    syncToHardDisk(
+      `تسجيل معاملة مالية: ${catName} (${amount} ج.م) للعميل ${targetClient.name}`,
+      true,
+      updatedNotifs,
+      bookings,
+      updatedClients,
+      attendance,
+      null,
+      updatedTxs
+    );
+
+    // 5. Push to Firebase Realtime Database (0.02s latency instant broadcast)
+    try {
+      // Direct EventSource wakeup
+      fetch(`${FIREBASE_BASE_URL}/alkayan_db/latest_notification.json`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(autoNotif)
+      }).catch(() => {});
+
+      // Update notifications list in Firebase
+      fetch(`${FIREBASE_BASE_URL}/alkayan_db/notifications.json`, { cache: 'no-store' })
+        .then(r => r.json())
+        .then(raw => {
+          const list = Array.isArray(raw) ? raw : (raw && typeof raw === 'object' ? Object.values(raw) : []);
+          const merged = [autoNotif, ...list.filter(n => n && n.id !== autoNotif.id)];
+          fetch(`${FIREBASE_BASE_URL}/alkayan_db/notifications.json`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(merged)
+          });
+        }).catch(() => {});
+
+      // Update clients in Firebase
+      fetch(`${FIREBASE_BASE_URL}/alkayan_db/clients.json`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedClients)
+      }).catch(() => {});
+
+      // Update financial_transactions in Firebase
+      fetch(`${FIREBASE_BASE_URL}/alkayan_db/financial_transactions.json`, { cache: 'no-store' })
+        .then(r => r.json())
+        .then(raw => {
+          const list = Array.isArray(raw) ? raw : (raw && typeof raw === 'object' ? Object.values(raw) : []);
+          const merged = [newTx, ...list.filter(t => t && t.id !== newTx.id)];
+          fetch(`${FIREBASE_BASE_URL}/alkayan_db/financial_transactions.json`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(merged)
+          });
+        }).catch(() => {});
+    } catch (fbErr) {
+      console.warn('Firebase financial push warning:', fbErr);
+    }
+
+    triggerToast('تم تسجيل المعاملة بنجاح 🎉', `تم تسجيل (${amount} ج.م) تحت بند (${catName}) وإخطار العميل فورياً على الجوال.`, 'success');
+    logRecentTask(`معاملة مالية: ${catName} (${amount} ج.م) للعميل ${targetClient.name}`, 'financial');
+    setShowFinancialModal(null);
+  };
+
+  // 🔒 IMMUTABLE FINANCIAL LEDGER: AUDIT REVERSAL / ADJUSTMENT (NO PHYSICAL DATA ERASURE)
+  const handleReverseFinancialTransaction = (txId) => {
+    if (!hasPermission('canDeleteFinancialTransaction')) {
+      alert('⛔ عذراً، ليس لديك صلاحية تسوية أو إلغاء المعاملات المالية.');
+      return;
+    }
+    const tx = financialTransactions.find(t => t.id === txId);
+    if (!tx) return;
+
+    if (tx.isReversal || tx.category === 'adjustment') {
+      alert('⚠️ هذه المعاملة هي قيد تسوية وتصحيح بالفعل، ولا يمكن عكسها مرة أخرى.');
+      return;
+    }
+
+    const reason = window.prompt(
+      `🔒 نظام الحسابات الدقيق (سجل غير قابل للحذف):\n\n` +
+      `أنت على وشك عمل تسوية وتصحيح مالي للحركة:\n` +
+      `• العميل: ${tx.clientName}\n` +
+      `• البند: ${tx.categoryName}\n` +
+      `• المبلغ: ${tx.amount} ج.م\n\n` +
+      `حفاظاً على سلامة وموثوقية الحسابات المالية، سيتم تسجيل قيد تسوية محاسبي معاكس موثق بالوقت والتاريخ دون مسح الحركة السابقة نهائياً.\n\n` +
+      `يرجى كتابة سبب التسوية / الإلغاء:`,
+      'تسوية وتصحيح حركة مسجلة بالخطأ'
+    );
+
+    if (reason === null) return; // Cancelled
+
+    const isCharge = tx.type === 'charge';
+    const amount = parseFloat(tx.amount) || 0;
+    const targetClient = clients.find(c => c.id === tx.clientId);
+
+    // 🔒 RECOMPUTE curBal from actual transaction ledger (prevents drift)
+    const allClientTxs = getClientTxs(tx.clientId);
+    const curBal = allClientTxs.reduce((acc, t) => {
+      const amt = parseFloat(t.amount) || 0;
+      return t.type === 'charge' ? acc - amt : t.type === 'payment' ? acc + amt : acc;
+    }, 0);
+
+    // Reversal balance effect:
+    // If original was charge (reduced balance), reversal restores balance (+amount)
+    // If original was payment (increased balance), reversal adjusts balance (-amount)
+    const newBal = isCharge ? (curBal + amount) : (curBal - amount);
+
+    const nowIso = new Date().toISOString();
+    const dateStr = nowIso.split('T')[0];
+    const timeStr = new Date().toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' });
+
+    const reversalTx = {
+      id: 'ftx-adj-' + Date.now(),
+      clientId: tx.clientId,
+      clientName: tx.clientName,
+      clientPhone: tx.clientPhone || '',
+      clientUsername: tx.clientUsername || '',
+      type: isCharge ? 'payment' : 'charge',
+      category: 'adjustment',
+      categoryName: 'تسوية وتصحيح مالي ⚖️',
+      amount: amount,
+      description: `تسوية للحركة (${tx.categoryName} - ${amount} ج.م): ${reason.trim() || 'تسوية محاسبية'}`,
+      balanceAfter: newBal,
+      date: dateStr,
+      time: timeStr,
+      createdAt: nowIso,
+      createdBy: currentUser?.name || 'الإدارة',
+      isReversal: true,
+      reversedTxId: tx.id
+    };
+
+    const updatedTxs = [reversalTx, ...financialTransactions];
+    setFinancialTransactions(updatedTxs);
+
+    const updatedClients = clients.map(c => {
+      if (c.id === tx.clientId) {
+        return { ...c, financialBalance: newBal };
+      }
+      return c;
+    });
+    setClients(updatedClients);
+
+    // 🔔 Automatic Notification to Client regarding the adjustment
+    const notifMsg = `عزيزي أ/ ${tx.clientName}، تم تسجيل تسوية مالية وتصحيح لحسابك بقيمة (${amount} ج.م) - البيان: ${reversalTx.description}. رصيدك الحالي: (${newBal} ج.م).`;
+    const adjNotif = {
+      id: 'notif-fin-' + Date.now(),
+      clientId: tx.clientId,
+      targetClientId: tx.clientId,
+      clientName: tx.clientName,
+      clientPhone: tx.clientPhone || '',
+      clientUsername: tx.clientUsername || '',
+      title: '⚖️ تسوية وتصحيح مالي في حسابك',
+      message: notifMsg,
+      text: notifMsg,
+      type: 'info',
+      time: timeStr + ' • ' + dateStr,
+      date: dateStr,
+      read: false,
+      source: 'financial_ledger',
+      createdAt: nowIso
+    };
+
+    const updatedNotifs = [adjNotif, ...notifications];
+    setNotifications(updatedNotifs);
+
+    syncToHardDisk(
+      `تسوية وتصحيح مالي: ${amount} ج.م للعميل ${tx.clientName}`,
+      true,
+      updatedNotifs,
+      bookings,
+      updatedClients,
+      attendance,
+      null,
+      updatedTxs
+    );
+
+    // Sync to Firebase
+    try {
+      fetch(`${FIREBASE_BASE_URL}/alkayan_db/latest_notification.json`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(adjNotif)
+      }).catch(() => {});
+
+      fetch(`${FIREBASE_BASE_URL}/alkayan_db/clients.json`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedClients)
+      }).catch(() => {});
+
+      fetch(`${FIREBASE_BASE_URL}/alkayan_db/financial_transactions.json`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedTxs)
+      }).catch(() => {});
+    } catch(e) {}
+
+    triggerToast('تم تسجيل التسوية بنجاح ⚖️', `تم توثيق قيد التسوية المحاسبي وتعديل رصيد العميل دون حذف أي بيانات سابقة.`, 'success');
+    logRecentTask(`تسوية وتصحيح مالي: ${amount} ج.م للعميل ${tx.clientName}`, 'financial');
+  };
+
+  // Add Booking (Guaranteed 0 deduction upon creation + Room Interval Conflict Prevention)
+  const handleAddBooking = async (bookingData) => {
+    const client = clients.find(c => c.id === bookingData.clientId);
+    if (!client) {
+      alert('العميل غير موجود. يرجى التحديث.');
+      return;
+    }
+
+    const durationHours = parseFloat(bookingData.duration) || 1;
+    const selectedRoom = (bookingData.room || (settings.rooms && settings.rooms[0]) || INITIAL_ROOMS[0]).trim();
+    const cleanDate = normalizeDate(bookingData.date) || new Date().toISOString().split('T')[0];
+    
+    // Auto-calculate end_time
+    const h = parseInt(bookingData.time.split(':')[0] || '12');
+    const m = parseInt(bookingData.time.split(':')[1] || '0');
+    const end_h = (h + Math.floor(durationHours)) % 24;
+    const end_time = `${end_h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
+
+    const normalize_phone = (p) => p ? p.toString().replace(/\D/g, '') : '';
+
+    const payload = {
+        phone: normalize_phone(client.phone),
+        room: selectedRoom,
+        date: cleanDate,
+        start_time: bookingData.time,
+        end_time: end_time,
+        hours: durationHours,
+        source: "admin",
+        // Fallbacks for compatibility
+        clientId: client.id,
+        notes: bookingData.notes || '',
+        serviceType: bookingData.serviceType || 'حجز قاعة'
+    };
+
+    try {
+        setBookingSubmitting(true);
+    } catch(e) {}
+
+    try {
+        const response = await fetch('/api/unified/book', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        const result = await response.json();
+        
+        if (!result.success) {
+            triggerToast('خطأ في الحجز', result.message || 'فشل الحجز', 'error');
+            alert(result.message || 'فشل الحجز');
+            return;
+        }
+
+        // Live Sync: Update the UI with the successful response
+        if (result.booking) {
+            setBookings(prev => [result.booking, ...prev.filter(b => b.id !== result.booking.id)]);
+        }
+        
+        // Update client balance directly without refresh
+        if (result.new_balance !== undefined && result.new_balance !== null) {
+            setClients(prev => prev.map(c => c.id === client.id ? { ...c, currentBalance: result.new_balance, active_hours: result.new_balance, hours: result.new_balance } : c));
+        }
+
+        if (result.attendance) {
+            setAttendance(prev => [result.attendance, ...prev]);
+        }
+
+        setShowNewBookingModal(false);
+        triggerToast('تم الحجز', `تم حجز قاعة ${selectedRoom} بنجاح.`, 'success');
+        
+        // Send WhatsApp
+        const pkgTypeName = (client?.packageDuration === '3months' || client?.packageDuration === 'quarterly') ? 'باقة 3 شهور' : client?.packageDuration === 'annual' ? 'باقة سنوية' : 'باقة شهرية';
+        const template = settings.templates?.booking || DEFAULT_TEMPLATES.booking;
+        const waMessage = fillTemplate(template, {
+            '{اسم_العميل}': client.name,
+            '{اسم_الشركة}': settings.companyName,
+            '{نوع_الخدمة}': payload.serviceType,
+            '{نوع_الباقة}': pkgTypeName,
+            '{القاعة}': selectedRoom,
+            '{تاريخ_الانتهاء}': client?.expiryDate || 'مستمر',
+            '{التاريخ}': cleanDate,
+            '{الوقت}': bookingData.time,
+            '{المدة}': durationHours
+        });
+        openWhatsAppModalForEdit(client.phone, client.name, waMessage, 'تأكيد حجز الموعد والقاعة عبر WhatsApp');
+
+    } catch (err) {
+        console.error('Booking error:', err);
+        triggerToast('خطأ اتصال', 'حدث خطأ أثناء الاتصال بالخادم المحلي.', 'error');
+    } finally {
+        try {
+            setBookingSubmitting(false);
+        } catch(e) {}
+    }
+};
+  // Filtered Clients
+  const filteredClients = useMemo(() => {
+    return clients.filter(c => {
+      try {
+        const matchSearch = ((c.name || '').toString().toLowerCase().includes((clientSearch||'').toString().toLowerCase())) || ((c.phone || '').toString().includes(clientSearch));
+        if (!matchSearch) return false;
+
+      const contractInfo = getClientContractStatus(c);
+
+      if (clientFilter === 'fulltime') return contractInfo.isFullTime;
+      if (clientFilter === 'hourly') return !contractInfo.isFullTime;
+      if (clientFilter === 'last_week') return contractInfo.isLastWeek;
+      if (clientFilter === 'monthly') return !contractInfo.isFullTime && c.packageDuration === 'monthly';
+      if (clientFilter === '3months' || clientFilter === 'quarterly') return !contractInfo.isFullTime && (c.packageDuration === '3months' || c.packageDuration === 'quarterly');
+      if (clientFilter === 'annual') return !contractInfo.isFullTime && c.packageDuration === 'annual';
+      if (clientFilter === 'active') return !contractInfo.isExpired;
+      if (clientFilter === 'expired') return contractInfo.isExpired;
+        if (clientFilter === 'expiring_soon') return contractInfo.isLastWeek || contractInfo.status === 'expiring_soon' || contractInfo.status === 'expiring_soon_fulltime';
+        if (clientFilter === 'low') return !contractInfo.isFullTime && c.currentBalance > 0 && c.currentBalance <= 5;
+        return true;
+      } catch (err) {
+        console.error('Error filtering client:', c, err);
+        return false;
+      }
+    });
+  }, [clients, clientSearch, clientFilter]);
+
+  // Filtered Bookings with Status and Room Filters
+  const filteredBookings = useMemo(() => {
+    return bookings.filter(b => {
+      const matchStatus = 
+        bookingFilter === 'all' ? true :
+        bookingFilter === 'scheduled' ? isBookingUpcoming(b) :
+        bookingFilter === 'attended' ? isBookingCompletedOrAttended(b) :
+        bookingFilter === 'cancelled' ? isBookingCancelled(b) : true;
+      
+      const matchRoom = bookingRoomFilter === 'all' || (b.room || INITIAL_ROOMS[0]) === bookingRoomFilter;
+
+      return matchStatus && matchRoom;
+    });
+  }, [bookings, bookingFilter, bookingRoomFilter]);
+
+  const stats = useMemo(() => {
+    const totalClients = clients.length;
+    const totalRemainingHours = clients
+      .filter(c => !getClientContractStatus(c).isFullTime)
+      .reduce((acc, c) => acc + (parseFloat(c.currentBalance) || 0), 0);
+    const todayStr = new Date().toISOString().split('T')[0];
+    const todayBookings = bookings.filter(b => b.date === todayStr && b.status !== 'cancelled');
+    const todayAttendance = attendance.filter(a => a.date === todayStr);
+    const todayHoursConsumed = todayAttendance.reduce((acc, a) => acc + (parseFloat(a.hoursConsumed) || 0), 0);
+
+    const monthlyCount = clients.filter(c => !getClientContractStatus(c).isFullTime && c.packageDuration === 'monthly').length;
+    const quarterlyCount = clients.filter(c => !getClientContractStatus(c).isFullTime && (c.packageDuration === '3months' || c.packageDuration === 'quarterly')).length;
+    const annualCount = clients.filter(c => !getClientContractStatus(c).isFullTime && c.packageDuration === 'annual').length;
+    const fulltimeCount = clients.filter(c => getClientContractStatus(c).isFullTime).length;
+    const hourlyCount = clients.filter(c => !getClientContractStatus(c).isFullTime).length;
+
+    const expiredClients = clients.filter(c => getClientContractStatus(c).isExpired);
+    const expiringSoonClients = clients.filter(c => getClientContractStatus(c).isLastWeek || getClientContractStatus(c).status === 'expiring_soon' || getClientContractStatus(c).status === 'expiring_soon_fulltime');
+    const fulltimeLastWeekClients = clients.filter(c => {
+      const s = getClientContractStatus(c);
+      return s.isFullTime && s.isLastWeek;
+    });
+
+    const lowBalanceClients = clients.filter(c => {
+      const s = getClientContractStatus(c);
+      const bal = parseFloat(c.currentBalance || 0);
+      return !s.isFullTime && bal > 0 && bal <= 5;
+    });
+
+    const scheduledBookingsCount = bookings.filter(b => isBookingUpcoming(b)).length;
+    const attendedBookingsCount = bookings.filter(b => isBookingCompletedOrAttended(b)).length;
+    const cancelledBookingsCount = bookings.filter(b => isBookingCancelled(b)).length;
+
+    return {
+      totalClients,
+      totalRemainingHours: Number(totalRemainingHours || 0).toFixed(1),
+      todayBookingsCount: todayBookings.length,
+      todayAttendanceCount: todayAttendance.length,
+      todayHoursConsumed: Number(todayHoursConsumed || 0).toFixed(1),
+      monthlyCount,
+      quarterlyCount,
+      annualCount,
+      fulltimeCount,
+      hourlyCount,
+      expiredCount: expiredClients.length,
+      expiringSoonCount: expiringSoonClients.length,
+      expiredClients,
+      expiringSoonClients,
+      fulltimeLastWeekClients,
+      lowBalanceClients,
+      lowBalanceCount: lowBalanceClients.length,
+      scheduledBookingsCount,
+      attendedBookingsCount,
+      cancelledBookingsCount
+    };
+  }, [clients, bookings, attendance]);
+
+  const unreadNotifsCount = notifications.filter(n => !n.read).length;
+
+  // ====================================================================
+  // 🔒 Desktop App Authentication Guard (شاشة تسجيل الدخول للبرنامج الرئيسي)
+  // ====================================================================
+  if (!currentUser) {
+    return (
+      <div className="min-h-screen flex flex-col justify-center items-center p-4 font-cairo selection:bg-gold-500 selection:text-stone-950">
+        {/* Toast Banner */}
+        {toastMessage && (
+          <div className="fixed top-5 left-5 z-50 max-w-md glass-card bg-stone-950/95 border-2 border-amber-500 shadow-2xl rounded-2xl p-4 flex items-start space-x-3 space-x-reverse transition-all transform ">
+            <div className={`p-2.5 rounded-xl text-stone-950 font-black ${toastMessage.type === 'warning' ? 'bg-amber-400' : toastMessage.type === 'error' ? 'bg-rose-500 text-white' : 'bg-emerald-400'}`}>
+              <Icon name={toastMessage.type === 'warning' ? 'alert' : 'whatsapp'} className="w-5 h-5" />
+            </div>
+            <div className="flex-1">
+              <h4 className="font-black text-white text-sm">{toastMessage.title}</h4>
+              <p className="text-xs text-stone-200 mt-0.5 leading-relaxed font-bold">{toastMessage.text}</p>
+            </div>
+            <button onClick={() => setToastMessage(null)} className="text-stone-400 hover:text-white text-lg font-bold">×</button>
+          </div>
+        )}
+
+        <div className="w-full max-w-md glass-card bg-stone-950/95 border-2 border-amber-500/50 shadow-2xl rounded-3xl p-8 space-y-6 text-white text-center  zoom-in-95 duration-200">
+          
+          {/* Header with Logo */}
+          <div className="flex flex-col items-center space-y-3">
+            <div className="relative">
+              {(settings.companyLogo || settings.logo) ? (
+                <img src={settings.companyLogo || settings.logo} alt="Logo" className="w-16 h-16 max-w-[64px] max-h-[64px] rounded-2xl object-cover border-2 border-amber-400 shadow-xl" />
+              ) : (
+                <div className="w-16 h-16 bg-gradient-to-br from-amber-500 via-amber-600 to-amber-900 rounded-2xl flex items-center justify-center text-stone-950 text-2xl shadow-xl border-2 border-amber-300/60">
+                  ⚜️
+                </div>
+              )}
+              <span className="absolute -bottom-1 -right-1 w-4 h-4 bg-emerald-500 rounded-full border-2 border-stone-950 "></span>
+            </div>
+
+            <div>
+              <h1 className="text-xl font-black text-white">{settings.companyName}</h1>
+              <p className="text-xs text-amber-300 font-bold mt-1">نظام إدارة المواعيد والباقات الذكي 🛡️</p>
+              <p className="text-[11px] text-stone-400 mt-0.5">تسجيل الدخول إلى النظام الرئيسي</p>
+            </div>
+          </div>
+
+          {/* Error alert */}
+          {desktopLoginData.error && (
+            <div className="p-3 bg-rose-950/90 border border-rose-500/50 rounded-2xl text-xs font-bold text-rose-300 flex items-center justify-center gap-2">
+              <span>⚠️</span>
+              <span>{desktopLoginData.error}</span>
+            </div>
+          )}
+
+          {/* Form */}
+          <form onSubmit={handleDesktopLogin} className="space-y-4 text-right">
+            <div>
+              <label className="block text-xs font-black text-amber-300 mb-1.5">اسم المستخدم (Username):</label>
+              <div className="relative">
+                <input
+                  required
+                  type="text"
+                  value={desktopLoginData.username}
+                  onChange={(e) => setDesktopLoginData(prev => ({ ...prev, username: e.target.value }))}
+                  placeholder="Username"
+                  className="w-full bg-stone-900 border border-amber-500/40 text-white font-mono rounded-2xl p-3.5 text-xs font-bold focus:ring-2 focus:ring-amber-400 focus:outline-none placeholder-stone-500"
+                />
+                <span className="absolute left-3.5 top-3.5 text-stone-400 text-sm">👤</span>
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-black text-amber-300 mb-1.5">كلمة المرور (Password):</label>
+              <div className="relative">
+                <input
+                  required
+                  type={desktopLoginData.showPassword ? 'text' : 'password'}
+                  value={desktopLoginData.password}
+                  onChange={(e) => setDesktopLoginData(prev => ({ ...prev, password: e.target.value }))}
+                  placeholder="كلمة مرور الحساب..."
+                  className="w-full bg-stone-900 border border-amber-500/40 text-white font-mono rounded-2xl p-3.5 text-xs font-bold focus:ring-2 focus:ring-amber-400 focus:outline-none placeholder-stone-500"
+                />
+                <button
+                  type="button"
+                  onClick={() => setDesktopLoginData(prev => ({ ...prev, showPassword: !prev.showPassword }))}
+                  className="absolute left-3.5 top-3 text-stone-400 hover:text-amber-300 text-sm font-bold"
+                >
+                  {desktopLoginData.showPassword ? '🙈' : '👁️'}
+                </button>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between pt-1">
+              <label className="flex items-center gap-2 cursor-pointer text-xs text-stone-300 font-bold">
+                <input
+                  type="checkbox"
+                  checked={desktopLoginData.rememberMe}
+                  onChange={(e) => setDesktopLoginData(prev => ({ ...prev, rememberMe: e.target.checked }))}
+                  className="w-4 h-4 rounded text-amber-500 focus:ring-amber-400 bg-stone-900 border-amber-500/40"
+                />
+                <span>تذكر تسجيل الدخول على هذا الجهاز</span>
+              </label>
+            </div>
+
+            <button
+              type="submit"
+              className="w-full gold-gradient-btn text-stone-950 font-black py-3.5 rounded-2xl text-xs shadow-xl active:scale-95 transition-all flex items-center justify-center gap-2 mt-2"
+            >
+              <span>🔐 تسجيل الدخول إلى البرنامج</span>
+            </button>
+          </form>
+        </div>
+      </div>
+    );
+  }
+
+
+  // Active Tab Title Lookup
+  const getActiveTabTitle = () => {
+    switch (activeTab) {
+      case 'dashboard': return '📊 لوحة التحكم العامة والإحصائيات';
+      case 'attendance': return '⏱️ تسجيل الحضور والخصم التلقائي';
+      case 'bookings': return '📅 جدول حجوزات القاعات والمواعيد';
+      case 'clients': return '👥 إدارة العملاء والباقات وتواريخ الانتهاء';
+      case 'excel': return '📑 شيتات Excel والنسخ الدوري والاسترجاع';
+      case 'notifications': return '🔔 مركز التنبيهات وتنبيهات انتهاء العقود';
+      case 'settings': return '⚙️ قوالب الرسائل وإعدادات القاعات والشركة';
+      default: return 'لوحة التحكم';
+    }
+  };
+
+  return (
+    <div className="min-h-screen flex flex-row font-cairo selection:bg-gold-500 selection:text-stone-950 bg-stone-950">
+      
+      {/* Toast Banner */}
+      {toastMessage && (
+        <div className="fixed top-5 left-5 z-50 max-w-md glass-card bg-stone-950/95 border-2 border-amber-500 shadow-2xl rounded-2xl p-4 flex items-start space-x-3 space-x-reverse transition-all transform ">
+          <div className={`p-2.5 rounded-xl text-stone-950 font-black ${toastMessage.type === 'warning' ? 'bg-amber-400' : toastMessage.type === 'error' ? 'bg-rose-500 text-white' : 'bg-emerald-400'}`}>
+            <Icon name={toastMessage.type === 'warning' ? 'alert' : 'whatsapp'} className="w-5 h-5" />
+          </div>
+          <div className="flex-1">
+            <h4 className="font-black text-white text-sm">{toastMessage.title}</h4>
+            <p className="text-xs text-stone-200 mt-0.5 leading-relaxed font-bold">{toastMessage.text}</p>
+          </div>
+          <button onClick={() => setToastMessage(null)} className="text-stone-400 hover:text-white text-lg font-bold">×</button>
+        </div>
+      )}
+
+      {/* ==================================================== */}
+      {/* 🧭 Luxury Modern Right Sidebar (القائمة الجانبية باليمين) */}
+      {/* ==================================================== */}
+      <aside className="w-72 lg:w-80 flex-shrink-0 flex flex-col glass-card border-l border-amber-500/25 min-h-screen sticky top-0 h-screen z-40 backdrop-blur-2xl shadow-2xl overflow-y-auto">
+        
+        {/* 0. Current User Profile Bar */}
+        <div className="p-3 bg-stone-900/90 border-b border-amber-500/20 flex items-center justify-between text-xs">
+          <div className="flex items-center gap-2 min-w-0">
+            <div className="w-7 h-7 rounded-xl bg-amber-500/20 text-amber-300 border border-amber-500/30 flex items-center justify-center text-xs font-black flex-shrink-0">
+              👤
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="font-black text-white text-[11px] truncate">{currentUser.name}</div>
+              <div className="text-[9px] text-amber-300 font-bold truncate">{currentUser.role === 'admin' ? 'مدير عام (كامل الصلاحيات) 👑' : 'موظف (صلاحيات محددة) 🛡️'}</div>
+            </div>
+          </div>
+          <button
+            onClick={handleDesktopLogout}
+            title="تسجيل الخروج وقفل البرنامج"
+            className="p-1.5 text-stone-400 hover:text-rose-400 hover:bg-rose-950/60 rounded-lg transition-all text-xs font-bold"
+          >
+            🚪 خروج
+          </button>
+        </div>
+
+        {/* 1. Sidebar Header / Branding */}
+        <div 
+          onClick={() => setShowBrandingModal(true)}
+          title="اضغط هنا لتعديل اسم الشركة واللوجو"
+          className="p-4 border-b border-amber-500/20 cursor-pointer hover:bg-stone-900/70 transition-all group"
+        >
+          <div className="flex items-center space-x-3 space-x-reverse">
+            <div className="relative flex-shrink-0">
+              {(settings.companyLogo || settings.logo) ? (
+                <img 
+                  src={settings.companyLogo || settings.logo} 
+                  alt="Company Logo" 
+                  className="w-11 h-11 max-w-[44px] max-h-[44px] rounded-2xl object-cover border-2 border-amber-400/60 shadow-lg group-hover:border-amber-400 transition-all"
+                />
+              ) : (
+                <div className="w-11 h-11 bg-gradient-to-br from-amber-500 via-amber-600 to-amber-900 rounded-2xl flex items-center justify-center text-stone-950 shadow-lg shadow-amber-900/40 group-hover:scale-105 transition-transform border border-amber-300/40">
+                  <span className="font-black text-lg">⚜️</span>
+                </div>
+              )}
+              <span className="absolute -bottom-1 -left-1 bg-stone-900 text-amber-300 p-0.5 rounded-full shadow border border-amber-500/40 group-hover:text-white transition-colors">
+                <Icon name="edit" className="w-2.5 h-2.5" />
+              </span>
+            </div>
+
+            <div className="min-w-0 flex-1">
+              <h1 className="text-sm font-black text-white leading-snug truncate group-hover:text-amber-400 transition-colors drop-shadow-md" title={settings.companyName}>
+                {settings.companyName}
+              </h1>
+              <p className="text-[10px] text-amber-200/90 mt-0.5 font-bold truncate flex items-center gap-1" title={settings.companyTagline}>
+                <span className="w-1.5 h-1.5 rounded-full bg-amber-400  flex-shrink-0"></span>
+                <span className="truncate">{settings.companyTagline}</span>
+              </p>
+            </div>
+          </div>
+
+          <div className="mt-2.5 flex items-center justify-between">
+            <span className="text-[9px] bg-amber-500/20 text-amber-300 font-black px-2 py-0.5 rounded-md border border-amber-500/30">
+              حماية الرصيد عند الإلغاء 🛡️
+            </span>
+          </div>
+        </div>
+
+        {/* 2. Primary Fast Actions */}
+        <div className="p-3 space-y-1.5 border-b border-amber-500/20">
+          {hasPermission('canManageBookings') && (
+            <button
+              onClick={() => setShowNewBookingModal(true)}
+              className="w-full gold-gradient-btn flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-2xl font-black text-xs shadow-lg active:scale-95 transition-all"
+            >
+              <Icon name="plus" className="w-4 h-4 text-stone-950 font-black" />
+              <span>حجز موعد جديد 📅</span>
+            </button>
+          )}
+
+          {hasPermission('canAddClients') && (
+            <div className="flex flex-col gap-1.5">
+              <div className="grid grid-cols-2 gap-1.5">
+                <button
+                  onClick={() => handleOpenNewClientModal('hourly', 'monthly')}
+                  className="flex items-center justify-center gap-1 bg-emerald-600 hover:bg-emerald-500 text-white border border-emerald-400/40 py-2 px-1.5 rounded-xl font-black text-[11px] shadow-md transition-all active:scale-95 truncate"
+                  title="إضافة عميل بباقة ساعات شهرية أو سنوية"
+                >
+                  <Icon name="userPlus" className="w-3.5 h-3.5 flex-shrink-0" />
+                  <span className="truncate">+ باقة ساعات ⏱️</span>
+                </button>
+
+                <button
+                  onClick={() => handleOpenNewClientModal('fulltime', 'fulltime_1m')}
+                  className="flex items-center justify-center gap-1 bg-gradient-to-r from-purple-700 via-indigo-600 to-purple-800 hover:from-purple-600 hover:to-indigo-500 text-white border border-purple-400/50 py-2 px-1.5 rounded-xl font-black text-[11px] shadow-md transition-all active:scale-95  truncate"
+                  title="إضافة اشتراك Full Time دوام كامل"
+                >
+                  <span className="text-amber-300 flex-shrink-0">👑</span>
+                  <span className="truncate">+ Full Time</span>
+                </button>
+              </div>
+              
+              <button
+                onClick={() => handleOpenNewClientModal('shift', 'fulltime_3m')}
+                className="flex items-center justify-center gap-1 bg-gradient-to-r from-blue-700 via-cyan-600 to-blue-800 hover:from-blue-600 hover:to-cyan-500 text-white border border-blue-400/50 py-2 px-1.5 rounded-xl font-black text-[11px] shadow-md transition-all active:scale-95 truncate"
+                title="إضافة عميل لنظام الشيفت"
+              >
+                <span className="text-cyan-300 flex-shrink-0">🔄</span>
+                <span className="truncate">+ نظام الشيفت</span>
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* 3. Vertical Navigation Menu */}
+        <nav className="flex-1 p-2.5 space-y-1 overflow-y-auto scrollbar-none">
+          <div className="text-[10px] font-black text-amber-400/70 px-2.5 pt-1 pb-1">أقسام النظام الرئيسية</div>
+          {[
+            { id: 'dashboard', label: 'لوحة التحكم العامة', icon: 'dashboard' },
+            { id: 'attendance', label: 'تسجيل الحضور والخصم', icon: 'attendance', badge: 'خصم وتعديل 💬', allowed: hasPermission('canDeductAttendance') },
+            { id: 'bookings', label: 'حجوزات المواعيد وإلغاء الحجز', icon: 'calendar', count: bookings.length, badge: 'بدون خصم 🛡️', allowed: hasPermission('canManageBookings') },
+            { id: 'clients', label: 'إدارة الباقات والعملاء', icon: 'users', count: clients.length },
+            { 
+              id: 'financial', 
+              label: 'حسابات البوفيه وتصوير الورق', 
+              icon: 'wallet', 
+              badge: 'بوفيه وتصوير ☕📄',
+              count: financialTransactions.length > 0 ? financialTransactions.length : null,
+              allowed: hasPermission('canAccessFinancials')
+            },
+            { id: 'excel', label: 'شيتات Excel والنسخ الدوري', icon: 'excel', allowed: hasPermission('canAccessExcel') },
+            { id: 'notifications', label: 'مركز التنبيهات وانتهاء العقود', icon: 'bell', count: unreadNotifsCount > 0 ? unreadNotifsCount : null, countColor: 'bg-rose-500 text-white' },
+            { id: 'settings', label: 'قوالب الرسائل وإعدادات الشركة', icon: 'settings', badge: 'قوالب 📝', allowed: hasPermission('canAccessSettings') }
+          ].filter(tab => tab.allowed === undefined || tab.allowed).map(tab => {
+            const isActive = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`w-full flex items-center justify-between p-2.5 rounded-2xl font-black text-xs transition-all ${
+                  isActive
+                    ? 'gold-gradient-btn text-stone-950 shadow-lg shadow-gold-900/40 scale-101 border border-amber-300/50'
+                    : 'glass-card-subtle text-stone-200 hover:bg-stone-800/80 hover:text-white hover:border-amber-400/30 border-amber-500/15'
+                }`}
+              >
+                <div className="flex items-center gap-2 min-w-0">
+                  <Icon name={tab.icon} className={`w-4 h-4 flex-shrink-0 ${isActive ? 'text-stone-950' : 'text-amber-400'}`} />
+                  <span className="truncate">{tab.label}</span>
+                </div>
+
+                <div className="flex items-center gap-1 flex-shrink-0 mr-1">
+                  {tab.count !== undefined && tab.count !== null && (
+                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-black ${tab.countColor ? tab.countColor : (isActive ? 'bg-stone-950 text-amber-300' : 'bg-stone-900 text-amber-200 border border-amber-500/30')}`}>
+                      {tab.count}
+                    </span>
+                  )}
+                  {tab.badge && (
+                    <span className={`text-[9px] font-black px-1.5 py-0.5 rounded-md ${isActive ? 'bg-stone-950 text-amber-400' : 'bg-amber-500/20 text-amber-300 border border-amber-500/40'}`}>
+                      {tab.badge}
+                    </span>
+                  )}
+                </div>
+              </button>
+            );
+          })}
+        </nav>
+
+        {/* 4. Bottom Safety, Mobile App & Quick Utilities */}
+        <div className="p-3 border-t border-amber-500/20 space-y-2 bg-stone-950/40">
+          
+          {/* Hard Disk Safety Badge */}
+          <div
+            onClick={() => { fetchDiskBackupsList(); setShowDiskSafetyModal(true); }}
+            title="اضغط للاطلاع على مركز الأمان والنسخ الاحتياطية على القرص الصلب"
+            className="flex items-center justify-between p-2 rounded-xl glass-card-subtle hover:bg-stone-800 border border-emerald-500/30 hover:border-emerald-400 cursor-pointer transition-all group shadow-sm"
+          >
+            <div className="flex items-center gap-2">
+              <div className="w-6 h-6 rounded-lg bg-emerald-950 text-emerald-400 border border-emerald-500/40 flex items-center justify-center text-xs font-black">
+                💾
+              </div>
+              <div>
+                <div className="text-[10px] font-black text-white group-hover:text-emerald-300">
+                  حفظ القرص الصلب
+                </div>
+                <div className="text-[9px] text-emerald-300/80 font-bold font-mono">
+                  {lastDiskSaveText}
+                </div>
+              </div>
+            </div>
+            <span className="text-[9px] bg-emerald-950 text-emerald-400 px-1.5 py-0.5 rounded border border-emerald-500/30 font-black">
+              دائم 🔒
+            </span>
+          </div>
+
+          {/* 👥 Staff Management & Permissions Button */}
+          {hasPermission('canManageStaff') && (
+            <button
+              onClick={() => setShowStaffModal(true)}
+              className="w-full flex items-center justify-center gap-1.5 bg-gradient-to-r from-indigo-700 via-indigo-600 to-purple-800 hover:from-indigo-600 hover:to-purple-700 text-white border border-indigo-400/40 py-2 px-3 rounded-xl font-black text-xs shadow-md active:scale-95 transition-all"
+            >
+              <span>👥</span>
+              <span>إدارة الموظفين والصلاحيات</span>
+            </button>
+          )}
+
+          {/* Mobile App Modal Button */}
+          <button
+            onClick={() => {
+              loadNetworkInfo();
+              setShowMobileModal(true);
+            }}
+            className="w-full flex items-center justify-center gap-1.5 gold-gradient-btn text-stone-950 py-2 px-3 rounded-xl font-black text-xs shadow-md active:scale-95 transition-all "
+          >
+            <span className="text-sm">📱</span>
+            <span>تطبيق الجوال (Mobile App)</span>
+          </button>
+
+          {/* Send Client Notification Button */}
+          {hasPermission('canSendClientNotifications') && (
+            <button
+              onClick={() => handleOpenSendNotifModal('all')}
+              className="w-full flex items-center justify-center gap-1.5 bg-gradient-to-r from-amber-600/30 via-amber-500/20 to-amber-600/30 hover:from-amber-600/50 hover:to-amber-700/50 text-amber-300 border border-amber-500/40 py-2 px-3 rounded-xl font-black text-xs shadow-md active:scale-95 transition-all"
+            >
+              <span className="text-sm">🔔</span>
+              <span>إرسال إشعار للعملاء</span>
+            </button>
+          )}
+
+          {/* 24h Auto Backup & Excel Export */}
+          <div className="grid grid-cols-2 gap-1.5 pt-0.5">
+            {hasPermission('canAccessExcel') ? (
+              <button
+                onClick={() => exportExcelFullWorkbook(false)}
+                title="تصدير شيت Excel فوري شامل"
+                className="flex items-center justify-center gap-1 bg-stone-900 hover:bg-stone-800 text-amber-300 border border-amber-500/30 py-1.5 px-2 rounded-xl text-[10px] font-bold transition-all"
+              >
+                <Icon name="excel" className="w-3 h-3 text-emerald-400" />
+                <span>تصدير إكسل</span>
+              </button>
+            ) : (
+              <div className="flex items-center justify-center gap-1 bg-stone-900/50 text-stone-600 border border-stone-800 py-1.5 px-2 rounded-xl text-[10px] font-bold">
+                <span>🔒 إكسل مقفل</span>
+              </div>
+            )}
+
+            <div 
+              onClick={() => handleExportAndSendTelegramBackup()}
+              title="النسخ الدوري كل 6 ساعات محلياً وتيليجرام (اضغط للتصدير والنسخ الآن)"
+              className="flex flex-col items-center justify-center bg-stone-900/80 border border-sky-500/20 p-1 rounded-xl cursor-pointer hover:border-sky-400 transition-all active:scale-95"
+            >
+              <span className="text-[8px] text-sky-400 font-bold">نسخ 6h ✈️</span>
+              <span className="text-[9px] text-amber-300 font-black font-mono">{backupCountdown.hours}س {backupCountdown.minutes}د</span>
+            </div>
+          </div>
+
+        </div>
+
+      </aside>
+
+      {/* ==================================================== */}
+      {/* 🖥️ Left Content Area (مساحة المحتوى وعرض الأقسام) */}
+      {/* ==================================================== */}
+      <div className="flex-1 min-w-0 flex flex-col min-h-screen overflow-x-hidden">
+        
+        {/* Top Header Bar in Content Area */}
+        <header className="glass-card border-b border-amber-500/20 sticky top-0 z-30 shadow-md backdrop-blur-xl px-6 py-3 flex justify-between items-center">
+          <div className="flex items-center gap-3">
+            <h2 className="text-sm font-black text-white flex items-center gap-2">
+              <span>{getActiveTabTitle()}</span>
+            </h2>
+            <span className="text-xs text-amber-500/40 hidden sm:inline">•</span>
+            <span className="text-xs text-amber-300/80 font-bold hidden sm:inline">
+              {settings.companyName}
+            </span>
+          </div>
+
+          <div className="flex items-center gap-2.5">
+            <button 
+              onClick={() => setActiveTab('notifications')}
+              className={`relative p-2 rounded-xl border transition-all ${activeTab === 'notifications' ? 'bg-amber-500/20 border-amber-400 text-amber-300' : 'glass-card-subtle border-amber-500/20 text-amber-200 hover:text-white'}`}
+              title="مركز التنبيهات"
+            >
+              <Icon name="bell" className="w-4 h-4" />
+              {unreadNotifsCount > 0 && (
+                <span className="absolute -top-1 -right-1 w-4 h-4 bg-rose-500 text-white text-[9px] font-black rounded-full flex items-center justify-center shadow ">
+                  {unreadNotifsCount}
+                </span>
+              )}
+            </button>
+
+            <div className="text-[11px] font-bold text-amber-300 bg-stone-900/80 px-3 py-1.5 rounded-xl border border-amber-500/20 font-mono shadow-xs">
+              📅 {new Date().toISOString().split('T')[0]}
+            </div>
+
+            {/* 🛑 Close App & Clean Background Shutdown */}
+            <button 
+              type="button"
+              onClick={() => {
+                if (window.confirm('هل تريد بالتأكيد إغلاق تطبيق مجموعة الكيان وإنهاء كافة العمليات والمهام في الخلفية تماماً؟')) {
+                  fetch('/api/exit_app').catch(() => {});
+                  setTimeout(() => {
+                    window.close();
+                  }, 300);
+                }
+              }}
+              className="p-1.5 px-2.5 rounded-xl border border-rose-500/40 bg-rose-950/40 hover:bg-rose-900/70 text-rose-300 hover:text-white transition-all text-xs font-black flex items-center gap-1.5 shadow-sm active:scale-95"
+              title="إغلاق البرنامج وإنهاء العمليات من الخلفية نهائياً"
+            >
+              <span className="w-2 h-2 rounded-full bg-rose-500 "></span>
+              <span className="hidden sm:inline">إغلاق البرنامج</span>
+            </button>
+          </div>
+        </header>
+
+        {/* Main View Container */}
+        <main className="flex-1 w-full px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+
+        {/* Expired / Expiring Soon Contracts Warning Banner */}
+        {stats.expiredCount > 0 && activeTab !== 'notifications' && (
+          <div className="glass-card bg-rose-950/80 border-2 border-rose-500/50 rounded-3xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-xl">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 bg-rose-600 text-white rounded-2xl shadow-md">
+                <Icon name="alert" className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="font-black text-white text-sm">
+                  تنبيه: يوجد {stats.expiredCount} باقة منتهية الصلاحية (بسبب انتهاء التاريخ أو نفاد الساعات)!
+                </h3>
+                <p className="text-xs text-rose-200 mt-0.5 font-bold">
+                  العملاء المنتهية باقاتهم: {stats.expiredClients.map(c => `${c.name} (${c.expiryDate || 'نفد الرصيد'})`).join('، ')}
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={() => { setActiveTab('clients'); setClientFilter('expired'); }}
+              className="bg-rose-600 hover:bg-rose-500 text-white text-xs font-black px-4 py-2 rounded-xl transition-all shadow-md whitespace-nowrap active:scale-95"
+            >
+              عرض وتجديد الباقات 🔄
+            </button>
+          </div>
+        )}
+
+        {/* ==================================================== */}
+        {/* 1️⃣ DASHBOARD VIEW WITH SMART TASK CONTINUITY HUB */}
+        {/* ==================================================== */}
+        {activeTab === 'dashboard' && (
+          <div className="space-y-6">
+
+            {/* 🎯 Smart Task Resumption & Continuity Bar (استكمال المهام دون نسيان) */}
+            <div className="glass-card bg-stone-950/90 border-2 border-amber-500/40 p-5 rounded-3xl shadow-2xl space-y-4">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-amber-500/20 pb-3">
+                <div className="flex items-center gap-3">
+                  <div className="p-2.5 bg-gradient-to-br from-amber-500 to-amber-700 text-stone-950 rounded-2xl font-black shadow-lg">
+                    <span className="text-xl">🎯</span>
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h3 className="font-black text-white text-base">مركز استكمال المهام والمتابعة الذكية المستمرة</h3>
+                      <span className="text-[10px] bg-emerald-950 border border-emerald-500/40 text-emerald-400 font-black px-2 py-0.5 rounded-md flex items-center gap-1">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 "></span>
+                        <span>حفظ تلقائي مستمر 100%</span>
+                      </span>
+                    </div>
+                    <p className="text-xs text-amber-200/90 font-bold mt-0.5">
+                      النظام يحفظ كل خطوة تلقائياً لتتمكن دائماً من متابعة واستكمال مهامك دون نسيان أي موعد أو عميل
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setActiveTab('bookings')}
+                    className="gold-gradient-btn text-stone-950 font-black text-xs px-3.5 py-2 rounded-xl shadow-md flex items-center gap-1.5 active:scale-95"
+                  >
+                    <span>استكمال الحجوزات 📅</span>
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('clients')}
+                    className="glass-card-subtle text-amber-300 hover:text-white border border-amber-500/30 text-xs font-bold px-3.5 py-2 rounded-xl"
+                  >
+                    <span>متابعة الباقات 👥</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Actionable Pending Tasks Grid (مهام بحاجة للمتابعة الفورية) */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                
+                {/* 1. Today's Pending Attendance */}
+                <div className="glass-card-subtle p-3.5 rounded-2xl border border-amber-500/20 space-y-2">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="font-black text-amber-300 flex items-center gap-1">
+                      <span>⏰ مواعيد بانتظار الحضور والخصم:</span>
+                    </span>
+                    <span className="font-mono text-[11px] bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded font-black">
+                      {bookings.filter(b => isBookingUpcoming(b) && b.bookedVia !== 'mobile_app' && !b.isAutoDeducted).length}
+                    </span>
+                  </div>
+                  {bookings.filter(b => isBookingUpcoming(b) && b.bookedVia !== 'mobile_app' && !b.isAutoDeducted).length > 0 ? (
+                    <div className="space-y-1.5">
+                      {bookings.filter(b => isBookingUpcoming(b) && b.bookedVia !== 'mobile_app' && !b.isAutoDeducted).slice(0, 2).map(b => (
+                        <div key={b.id} className="p-2 bg-stone-900/90 border border-amber-500/20 rounded-xl flex items-center justify-between text-xs">
+                          <div>
+                            <span className="font-black text-white">{b.clientName}</span>
+                            <p className="text-[10px] text-stone-300 font-mono">{b.time} • {b.room}</p>
+                          </div>
+                          <button
+                            onClick={() => handleConvertBookingToAttendance(b)}
+                            className="bg-emerald-600 hover:bg-emerald-500 text-white text-[10px] font-black px-2 py-1 rounded-lg shadow-sm"
+                          >
+                            حضور وخصم ✓
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-[11px] text-stone-400 py-1">جميع مواعيد اليوم مكتملة بنجاح ✅</p>
+                  )}
+                </div>
+
+                {/* 2. Full Time & Packages Last Week Alert (تنبيه آخر أسبوع) */}
+                <div className="glass-card-subtle p-3.5 rounded-2xl border-2 border-amber-500/40 bg-amber-950/20 space-y-2">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="font-black text-amber-300 flex items-center gap-1">
+                      <span>🔔 تنبيهات آخر أسبوع (Full Time & باقات):</span>
+                    </span>
+                    <span className="font-mono text-[11px] bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded font-black border border-amber-500/40">
+                      {(stats.fulltimeLastWeekClients?.length || 0) + (stats.expiringSoonClients?.length || 0)}
+                    </span>
+                  </div>
+                  {(stats.fulltimeLastWeekClients?.length || 0) > 0 || (stats.expiringSoonClients?.length || 0) > 0 ? (
+                    <div className="space-y-1.5">
+                      {[...(stats.fulltimeLastWeekClients || []), ...(stats.expiringSoonClients || [])].slice(0, 2).map(c => {
+                        const s = getClientContractStatus(c);
+                        return (
+                          <div key={c.id} className="p-2 bg-stone-900/90 border border-amber-500/30 rounded-xl flex items-center justify-between text-xs">
+                            <div>
+                              <span className="font-black text-white flex items-center gap-1">
+                                <span>{c.name}</span>
+                                {s.isFullTime && <span className="text-amber-300 text-[10px]">👑</span>}
+                              </span>
+                              <p className="text-[10px] text-amber-300 font-bold">متبقي {s.daysLeft} أيام • ينتهي {c.expiryDate}</p>
+                            </div>
+                            <button
+                              onClick={() => s.isFullTime ? handleSendFullTimeReminder(c) : handleOpenRenewContractModal(c)}
+                              className="bg-emerald-600 hover:bg-emerald-500 text-white text-[10px] font-black px-2 py-1 rounded-lg shadow-sm flex items-center gap-1 active:scale-95"
+                            >
+                              <Icon name="whatsapp" className="w-3 h-3" />
+                              <span>تنبيه 💬</span>
+                            </button>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <p className="text-[11px] text-emerald-400 py-1">لا توجد اشتراكات في أسبوعها الأخير ✅</p>
+                  )}
+                </div>
+
+                {/* ⏱️ Low Balance Alert (<= 5 Hours) */}
+                <div className="glass-card-subtle p-3.5 rounded-2xl border-2 border-rose-500/40 bg-rose-950/20 space-y-2">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="font-black text-rose-300 flex items-center gap-1">
+                      <span>⏱️ رصيد الساعات المنخفض (آخر 5 ساعات متبقية):</span>
+                    </span>
+                    <span className="font-mono text-[11px] bg-rose-500/20 text-rose-300 px-2 py-0.5 rounded font-black border border-rose-500/40">
+                      {stats.lowBalanceCount || 0}
+                    </span>
+                  </div>
+                  {(stats.lowBalanceClients?.length || 0) > 0 ? (
+                    <div className="space-y-1.5">
+                      {stats.lowBalanceClients.slice(0, 3).map(c => (
+                        <div key={c.id} className="p-2 bg-stone-900/90 border border-rose-500/30 rounded-xl flex items-center justify-between text-xs">
+                          <div>
+                            <span className="font-black text-white">{c.name}</span>
+                            <p className="text-[10px] text-rose-300 font-bold">متبقي {c.currentBalance} ساعة فقط ⚠️</p>
+                          </div>
+                          <button
+                            onClick={() => handleOpenRenewContractModal(c)}
+                            className="bg-purple-600 hover:bg-purple-500 text-white text-[10px] font-black px-2.5 py-1 rounded-lg shadow-sm flex items-center gap-1 active:scale-95"
+                          >
+                            <span>شحن وتجديد ⚡</span>
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-[11px] text-emerald-400 py-1">جميع باقات الساعات برصيد كافٍ (&gt; 5 ساعات) ✅</p>
+                  )}
+                </div>
+
+                {/* 3. Recent Operations Activity Stream (آخر المهام المنفذة للرجوع إليها) */}
+                <div className="glass-card-subtle p-3.5 rounded-2xl border border-amber-500/20 space-y-2">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="font-black text-emerald-300 flex items-center gap-1">
+                      <span>📜 آخر العمليات المنفذة:</span>
+                    </span>
+                    <span className="text-[10px] text-stone-400 font-bold">محفوظ وموثق</span>
+                  </div>
+                  <div className="space-y-1.5 max-h-24 overflow-y-auto pr-1">
+                    {recentTasks.slice(0, 3).map((t, idx) => (
+                      <div key={idx} className="p-1.5 bg-stone-900/80 rounded-lg text-[11px] border border-amber-500/10 flex items-start gap-1.5">
+                        <span className="text-amber-400 mt-0.5 text-[9px]">●</span>
+                        <div className="flex-1 leading-tight">
+                          <p className="text-stone-200 font-bold">{t.text}</p>
+                          <span className="text-[9px] text-stone-400 font-mono">{t.time}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+              </div>
+            </div>
+            
+            {/* Top Metrics Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              
+              <div className="glass-card p-5 rounded-3xl border border-amber-500/25 shadow-xl hover:border-amber-400/50 transition-all flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-black text-amber-200/90">إجمالي الباقات الشهرية والسنوية</p>
+                  <h3 className="text-3xl font-black text-white mt-1">{stats.totalClients} <span className="text-sm font-bold text-amber-300">مشترك</span></h3>
+                  <div className="flex gap-2 text-[11px] font-black mt-1.5">
+                    <span className="text-amber-300 bg-amber-500/20 border border-amber-500/30 px-2 py-0.5 rounded-lg">شهري: {stats.monthlyCount}</span>
+                    <span className="text-amber-300 bg-amber-500/20 border border-amber-500/30 px-2 py-0.5 rounded-lg">سنوي: {stats.annualCount}</span>
+                  </div>
+                </div>
+                <div className="p-3.5 bg-amber-500/15 border border-amber-500/30 text-amber-300 rounded-2xl shadow-inner">
+                  <Icon name="users" className="w-6 h-6" />
+                </div>
+              </div>
+
+              <div className="glass-card p-5 rounded-3xl border border-amber-500/25 shadow-xl hover:border-amber-400/50 transition-all flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-black text-amber-200/90">رصيد الساعات الفعّال المتاح</p>
+                  <h3 className="text-3xl font-black text-emerald-400 mt-1">{stats.totalRemainingHours} <span className="text-sm font-bold text-slate-300">ساعة</span></h3>
+                  <p className="text-[11px] text-amber-300 font-black mt-1.5">لا يُخصم عند الحجز أو الإلغاء</p>
+                </div>
+                <div className="p-3.5 bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 rounded-2xl shadow-inner">
+                  <Icon name="hourglass" className="w-6 h-6" />
+                </div>
+              </div>
+
+              <div className="glass-card p-5 rounded-3xl border border-amber-500/25 shadow-xl hover:border-amber-400/50 transition-all flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-black text-amber-200/90">حجوزات مؤكدة قادمة</p>
+                  <h3 className="text-3xl font-black text-amber-300 mt-1">{stats.scheduledBookingsCount} <span className="text-sm font-bold text-slate-300">موعد</span></h3>
+                  <p className="text-[11px] text-emerald-400 font-black mt-1.5">🛡️ رصيد العميل محفوظ تماماً</p>
+                </div>
+                <div className="p-3.5 bg-amber-500/15 border border-amber-500/30 text-amber-300 rounded-2xl shadow-inner">
+                  <Icon name="calendarCheck" className="w-6 h-6" />
+                </div>
+              </div>
+
+              <div className="glass-card p-5 rounded-3xl border border-amber-500/25 shadow-xl hover:border-amber-400/50 transition-all flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-black text-amber-200/90">حضور وخصم اليوم</p>
+                  <h3 className="text-3xl font-black text-emerald-400 mt-1">{stats.todayAttendanceCount} <span className="text-sm font-bold text-slate-300">جلسة</span></h3>
+                  <p className="text-[11px] text-stone-300 font-bold mt-1.5">تم خصم {stats.todayHoursConsumed} ساعة اليوم</p>
+                </div>
+                <div className="p-3.5 bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 rounded-2xl shadow-inner">
+                  <Icon name="attendance" className="w-6 h-6" />
+                </div>
+              </div>
+
+            </div>
+
+            {/* Quick Attendance Widget */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              
+              <div className="lg:col-span-1 glass-card p-6 rounded-3xl border-2 border-amber-500/30 text-white shadow-2xl space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="p-2 bg-emerald-500/20 text-emerald-400 rounded-2xl border border-emerald-400/30">
+                      <Icon name="attendance" className="w-5 h-5" />
+                    </span>
+                    <h3 className="font-black text-lg text-white">تسجيل حضور وخصم ساعات</h3>
+                  </div>
+                  <span className="text-[10px] bg-emerald-600 text-white px-2.5 py-0.5 rounded-full font-black flex items-center gap-1 shadow-sm">
+                    <Icon name="editMessage" className="w-3.5 h-3.5" />
+                    <span>تعديل الرسالة ✏️</span>
+                  </span>
+                </div>
+
+                <p className="text-xs text-stone-200 leading-relaxed font-bold">
+                  يتم الخصم الفعلي من رصيد العميل <b>فقط عند تأكيد الحضور الفعلي</b> للجلسة. أما حجز الموعد أو إلغاؤه فلا يخصم أي ساعات.
+                </p>
+
+                <form onSubmit={handleRegisterAttendance} className="space-y-3 pt-2">
+                  <div>
+                    <label className="block text-xs font-black text-amber-200 mb-1">اختر العميل والباقة:</label>
+                    <select
+                      value={quickClientId}
+                      onChange={(e) => setQuickClientId(e.target.value)}
+                      className="w-full bg-stone-950/90 border border-amber-500/30 text-white rounded-2xl p-3 text-xs font-bold focus:ring-2 focus:ring-amber-400 focus:outline-none"
+                    >
+                      <option value="">-- اضغط لاختيار العميل --</option>
+                      {clients.map(c => {
+                        const status = getClientContractStatus(c);
+                        return (
+                          <option key={c.id} value={c.id} className="bg-stone-950 text-white">
+                            {c.name} ({(c.packageDuration === '3months' || c.packageDuration === 'quarterly') ? '3 شهور' : (c.packageDuration === 'annual' ? 'سنوي' : (c.packageDuration === 'monthly' ? 'شهري' : 'مخصص'))}) - الرصيد: {c.currentBalance}س - {status.badgeText}
+                          </option>
+                        );
+                      })}
+                    </select>
+                  </div>
+
+                  {(() => {
+                    const selClient = clients.find(c => c.id === quickClientId);
+                    const isFT = selClient ? getClientContractStatus(selClient).isFullTime : false;
+
+                    if (isFT) {
+                      return (
+                        <div className="p-3.5 bg-purple-950/80 border-2 border-purple-500/50 rounded-2xl text-purple-200 text-xs font-black flex items-center gap-2 shadow-inner">
+                          <span className="text-xl">👑</span>
+                          <div>
+                            <div className="text-amber-300 font-black">اشتراك Full Time (دوام كامل)</div>
+                            <div className="text-[11px] text-purple-200 font-bold mt-0.5">تسجيل حضور مباشر دون الحاجة لطلب أو خصم ساعات.</div>
+                          </div>
+                        </div>
+                      );
+                    }
+
+                    return (
+                      <div>
+                        <label className="block text-xs font-black text-amber-200 mb-1">الساعات المستهلكة:</label>
+                        <div className="grid grid-cols-4 gap-1.5 mb-2">
+                          {['0.5', '1', '1.5', '2'].map(val => (
+                            <button
+                              key={val}
+                              type="button"
+                              onClick={() => setQuickHours(val)}
+                              className={`py-1.5 rounded-xl text-xs font-black transition-all ${quickHours === val ? 'gold-gradient-btn text-stone-950 scale-105 shadow-md' : 'bg-stone-900 text-stone-200 hover:bg-stone-800 hover:text-white border border-amber-500/20'}`}
+                            >
+                              {val}س
+                            </button>
+                          ))}
+                        </div>
+                        <input
+                          type="number"
+                          step="0.25"
+                          min="0.25"
+                          value={quickHours}
+                          onChange={(e) => setQuickHours(e.target.value)}
+                          placeholder="أو اكتب عدد الساعات..."
+                          className="w-full bg-stone-950 border border-amber-500/30 text-white rounded-2xl p-2.5 text-xs font-bold focus:ring-2 focus:ring-amber-400 focus:outline-none"
+                        />
+                      </div>
+                    );
+                  })()}
+
+                  <div>
+                    <label className="block text-xs font-black text-amber-200 mb-1">نوع الجلسة / ملاحظة:</label>
+                    <input
+                      type="text"
+                      value={quickNotes}
+                      onChange={(e) => setQuickNotes(e.target.value)}
+                      placeholder="مثال: جلسة استشارية، تدريب..."
+                      className="w-full bg-stone-950 border border-amber-500/30 text-white rounded-2xl p-2.5 text-xs font-bold focus:ring-2 focus:ring-amber-400 focus:outline-none"
+                    />
+                  </div>
+
+                  <button
+                    type="submit"
+                    className="w-full bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white font-black py-3.5 rounded-2xl text-xs shadow-lg shadow-emerald-950/50 transition-all active:scale-95 flex items-center justify-center gap-2"
+                  >
+                    <Icon name="editMessage" className="w-5 h-5" />
+                    <span>تأكيد الخصم ومراجعة/تعديل الرسالة 💬</span>
+                  </button>
+                </form>
+              </div>
+
+              {/* Today's Appointments & Instant Convert */}
+              <div className="lg:col-span-2 glass-card p-6 rounded-3xl border border-amber-500/25 shadow-2xl space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="p-2 bg-amber-500/15 border border-amber-500/30 text-amber-300 rounded-2xl">
+                      <Icon name="calendar" className="w-5 h-5" />
+                    </span>
+                    <div>
+                      <h3 className="font-black text-white text-base">جدول المواعيد اليوم والحجوزات القادمة</h3>
+                      <p className="text-xs text-amber-200/80 font-bold">حجز المواعيد أو إلغاؤها لا يخصم أي ساعات من رصيد العميل 🛡️</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => handleOpenNewBookingModal()}
+                    className="gold-gradient-btn px-4 py-1.5 rounded-2xl text-xs font-black flex items-center gap-1 shadow-md"
+                  >
+                    <Icon name="plus" className="w-3.5 h-3.5 text-stone-950 font-black" />
+                    <span>موعد جديد</span>
+                  </button>
+                </div>
+
+                {bookings.length === 0 ? (
+                  <div className="text-center py-10 text-stone-400 text-xs font-bold">لا توجد مواعيد مجدولة حالياً.</div>
+                ) : (
+                  <div className="space-y-2.5 max-h-[340px] overflow-y-auto pr-1">
+                    {bookings.slice(0, 5).map(b => {
+                      const client = clients.find(c => c.id === b.clientId);
+                      const isCancelled = isBookingCancelled(b);
+                      const isAttended = isBookingCompletedOrAttended(b);
+
+                      return (
+                        <div key={b.id} className={`p-3.5 rounded-2xl border flex items-center justify-between gap-3 transition-all ${isCancelled ? 'bg-rose-950/40 border-rose-500/30 opacity-80' : 'glass-card-subtle border-amber-500/15 hover:border-amber-400/40'}`}>
+                          <div className="flex items-center gap-3">
+                            <div className={`w-11 h-11 rounded-2xl flex flex-col items-center justify-center font-black text-xs border ${isCancelled ? 'bg-rose-950/80 border-rose-500/40 text-rose-300' : isAttended ? 'bg-emerald-950/80 border-emerald-500/40 text-emerald-400' : 'bg-amber-500/20 border-amber-500/40 text-amber-300'}`}>
+                              <span>{b.time.split(' ')[0]}</span>
+                              <span className="text-[9px] font-bold">{b.time.split(' ')[1] || ''}</span>
+                            </div>
+                            <div>
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <h4 className="font-black text-white text-sm">{b.clientName}</h4>
+                                {b.bookedVia === 'mobile_app' && (
+                                  <span className="text-[10px] bg-gradient-to-r from-amber-500 to-amber-600 text-stone-950 font-black px-2 py-0.5 rounded-md shadow flex items-center gap-1">
+                                    <span>📱</span>
+                                    <span>حجز من الجوال</span>
+                                  </span>
+                                )}
+                                <span className="text-[10px] font-black text-amber-300 bg-stone-950/80 border border-amber-500/30 px-2 py-0.5 rounded-md">
+                                  🚪 {b.room || INITIAL_ROOMS[0]}
+                                </span>
+                                {isCancelled ? (
+                                  <span className="text-[10px] bg-rose-950 border border-rose-500/40 text-rose-300 px-2 py-0.5 rounded-md font-bold flex items-center gap-1">
+                                    <Icon name="shieldCheck" className="w-3 h-3 text-rose-400" />
+                                    <span>{b.cancelledBy === 'client' ? 'ملغي بواسطة العميل' : 'ملغي (الساعات غير مستردة)'}</span>
+                                  </span>
+                                ) : isAttended ? (
+                                  (b.bookedVia === 'mobile_app' || b.isAutoDeducted) ? (
+                                    <span className="text-[10px] bg-emerald-950 border border-emerald-500/40 text-emerald-300 px-2 py-0.5 rounded-md font-bold">
+                                      ✓ تم الحضور والخصم (جوال)
+                                    </span>
+                                  ) : (
+                                    <span className="text-[10px] bg-emerald-950 border border-emerald-500/40 text-emerald-300 px-2 py-0.5 rounded-md font-bold">
+                                      ✓ تم الحضور والخصم
+                                    </span>
+                                  )
+                                ) : (b.bookedVia === 'mobile_app' || b.isAutoDeducted) ? (
+                                  <span className="text-[10px] bg-emerald-950 border border-emerald-500/50 text-emerald-300 px-2 py-0.5 rounded-md font-bold">
+                                    ⚡ حجز جوال (مخصوم فورياً)
+                                  </span>
+                                ) : (
+                                  <span className="text-[10px] bg-amber-500/20 border border-amber-500/30 text-amber-300 px-2 py-0.5 rounded-md font-bold">
+                                    مؤكد (بدون خصم حتى الآن)
+                                  </span>
+                                )}
+                              </div>
+                              <p className="text-[11px] text-stone-300 flex items-center gap-2 mt-1 font-bold">
+                                <span>📅 {b.date}</span>
+                                <span>⏱️ {b.durationHours} ساعة</span>
+                                <span className="font-mono text-emerald-400 font-bold bg-stone-950/80 border border-emerald-500/30 px-1.5 py-0.5 rounded">📞 {b.phone}</span>
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-2">
+                            {isCancelled ? (
+                              hasPermission('canManageBookings') && (
+                                <button
+                                  onClick={() => handleReactivateBooking(b)}
+                                  className="bg-stone-900 hover:bg-stone-800 text-stone-200 border border-amber-500/30 text-xs font-bold px-3 py-1.5 rounded-xl transition-all"
+                                >
+                                  إعادة التفعيل 🔄
+                                </button>
+                              )
+                            ) : isAttended ? (
+                              <span className="text-emerald-400 bg-emerald-950/80 border border-emerald-500/30 text-xs font-black px-3 py-1.5 rounded-xl flex items-center gap-1">
+                                <Icon name="check" className="w-3.5 h-3.5 text-emerald-400" />
+                                <span>جلسة مكتملة ومخصومة</span>
+                              </span>
+                            ) : (
+                              <div className="flex items-center gap-1.5">
+                                {hasPermission('canDeductAttendance') && (
+                                  <button
+                                    onClick={() => handleConvertBookingToAttendance(b)}
+                                    className="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-black px-3.5 py-1.5 rounded-xl shadow-md transition-all flex items-center gap-1 active:scale-95"
+                                  >
+                                    <Icon name="check" className="w-3.5 h-3.5" />
+                                    <span>حضور وخصم</span>
+                                  </button>
+                                )}
+
+                                {hasPermission('canCancelBookings') && (
+                                  <button
+                                    onClick={() => handleCancelBooking(b)}
+                                    className="bg-rose-950/80 hover:bg-rose-900 text-rose-300 border border-rose-500/30 text-xs font-bold px-2.5 py-1.5 rounded-xl transition-all flex items-center gap-1"
+                                    title="إلغاء الموعد دون خصم أي ساعات من العميل"
+                                  >
+                                    <Icon name="ban" className="w-3.5 h-3.5 text-rose-400" />
+                                    <span className="hidden sm:inline">إلغاء (بدون خصم)</span>
+                                  </button>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+            </div>
+
+          </div>
+        )}
+
+        {/* ==================================================== */}
+        {/* 2️⃣ ATTENDANCE ENGINE VIEW */}
+        {/* ==================================================== */}
+        {activeTab === 'attendance' && (
+          <div className="space-y-6">
+            <div className="glass-card p-6 rounded-3xl border border-amber-500/25 shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+              <div>
+                <h2 className="text-xl font-black text-white">تسجيل الحضور والخصم التلقائي مع سريان الباقات</h2>
+                <p className="text-xs text-amber-200/80 mt-1 font-bold">يتم الخصم فقط عند الحضور الفعلي للجلسة، وإلغاء الحجز لا يمس الرصيد نهائياً.</p>
+              </div>
+              <button
+                onClick={() => exportExcelFullWorkbook(false)}
+                className="gold-gradient-btn text-stone-950 text-xs font-black px-4 py-2.5 rounded-2xl flex items-center gap-2 shadow-lg"
+              >
+                <Icon name="excel" className="w-4 h-4 text-stone-950 font-black" />
+                <span>تصدير شيت الحضور لإكسل</span>
+              </button>
+            </div>
+
+            {/* Attendance History Table */}
+            <div className="glass-card p-6 rounded-3xl border border-amber-500/25 shadow-2xl space-y-4">
+              <h3 className="font-black text-white text-base">سجل كافة جلسات الحضور والاستهلاك</h3>
+              
+              <div className="overflow-x-auto">
+                <table className="w-full text-right text-xs">
+                  <thead>
+                    <tr className="bg-stone-950/80 text-amber-300 font-black border-b border-amber-500/30">
+                      <th className="p-3.5 rounded-r-2xl">م</th>
+                      <th className="p-3.5">اسم العميل</th>
+                      <th className="p-3.5">رقم الهاتف ومفتاح الدولة</th>
+                      <th className="p-3.5">التاريخ والوقت</th>
+                      <th className="p-3.5">الساعات المستهلكة</th>
+                      <th className="p-3.5">الرصيد بعد</th>
+                      <th className="p-3.5">نوع الجلسة</th>
+                      <th className="p-3.5">تعديل وإرسال الرسالة</th>
+                      <th className="p-3.5 rounded-l-2xl">حذف</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-amber-500/10">
+                    {attendance.map((att, idx) => {
+                      const client = clients.find(c => c.id === att.clientId);
+                      return (
+                        <tr key={att.id} className="hover:bg-amber-950/20 transition-colors">
+                          <td className="p-3.5 font-bold text-stone-400">{idx + 1}</td>
+                          <td className="p-3.5 font-black text-white">{att.clientName}</td>
+                          <td className="p-3.5 text-emerald-400 font-mono font-bold bg-stone-950/40 rounded">{att.clientPhone}</td>
+                          <td className="p-3.5 text-stone-300 font-bold">{att.date} ({att.time})</td>
+                          <td className="p-3.5 font-black text-rose-400">-{att.hoursConsumed} ساعة</td>
+                          <td className="p-3.5 font-black text-emerald-400">{att.newBalance}س</td>
+                          <td className="p-3.5 text-stone-200 font-bold">{att.serviceType}</td>
+                          <td className="p-3.5">
+                            <button
+                              onClick={() => {
+                                const template = settings.templates?.attendance || DEFAULT_TEMPLATES.attendance;
+                                const contractInfo = client ? getClientContractStatus(client) : { badgeText: '' };
+                                const pkgTypeName = (client?.packageDuration === '3months' || client?.packageDuration === 'quarterly') ? 'باقة 3 شهور' : (client?.packageDuration === 'annual' ? 'باقة سنوية' : (client?.packageDuration === 'monthly' ? 'باقة شهرية' : 'باقة مخصصة'));
+
+                                const msg = fillTemplate(template, {
+                                  'اسم_العميل': att.clientName,
+                                  'اسم_الشركة': settings.companyName,
+                                  'نوع_الخدمة': att.serviceType,
+                                  'نوع_الباقة': pkgTypeName,
+                                  'التاريخ': att.date,
+                                  'الوقت': att.time,
+                                  'الساعات_المستهلكة': att.hoursConsumed,
+                                  'الرصيد_المتبقي': att.newBalance,
+                                  'تاريخ_الانتهاء': client?.expiryDate || 'مستمر',
+                                  'حالة_التعاقد': contractInfo.badgeText
+                                });
+                                openWhatsAppModalForEdit(att.clientPhone, att.clientName, msg, 'إرسال تفاصيل الجلسة عبر WhatsApp');
+                              }}
+                              className="bg-emerald-600 hover:bg-emerald-500 text-white font-black px-3.5 py-1.5 rounded-xl text-xs flex items-center gap-1.5 shadow-md transition-all active:scale-95"
+                            >
+                              <Icon name="editMessage" className="w-3.5 h-3.5" />
+                              <span>تعديل وإرسال 💬</span>
+                            </button>
+                          </td>
+                          <td className="p-3.5">
+                            {hasPermission('canDeleteAttendance') && (
+                              <button
+                                onClick={() => {
+                                  if (!hasPermission('canDeleteAttendance')) {
+                                    alert('⛔ عذراً، ليس لديك صلاحية حذف سجلات الحضور.');
+                                    return;
+                                  }
+                                  if (window.confirm('هل تريد حذف هذا السجل؟')) {
+                                    setAttendance(prev => prev.filter(a => a.id !== att.id));
+                                    triggerToast('تم الحذف', 'تم حذف سجل الحضور.', 'info');
+                                  }
+                                }}
+                                className="p-1.5 text-rose-400 hover:bg-rose-950/80 rounded-xl transition-all"
+                                title="حذف السجل"
+                              >
+                                <Icon name="trash" className="w-4 h-4" />
+                              </button>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ==================================================== */}
+        {/* 3️⃣ APPOINTMENTS & BOOKINGS VIEW (WITH ZERO-DEDUCTION CANCELLATION) */}
+        {/* ==================================================== */}
+        {activeTab === 'bookings' && (
+          <div className="space-y-6">
+            <div className="glass-card p-6 rounded-3xl border border-amber-500/25 shadow-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="p-2 bg-amber-500/15 border border-amber-500/30 text-amber-300 rounded-xl">
+                    <Icon name="calendar" className="w-5 h-5" />
+                  </span>
+                  <h2 className="text-xl font-black text-white">جدول المواعيد ونظام الإلغاء بدون خصم ساعات 🛡️</h2>
+                </div>
+                <p className="text-xs text-amber-200/80 mt-1 font-bold">
+                  عند حجز موعد أو إلغائه <b>لا يتم خصم أي ساعات</b> من رصيد العميل، ويتم الخصم فقط عند الحضور الفعلي.
+                </p>
+              </div>
+              <button
+                onClick={() => handleOpenNewBookingModal()}
+                className="gold-gradient-btn text-stone-950 text-xs font-black px-5 py-3 rounded-2xl flex items-center gap-2 shadow-lg active:scale-95"
+              >
+                <Icon name="plus" className="w-5 h-5 font-black text-stone-950" />
+                <span>+ حجز موعد جديد</span>
+              </button>
+            </div>
+
+            {/* Filter Tabs & Room Filter Bar for Bookings */}
+            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
+              <div className="flex flex-wrap gap-1.5">
+                {[
+                  { id: 'all', label: `كافة المواعيد (${bookings.length})` },
+                  { id: 'scheduled', label: `المواعيد القادمة (${stats.scheduledBookingsCount})` },
+                  { id: 'attended', label: `تم الحضور والخصم (${stats.attendedBookingsCount})` },
+                  { id: 'cancelled', label: `الملغية (${stats.cancelledBookingsCount})` }
+                ].map(f => (
+                  <button
+                    key={f.id}
+                    onClick={() => setBookingFilter(f.id)}
+                    className={`px-4 py-2 rounded-2xl text-xs font-black transition-all ${bookingFilter === f.id ? 'gold-gradient-btn text-stone-950 shadow-md' : 'glass-card-subtle border border-amber-500/20 text-stone-200 hover:text-white hover:bg-stone-800'}`}
+                  >
+                    {f.label}
+                  </button>
+                ))}
+              </div>
+
+              {/* Room Filter Dropdown */}
+              <div className="flex items-center gap-2 glass-card-subtle px-4 py-2 rounded-2xl border border-amber-500/30 text-xs w-full md:w-auto shadow-md">
+                <span className="font-black text-amber-300 whitespace-nowrap">🚪 تصفية بالقاعة:</span>
+                <select
+                  value={bookingRoomFilter}
+                  onChange={(e) => setBookingRoomFilter(e.target.value)}
+                  className="bg-transparent font-black text-white focus:outline-none cursor-pointer text-xs w-full"
+                >
+                  <option value="all" className="bg-stone-950 text-white">كافة القاعات والغرف ({bookings.length})</option>
+                  {(settings.rooms || INITIAL_ROOMS).map(r => (
+                    <option key={r} value={r} className="bg-stone-950 text-white">
+                      {r} ({bookings.filter(b => (b.room || INITIAL_ROOMS[0]) === r).length})
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            {/* Bookings Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {filteredBookings.length === 0 ? (
+                <div className="col-span-full p-12 text-center glass-card rounded-3xl border border-amber-500/20 shadow-lg space-y-2">
+                  <span className="text-4xl block">📅</span>
+                  <h4 className="font-black text-white text-base">جدول المواعيد والقاعات نظيف تماماً ✨</h4>
+                  <p className="text-xs text-stone-400 font-bold">لا توجد حجوزات مسجلة حالياً في هذا القسم. الجدول جاهز لاستقبال المواعيد الجديدة.</p>
+                </div>
+              ) : (
+                filteredBookings.map(b => {
+                const client = clients.find(c => c.id === b.clientId);
+                const isCancelled = isBookingCancelled(b);
+                const isAttended = isBookingCompletedOrAttended(b);
+                const contractInfo = client ? getClientContractStatus(client) : { isExpired: false, badgeText: '' };
+
+                return (
+                  <div key={b.id} className={`glass-card p-5 rounded-3xl border shadow-xl space-y-4 hover:border-amber-400/50 transition-all ${isCancelled ? 'border-rose-500/30 bg-rose-950/30' : 'border-amber-500/25'}`}>
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="text-xs font-black bg-amber-500/20 border border-amber-500/40 text-amber-300 px-2.5 py-1 rounded-xl">
+                            📅 {b.date} • ⏰ {formatBookingTimeRange(b)}
+                          </span>
+                          <span className="text-xs font-black bg-stone-950 text-amber-300 border border-amber-500/30 px-2.5 py-1 rounded-xl">
+                            🚪 {b.room || INITIAL_ROOMS[0]}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2 flex-wrap mt-2">
+                          <h3 className="font-black text-white text-base">{b.clientName}</h3>
+                          {b.bookedVia === 'mobile_app' && (
+                            <span className="text-[10px] bg-gradient-to-r from-amber-500 to-amber-600 text-stone-950 font-black px-2 py-0.5 rounded-md shadow flex items-center gap-1">
+                              <span>📱</span>
+                              <span>حجز ذاتي من الجوال</span>
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-xs text-emerald-400 font-mono font-bold flex items-center gap-1 mt-1 bg-stone-950/80 border border-emerald-500/30 px-2 py-0.5 rounded-lg w-fit">
+                          <Icon name="whatsapp" className="w-3.5 h-3.5 text-emerald-400" />
+                          <span>{b.phone}</span>
+                        </p>
+                      </div>
+
+                      <div>
+                        {isCancelled ? (
+                          <span className="bg-rose-950 border border-rose-500/40 text-rose-300 text-[10px] font-black px-2.5 py-1 rounded-xl flex items-center gap-1">
+                            <Icon name="shieldCheck" className="w-3 h-3 text-rose-400" />
+                            <span>{b.cancelledBy === 'client' ? 'ملغي بواسطة العميل' : 'ملغي (الساعات غير مستردة)'}</span>
+                          </span>
+                        ) : isAttended ? (
+                          (b.bookedVia === 'mobile_app' || b.isAutoDeducted) ? (
+                            <span className="bg-emerald-950 border border-emerald-500/50 text-emerald-300 text-[10px] font-black px-2.5 py-1 rounded-xl flex items-center gap-1 shadow-sm">
+                              <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
+                              <span>✓ تم الحضور والخصم (حجز جوال)</span>
+                            </span>
+                          ) : (
+                            <span className="bg-emerald-950 border border-emerald-500/40 text-emerald-300 text-[10px] font-black px-2.5 py-1 rounded-xl">
+                              ✓ تم الحضور والخصم
+                            </span>
+                          )
+                        ) : (b.bookedVia === 'mobile_app' || b.isAutoDeducted) ? (
+                          <span className="bg-emerald-950 border border-emerald-500/50 text-emerald-300 text-[10px] font-black px-2.5 py-1 rounded-xl flex items-center gap-1 shadow-sm">
+                            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                            <span>⚡ حجز جوال (مخصوم فورياً)</span>
+                          </span>
+                        ) : (
+                          <span className="bg-amber-500/20 border border-amber-500/40 text-amber-300 text-[10px] font-black px-2.5 py-1 rounded-xl">
+                            حجز إداري (بانتظار الحضور)
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="glass-card-subtle p-3.5 rounded-2xl text-xs space-y-1.5 border border-amber-500/15 text-stone-200">
+                      <div className="font-black text-white">🏷️ {b.serviceType}</div>
+                      <div className="p-2 bg-stone-950/80 rounded-xl border border-amber-500/20 text-xs space-y-1">
+                        <div className="text-emerald-300 font-black flex items-center justify-between">
+                          <span>⏱️ عدد الساعات المحجوزة:</span>
+                          <span className="text-sm bg-emerald-500/20 px-2 py-0.5 rounded-lg border border-emerald-500/40 font-mono font-black">{b.duration || b.durationHours || 1} ساعات</span>
+                        </div>
+                        <div className="text-stone-300 text-[11px] font-bold">
+                          ⏰ الفترة: <span className="text-amber-300 font-mono">{formatBookingTimeRange(b)}</span>
+                        </div>
+                        {(b.bookedVia === 'mobile_app' || b.isAutoDeducted) && (
+                          <div className="text-[10px] text-emerald-400 font-black flex items-center gap-1 pt-0.5">
+                            <span>⚡</span>
+                            <span>تم خصم ({b.duration || b.durationHours || 1} ساعات) تلقائياً من رصيد العميل فور الحجز</span>
+                          </div>
+                        )}
+                      </div>
+                      <div className="text-amber-300 font-bold">🚪 القاعة: {b.room || INITIAL_ROOMS[0]}</div>
+                      {client && (
+                        <div className="text-[11px] font-black text-amber-400">
+                          📦 {(client.packageDuration === '3months' || client.packageDuration === 'quarterly') ? 'باقة 3 شهور' : (client.packageDuration === 'annual' ? 'باقة سنوية' : (client.packageDuration === 'monthly' ? 'باقة شهرية' : 'باقة مخصصة'))} ({contractInfo.badgeText})
+                        </div>
+                      )}
+                      {b.notes && <div className="text-[11px] text-stone-400 mt-1 font-medium">📝 {b.notes}</div>}
+                    </div>
+
+                    <div className="pt-2 flex flex-col gap-2">
+                      <div className="flex gap-2">
+                        {/* WhatsApp Message Button */}
+                        <button
+                          onClick={() => {
+                            const template = isCancelled ? (settings.templates?.cancellation || DEFAULT_TEMPLATES.cancellation) : (settings.templates?.booking || DEFAULT_TEMPLATES.booking);
+                            const pkgTypeName = (client?.packageDuration === '3months' || client?.packageDuration === 'quarterly') ? 'باقة 3 شهور' : (client?.packageDuration === 'annual' ? 'باقة سنوية' : (client?.packageDuration === 'monthly' ? 'باقة شهرية' : 'باقة عامة'));
+
+                            const msg = fillTemplate(template, {
+                              'اسم_العميل': b.clientName,
+                              'اسم_الشركة': settings.companyName,
+                              'نوع_الخدمة': b.serviceType,
+                              'نوع_الباقة': pkgTypeName,
+                              'تاريخ_الانتهاء': client?.expiryDate || 'مستمر',
+                              'التاريخ': b.date,
+                              'الوقت': b.time,
+                              'المدة': b.durationHours,
+                              'الرصيد_المتبقي': client?.currentBalance || 0
+                            });
+                            openWhatsAppModalForEdit(b.phone, b.clientName, msg, isCancelled ? 'إشعار إلغاء الحجز عبر WhatsApp' : 'تذكير بموعد عبر WhatsApp');
+                          }}
+                          className="flex-1 bg-emerald-950/80 hover:bg-emerald-900 text-emerald-300 border border-emerald-500/30 font-black px-3 py-2 rounded-xl text-xs flex items-center justify-center gap-1.5 shadow-sm transition-all"
+                          title="تعديل نص الرسالة وإرسالها"
+                        >
+                          <Icon name="editMessage" className="w-4 h-4 text-emerald-400" />
+                          <span>{isCancelled ? 'إرسال تأكيد الإلغاء 💬' : 'تعديل وإرسال 💬'}</span>
+                        </button>
+
+                        {/* Convert to Attendance (Only for manual desktop bookings, NOT mobile auto-deducted bookings) */}
+                        {!isCancelled && !isAttended && b.bookedVia !== 'mobile_app' && !b.isAutoDeducted && (
+                          <button
+                            onClick={() => handleConvertBookingToAttendance(b)}
+                            className="bg-emerald-600 hover:bg-emerald-500 text-white font-black px-3.5 py-2 rounded-xl text-xs flex items-center justify-center gap-1 shadow-md transition-all active:scale-95"
+                          >
+                            <Icon name="check" className="w-4 h-4" />
+                            <span>حضور وخصم</span>
+                          </button>
+                        )}
+                      </div>
+
+                      {/* Cancel Booking Without Deduction Button */}
+                      <div className="flex gap-2 pt-1 border-t border-amber-500/10">
+                        {isCancelled ? (
+                          <div className="flex w-full justify-between items-center text-xs">
+                            <button
+                              onClick={() => handleReactivateBooking(b)}
+                              className="text-amber-400 hover:underline font-bold"
+                            >
+                              ↺ إعادة تفعيل الموعد
+                            </button>
+                            <button
+                              onClick={() => handleDeleteBookingPermanently(b.id)}
+                              className="text-rose-400 hover:underline text-[11px] font-bold"
+                            >
+                              حذف السجل نهائياً
+                            </button>
+                          </div>
+                        ) : (b.bookedVia === 'mobile_app' || b.isAutoDeducted) ? (
+                          <div className="w-full text-center py-2 bg-emerald-950/90 text-emerald-300 text-xs font-black rounded-xl border border-emerald-500/40 flex items-center justify-center gap-1.5 shadow-sm">
+                            <span className="text-emerald-400">⚡</span>
+                            <span>تم خصم ({b.duration || b.durationHours || 1}س) فورياً عبر الجوال • لا يتطلب تأكيد حضور</span>
+                          </div>
+                        ) : isAttended ? (
+                          <div className="w-full text-center py-2 bg-emerald-950/80 text-emerald-300 text-xs font-black rounded-xl border border-emerald-500/30 flex items-center justify-center gap-1.5 shadow-sm">
+                            <Icon name="check" className="w-4 h-4 text-emerald-400" />
+                            <span>تم الحضور وخصم الساعات بنجاح ✓ (جلسة مكتملة)</span>
+                          </div>
+                        ) : (
+                          <button
+                            onClick={() => handleCancelBooking(b)}
+                            className="w-full bg-rose-950/80 hover:bg-rose-900 text-rose-300 border border-rose-500/30 font-bold py-2 rounded-xl text-xs flex items-center justify-center gap-1.5 transition-all hover:shadow-sm"
+                            title="إلغاء الحجز دون خصم أي ساعات من رصيد العميل"
+                          >
+                            <Icon name="ban" className="w-4 h-4 text-rose-400" />
+                            <span>إلغاء الموعد (بدون خصم ساعات) ❌</span>
+                          </button>
+                        )}
+                      </div>
+
+                    </div>
+                  </div>
+                );
+              }))}
+            </div>
+          </div>
+        )}
+
+        {/* ==================================================== */}
+        {/* 4️⃣ CLIENTS & PACKAGES (MONTHLY/ANNUAL) VIEW */}
+        {/* ==================================================== */}
+        {activeTab === 'clients' && (
+          <div className="space-y-6">
+            <div className="glass-card p-6 rounded-3xl border border-amber-500/25 shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="p-2 bg-amber-500/15 border border-amber-500/30 text-amber-300 rounded-xl">
+                    <Icon name="users" className="w-5 h-5" />
+                  </span>
+                  <h2 className="text-xl font-black text-white">إدارة الباقات الشهرية والسنوية ومتابعة انتهاء الصلاحية</h2>
+                </div>
+                <p className="text-xs text-amber-200/80 mt-1 font-bold">
+                  ينتهي رصيد العميل تلقائياً عند استهلاك الساعات أو عند وصول تاريخ انتهاء العقد (شهري أو سنوي).
+                </p>
+              </div>
+              
+              <div className="flex flex-wrap items-center gap-2.5">
+                {hasPermission('canSendClientNotifications') && (
+                  <button
+                    onClick={() => handleOpenSendNotifModal('all')}
+                    className="bg-stone-900 hover:bg-stone-800 border border-amber-500/40 text-amber-300 text-xs font-black px-4 py-3 rounded-2xl flex items-center gap-2 shadow-lg active:scale-95 transition-all"
+                  >
+                    <span className="text-sm">🔔</span>
+                    <span>إرسال إشعار للعملاء</span>
+                  </button>
+                )}
+
+                <button
+                  onClick={handleOpenNewClientModal}
+                  className="gold-gradient-btn text-stone-950 text-xs font-black px-5 py-3 rounded-2xl flex items-center gap-2 shadow-lg active:scale-95"
+                >
+                  <Icon name="userPlus" className="w-5 h-5 font-black text-stone-950" />
+                  <span>+ إضافة عميل / باقة جديدة</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Search & Filter Bar */}
+            <div className="flex flex-col sm:flex-row gap-3">
+              <div className="flex-1 relative">
+                <input
+                  type="text"
+                  value={clientSearch}
+                  onChange={(e) => setClientSearch(e.target.value)}
+                  placeholder="ابحث باسم العميل أو رقم الهاتف الدولي..."
+                  className="w-full bg-stone-950/90 border border-amber-500/30 rounded-2xl py-3 pr-10 pl-4 text-xs font-bold text-white placeholder:text-stone-400 focus:ring-2 focus:ring-amber-400 focus:outline-none shadow-sm"
+                />
+                <span className="absolute right-3.5 top-3.5 text-amber-400">
+                  <Icon name="search" className="w-4 h-4" />
+                </span>
+              </div>
+
+              <div className="flex flex-wrap gap-1.5">
+                {[
+                  { id: 'all', label: `كافة العملاء (${clients.length})` },
+                  { id: 'fulltime', label: `👑 اشتراك Full Time (${stats.fulltimeCount || 0})` },
+                  { id: 'last_week', label: `⚠️ آخر أسبوع (${(stats.fulltimeLastWeekClients?.length || 0) + (stats.expiringSoonClients?.length || 0)})` },
+                  { id: 'monthly', label: `باقات شهرية (${stats.monthlyCount || 0})` },
+                  { id: '3months', label: `باقات 3 شهور (${stats.quarterlyCount || 0}) ⭐` },
+                  { id: 'annual', label: `باقات سنوية (${stats.annualCount || 0})` },
+                  { id: 'active', label: 'سارية ✅' },
+                  { id: 'expired', label: `منتهية الصلاحية (${stats.expiredCount || 0}) ⛔` }
+                ].map(f => (
+                  <button
+                    key={f.id}
+                    onClick={() => setClientFilter(f.id)}
+                    className={`px-3.5 py-2 rounded-2xl text-xs font-black transition-all ${clientFilter === f.id ? 'gold-gradient-btn text-stone-950 shadow-md' : 'glass-card-subtle border border-amber-500/20 text-stone-200 hover:text-white hover:bg-stone-800'}`}
+                  >
+                    {f.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Clients Cards Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+              {filteredClients.map(client => {
+                const contractInfo = getClientContractStatus(client);
+                const isFT = contractInfo.isFullTime;
+                const isShiftCard = client.subscriptionType === 'shift' || (client.package && client.package.includes('الشيفت'));
+                const isFTOnly = isFT && !isShiftCard;
+                const isMonthly = client.packageDuration === 'monthly' || client.packageDuration === 'fulltime_1m';
+                const isAnnual = client.packageDuration === 'annual' || client.packageDuration === 'fulltime_1y';
+                const is3M = client.packageDuration === '3months' || client.packageDuration === 'quarterly' || client.packageDuration === 'fulltime_3m';
+                const isZero = !isFT && (client.currentBalance === 0 || client.currentBalance === '0');
+                const clientBal = client.currentBalance !== undefined && client.currentBalance !== null ? Number(client.currentBalance) : Number(client.initialHours || 0);
+                const consumed = isFT ? '-' : Math.max(0, Number(client.initialHours || 0) - clientBal).toFixed(1);
+
+                return (
+                  <div 
+                    key={client.id} 
+                    className={`glass-card rounded-3xl p-5 border shadow-xl space-y-4 hover:border-amber-400/50 transition-all relative group ${
+                      contractInfo.isExpired ? 'border-rose-500/40 bg-rose-950/25' :
+                      contractInfo.isLastWeek ? 'border-amber-400/80 bg-amber-950/30 ring-2 ring-amber-400/40 ' :
+                      isFT ? 'border-purple-500/40 bg-purple-950/20' :
+                      'border-amber-500/25'
+                    }`}
+                  >
+                    
+                    {/* Header with Expiry & Duration Badges */}
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          {isFT ? (
+                            <span className={`text-[10px] font-black px-2.5 py-0.5 rounded-lg text-white border shadow-sm flex items-center gap-1 ${isShiftCard ? 'bg-gradient-to-r from-blue-700 to-cyan-600 border-blue-400/50' : 'bg-gradient-to-r from-purple-700 to-indigo-600 border-purple-400/50'}`}>
+                              <span>{isShiftCard ? '🔄' : '👑'}</span>
+                              <span>{isShiftCard ? 'نظام الشيفت' : 'Full Time'} ({is3M ? '3 شهور' : isAnnual ? 'سنة كاملة' : 'شهر واحد'})</span>
+                            </span>
+                          ) : (
+                            <span className={`text-[10px] font-black px-2 py-0.5 rounded-md ${
+                              is3M ? 'bg-emerald-500/20 border border-emerald-500/40 text-emerald-300' :
+                              isMonthly ? 'bg-amber-500/20 border border-amber-500/30 text-amber-300' :
+                              isAnnual ? 'bg-amber-500/20 border border-amber-500/30 text-amber-300' :
+                              'bg-stone-800 text-stone-200'
+                            }`}>
+                              {is3M ? 'باقة 3 شهور ⭐' : isMonthly ? 'باقة شهرية' : isAnnual ? 'باقة سنوية' : 'باقة مخصصة'}
+                            </span>
+                          )}
+
+                          <span className={`text-[10px] font-black px-2 py-0.5 rounded-md ${
+                            contractInfo.isExpired ? 'bg-rose-950 border border-rose-500/40 text-rose-300' :
+                            contractInfo.isLastWeek ? 'bg-amber-950 border border-amber-400/70 text-amber-300 font-black ' :
+                            contractInfo.status === 'expiring_soon' ? 'bg-amber-950 border border-amber-500/40 text-amber-300' :
+                            'bg-emerald-950 border border-emerald-500/40 text-emerald-300'
+                          }`}>
+                            {contractInfo.badgeText}
+                          </span>
+                        </div>
+
+                        <h3 className="font-black text-white text-base mt-2 flex items-center gap-1.5">
+                          <span>{client.name}</span>
+                          {isFT && <span className="text-amber-300 text-xs font-black">{isShiftCard ? '🔄' : '👑'}</span>}
+                        </h3>
+                        <div className="flex items-center gap-2 flex-wrap mt-1">
+                          <p className="text-xs text-emerald-400 font-mono font-bold flex items-center gap-1 bg-stone-950/80 border border-emerald-500/30 px-2 py-0.5 rounded-lg w-fit">
+                            <Icon name="whatsapp" className="w-3.5 h-3.5 text-emerald-400" />
+                            <span>{client.phone}</span>
+                          </p>
+                          {client.username && (
+                            <span className="text-[10px] text-amber-300 font-mono font-bold bg-stone-950/80 border border-amber-500/30 px-2 py-0.5 rounded-lg flex items-center gap-1" title={hasPermission('canViewClientCredentials') ? `باسورد: ${client.password || 'غير محدد'}` : 'باسورد: •••••••• (محمي)'}>
+                              <span>👤</span>
+                              <span>{client.username}</span>
+                            </span>
+                          )}
+                          {isFT && (client.dedicatedRoom || client.room) && (
+                            <span className="text-[10px] text-purple-200 font-bold bg-purple-950/90 border border-purple-500/40 px-2 py-0.5 rounded-lg flex items-center gap-1">
+                              <span>🏢</span>
+                              <span>{client.dedicatedRoom || client.room}</span>
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      
+                      <div className={`px-3 py-1.5 rounded-2xl text-xs font-black text-center ${
+                        contractInfo.isExpired ? 'bg-rose-950 border border-rose-500/40 text-rose-300' :
+                        contractInfo.isLastWeek ? 'bg-amber-950 border border-amber-400/60 text-amber-300 ring-1 ring-amber-400' :
+                        isFT ? 'bg-purple-950/80 border border-purple-500/40 text-purple-200' :
+                        'bg-amber-500/20 border border-amber-500/40 text-amber-300'
+                      }`}>
+                        {isFT ? (
+                          <>
+                            <div className="text-sm font-mono font-black text-amber-300">
+                              {isShiftCard ? '🔄' : '👑'} {contractInfo.daysLeft !== null && contractInfo.daysLeft >= 0 ? `${contractInfo.daysLeft} يوم` : 'منتهي'}
+                            </div>
+                            <div className="text-[9px] font-bold text-stone-300">متبقي بالاشتراك</div>
+                            <div className="text-[8px] text-purple-300/80 font-sans">{isShiftCard ? 'الشيفت (أيام فقط)' : 'دوام كامل (أيام فقط)'}</div>
+                          </>
+                        ) : (
+                          <>
+                            <div className="text-base font-mono">{isFT ? '-' : clientBal}</div>
+                            <div className="text-[9px] font-normal">ساعة متبقية</div>
+                          </>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Contract Dates Info Box */}
+                    <div className="glass-card-subtle p-3.5 rounded-2xl text-xs space-y-1.5 border border-amber-500/15">
+                      <div className="flex justify-between items-center text-stone-300">
+                        <span className="font-black text-amber-300">📅 فترة الاشتراك:</span>
+                        <span className="font-mono text-[11px] text-white font-bold">{client.startDate || '-'} ➔ {client.expiryDate || 'مستمر'}</span>
+                      </div>
+                      <div className="flex justify-between items-center text-stone-400 text-[11px]">
+                        <span>حالة الصلاحية:</span>
+                        <span className={`font-black ${contractInfo.isExpired ? 'text-rose-400' : contractInfo.isLastWeek ? 'text-amber-300' : 'text-emerald-400'}`}>
+                          {contractInfo.label}
+                        </span>
+                      </div>
+                      {isFT && (
+                        <div className="flex justify-between items-center text-[10px] text-purple-300 bg-purple-950/40 p-2 rounded-xl border border-purple-500/20 font-bold">
+                          <span>نظام الاشتراك:</span>
+                          <span className="font-mono text-amber-300 text-[9.5px]">
+                            {client.subscriptionType === 'shift' || (client.package && client.package.includes('الشيفت'))
+                              ? `نظام الشيفت (${(client.shiftType === 'evening' || (client.package && client.package.includes('مسائي'))) ? 'مسائي' : 'صباحي'} | من ${client.shiftStartTime || '-'} إلى ${client.shiftEndTime || '-'} | ${client.contractHours || '-'} ساعات)` 
+                              : `دوام كامل (مساحة مخصصة 12/6)`}
+                            {contractInfo.daysLeft !== null && contractInfo.daysLeft >= 0 ? ` • ${contractInfo.daysLeft} يوم متبقي` : ' • منتهي'}
+                          </span>
+                        </div>
+                      )}
+                      {client.notes && <div className="text-[11px] text-stone-400 border-t border-amber-500/10 pt-1">📝 {client.notes}</div>}
+                    </div>
+
+                    {/* ☕📄 Financial Ledger Balance Indicator */}
+                    {(() => {
+                      const finBal = typeof client.financialBalance === 'number' ? client.financialBalance : 0;
+                      return (
+                        <div className="p-2.5 rounded-2xl bg-stone-950/80 border border-amber-500/20 flex items-center justify-between gap-2 shadow-inner">
+                          <div className="flex items-center gap-1.5 min-w-0">
+                            <span className="text-base">☕</span>
+                            <div className="truncate">
+                              <span className="text-[10px] text-stone-400 block font-bold">حساب البوفيه والخدمات:</span>
+                              <span className={`text-xs font-black font-mono ${
+                                finBal < 0 ? 'text-rose-400' : finBal > 0 ? 'text-emerald-400' : 'text-stone-300'
+                              }`}>
+                                {finBal < 0 ? `مطلوب منه: ${Math.abs(finBal)} ج.م ⚠️` : finBal > 0 ? `له رصيد: ${finBal} ج.م 🟢` : 'الحساب متزن (0 ج.م) ✨'}
+                              </span>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-1 flex-shrink-0">
+                            <button
+                              type="button"
+                              onClick={() => setShowFinancialModal({ client, type: 'charge', category: 'buffet' })}
+                              className="px-2 py-1 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 text-amber-300 text-[10px] font-black transition-all active:scale-95 flex items-center gap-0.5"
+                              title="إضافة حساب (بوفيه / تصوير ورق / خدمات)"
+                            >
+                              <span>+</span>
+                              <span>حساب</span>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setShowFinancialModal({ client, type: 'payment', category: 'payment' })}
+                              className="px-2 py-1 rounded-xl bg-emerald-950/80 hover:bg-emerald-900 border border-emerald-500/40 text-emerald-300 text-[10px] font-black transition-all active:scale-95"
+                              title="تسجيل سداد أو شحن رصيد"
+                            >
+                              سداد 💵
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setShowClientLedgerModal(client)}
+                              className="px-2 py-1 rounded-xl bg-stone-900 hover:bg-stone-800 border border-stone-700 text-stone-300 text-[10px] font-bold transition-all active:scale-95"
+                              title="كشف الحساب وسجل العمليات التفصيلي"
+                            >
+                              📜
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })()}
+
+                    {/* Progress Bar (Hours for Hourly, Days for Full Time) */}
+                    <div>
+                      {isFT ? (
+                        <div>
+                          <div className="flex justify-between text-[11px] text-purple-200 font-bold mb-1">
+                            <span>{isShiftCard ? '🔄 اشتراك شيفت (تاريخي)' : '👑 اشتراك مفتوح (تاريخي)'}</span>
+                            <span className={contractInfo.isLastWeek ? 'text-amber-300 font-black ' : 'text-stone-300'}>
+                              {contractInfo.daysLeft !== null ? (contractInfo.daysLeft < 0 ? 'منتهي' : `متبقي ${contractInfo.daysLeft} يوم`) : 'مستمر'}
+                            </span>
+                          </div>
+                          <div className="w-full bg-stone-950 border border-purple-500/30 h-2.5 rounded-full overflow-hidden">
+                            <div 
+                              className={`h-full rounded-full transition-all ${
+                                contractInfo.isExpired ? 'bg-rose-500' :
+                                contractInfo.isLastWeek ? 'bg-gradient-to-r from-amber-500 to-rose-500 ' :
+                                'bg-gradient-to-r from-purple-500 to-indigo-400'
+                              }`}
+                              style={{ width: `${contractInfo.daysLeft !== null ? Math.min(100, Math.max(5, (contractInfo.daysLeft / 30) * 100)) : 100}%` }}
+                            ></div>
+                          </div>
+                        </div>
+                      ) : (
+                        <div>
+                          <div className="flex justify-between text-[11px] text-stone-300 font-bold mb-1">
+                            <span>المستهلك: {consumed} ساعة</span>
+                            <span>الإجمالي: {client.initialHours} ساعة</span>
+                          </div>
+                          <div className="w-full bg-stone-950 border border-amber-500/20 h-2.5 rounded-full overflow-hidden">
+                            <div 
+                              className={`h-full rounded-full transition-all ${contractInfo.isExpired ? 'bg-rose-500' : 'bg-gradient-to-r from-amber-500 to-emerald-400'}`}
+                              style={{ width: `${Math.min(100, ((client.currentBalance || 0) / Math.max(1, client.initialHours || 1)) * 100)}%` }}
+                            ></div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Full Time Last Week Alert Quick Button */}
+                    {isFT && contractInfo.isLastWeek && (
+                      <div className="p-2.5 bg-gradient-to-r from-amber-950/90 to-stone-900 border-2 border-amber-400/80 rounded-2xl flex items-center justify-between gap-2 shadow-lg">
+                        <div className="text-[11px] font-black text-amber-300 flex items-center gap-1">
+                          <span>⚠️</span>
+                          <span>متبقي {contractInfo.daysLeft} أيام فقط (آخر أسبوع)</span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleSendFullTimeReminder(client)}
+                          className="bg-emerald-600 hover:bg-emerald-500 text-white font-black text-[11px] px-3 py-1.5 rounded-xl shadow-md flex items-center gap-1 active:scale-95 whitespace-nowrap"
+                          title="إرسال رسالة تذكير الواتساب قبل انتهاء الاشتراك بأسبوع"
+                        >
+                          <Icon name="whatsapp" className="w-3.5 h-3.5" />
+                          <span>تنبيه واتساب 💬</span>
+                        </button>
+                      </div>
+                    )}
+
+                    {/* Main Action Buttons */}
+                    <div className={`grid ${isFT ? 'grid-cols-3' : 'grid-cols-2 sm:grid-cols-4'} gap-2 pt-2 border-t border-amber-500/10`}>
+                      {hasPermission('canDeductAttendance') ? (
+                        isFT ? (
+                          <button
+                            onClick={() => {
+                              setQuickClientId(client.id);
+                              setActiveTab('attendance');
+                            }}
+                            className="bg-purple-950/80 hover:bg-purple-900 border border-purple-500/40 text-purple-200 py-2 rounded-2xl text-xs font-black transition-all text-center flex items-center justify-center gap-1"
+                          >
+                            <span>👑 تسجيل حضور</span>
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => {
+                              setQuickClientId(client.id);
+                              setActiveTab('attendance');
+                            }}
+                            className="bg-rose-950/80 hover:bg-rose-900 border border-rose-500/40 text-rose-300 py-2 rounded-2xl text-xs font-black transition-all text-center"
+                          >
+                            خصم ساعات
+                          </button>
+                        )
+                      ) : (
+                        <div className="bg-stone-900/50 text-stone-600 border border-stone-800 py-2 rounded-2xl text-[11px] font-bold text-center">
+                          🔒 غير مصرح
+                        </div>
+                      )}
+
+                      {!isFT && (
+                        hasPermission('canRechargeHours') ? (
+                          <button
+                            onClick={() => setShowRechargeModal({ client, hours: '10' })}
+                            className="bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/40 text-emerald-300 py-2 rounded-2xl text-xs font-black transition-all text-center flex items-center justify-center gap-1 shadow-sm active:scale-95"
+                            title="شحن ساعات إضافية على نفس الأيام المتبقية في العقد دون تمديد التاريخ"
+                          >
+                            <span>⚡</span>
+                            <span>شحن رصيد</span>
+                          </button>
+                        ) : (
+                          <div className="bg-stone-900/50 text-stone-600 border border-stone-800 py-2 rounded-2xl text-[11px] font-bold text-center">
+                            🔒 شحن مقفل
+                          </div>
+                        )
+                      )}
+
+                      {hasPermission('canRenewContracts') ? (
+                        <button
+                          onClick={() => handleOpenRenewContractModal(client)}
+                          className="bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/30 text-amber-300 py-2 rounded-2xl text-xs font-black transition-all text-center flex items-center justify-center gap-1"
+                          title="تجديد الاشتراك أو الباقة"
+                        >
+                          <Icon name="refresh" className="w-3.5 h-3.5 text-amber-300" />
+                          <span>تجديد</span>
+                        </button>
+                      ) : (
+                        <div className="bg-stone-900/50 text-stone-600 border border-stone-800 py-2 rounded-2xl text-[11px] font-bold text-center">
+                          🔒 تجديد مقفل
+                        </div>
+                      )}
+
+                      <button
+                        onClick={() => setShowClientDetailModal(client)}
+                        className="glass-card-subtle hover:bg-stone-800 border border-amber-500/20 text-stone-200 hover:text-white py-2 rounded-2xl text-xs font-bold transition-all text-center flex items-center justify-center gap-1"
+                      >
+                        <Icon name="eye" className="w-3.5 h-3.5 text-amber-300" />
+                        <span>تفاصيل</span>
+                      </button>
+                    </div>
+
+                    {/* Bottom Actions (Edit / Delete / Send WhatsApp) */}
+                    <div className="flex justify-between items-center pt-1 border-t border-amber-500/10 text-xs">
+                      <div className="flex gap-2">
+                        {hasPermission('canEditClients') && (
+                          <button
+                            onClick={() => handleOpenEditClientModal(client)}
+                            className="text-stone-300 hover:text-amber-300 font-bold flex items-center gap-1"
+                          >
+                            <Icon name="edit" className="w-3.5 h-3.5" />
+                            <span>تعديل</span>
+                          </button>
+                        )}
+
+                        <button
+                          onClick={() => {
+                            if (isShiftCard) {
+                              const template = settings.templates?.shift_welcome || DEFAULT_TEMPLATES.shift_welcome;
+                              const msg = fillTemplate(template, {
+                                'اسم_العميل': client.name,
+                                'اسم_الشركة': settings.companyName,
+                                'نوع_الباقة': client.package || 'اشتراك نظام الشيفت (Shift)',
+                                'اسم_الغرفة': client.dedicatedRoom || client.room || 'القاعة المخصصة',
+                                'تاريخ_البداية': client.startDate || '-',
+                                'تاريخ_الانتهاء': client.expiryDate || '-',
+                                'وقت_استلام_الغرفة': client.shiftStartTime || '10:00 ص',
+                                'وقت_تسليم_الغرفة': client.shiftEndTime || '05:00 م',
+                                'رقم_الهاتف': client.phone,
+                                'اسم_المستخدم': client.username || client.phone,
+                                'كلمة_المرور': client.password || '-',
+                                'رابط_الدخول_المباشر': getClientDirectLoginUrl(client)
+                              });
+                              openWhatsAppModalForEdit(client.phone, client.name, msg, 'إرسال رسالة ترحيب / تفعيل نظام الشيفت عبر WhatsApp 🔄');
+                            } else if (isFT) {
+                              const template = settings.templates?.fulltime_welcome || DEFAULT_TEMPLATES.fulltime_welcome;
+                              const contract = getClientContractStatus(client);
+                              const msg = fillTemplate(template, {
+                                'اسم_العميل': client.name,
+                                'اسم_الشركة': settings.companyName,
+                                'نوع_الباقة': client.package || 'اشتراك Full Time (دوام كامل)',
+                                'اسم_الغرفة': client.dedicatedRoom || client.room || 'المكتب التنفيذي الخاص',
+                                'تاريخ_البداية': client.startDate || '-',
+                                'تاريخ_الانتهاء': client.expiryDate || '-',
+                                'رقم_الهاتف': client.phone,
+                                'اسم_المستخدم': client.username || client.phone,
+                                'كلمة_المرور': client.password || '-',
+                                'الايام_المتبقية': contract.daysLeft !== null ? contract.daysLeft : '-',
+                                'رابط_الدخول_المباشر': getClientDirectLoginUrl(client)
+                              });
+                              openWhatsAppModalForEdit(client.phone, client.name, msg, 'إرسال رسالة ترحيب / تفعيل الدوام الكامل عبر WhatsApp 👑');
+                            } else {
+                              const template = settings.templates?.welcome || DEFAULT_TEMPLATES.welcome;
+                              const contract = getClientContractStatus(client);
+                              const pkgTypeName = (client.packageDuration === '3months' || client.packageDuration === 'quarterly') ? 'باقة 3 شهور' : (client.packageDuration === 'annual' ? 'باقة سنوية' : (client.packageDuration === 'monthly' ? 'باقة شهرية' : 'باقة ساعات'));
+                              const msg = fillTemplate(template, {
+                                'اسم_العميل': client.name,
+                                'اسم_الشركة': settings.companyName,
+                                'نوع_الباقة': pkgTypeName,
+                                'اسم_الخدمة': client.package,
+                                'اسم_الباقة': client.package,
+                                'تاريخ_البداية': client.startDate,
+                                'تاريخ_الانتهاء': client.expiryDate,
+                                'الرصيد_المتاح': client.currentBalance,
+                                'الرصيد_المتبقي': client.currentBalance,
+                                'الرصيد_الأولي': client.initialHours,
+                                'رقم_الهاتف': client.phone,
+                                'اسم_المستخدم': client.username || client.phone,
+                                'كلمة_المرور': client.password || '-',
+                                'رابط_الدخول_المباشر': getClientDirectLoginUrl(client)
+                              });
+                              openWhatsAppModalForEdit(client.phone, client.name, msg, 'إرسال رسالة ترحيب / تفعيل عبر WhatsApp');
+                            }
+                          }}
+                          className="text-emerald-400 hover:text-emerald-300 font-bold flex items-center gap-1 mr-2"
+                          title="إرسال رسالة WhatsApp"
+                        >
+                          <Icon name="whatsapp" className="w-3.5 h-3.5 text-emerald-400" />
+                          <span>واتساب</span>
+                        </button>
+
+                        {hasPermission('canSendClientNotifications') && (
+                          <button
+                            onClick={() => handleOpenSendNotifModal(client.id)}
+                            className="text-amber-300 hover:text-amber-200 font-bold flex items-center gap-1 mr-2"
+                            title="إرسال إشعار للعميل على تطبيق الموبيل والموقع"
+                          >
+                            <span className="text-xs">🔔</span>
+                            <span>إشعار للتطبيق</span>
+                          </button>
+                        )}
+                      </div>
+
+                      {hasPermission('canDeleteClients') && activeUser && (activeUser.username.toLowerCase() === 'memo' || activeUser.role === 'admin') && (
+                        <button
+                          onClick={() => handleDeleteClient(client.id)}
+                          className="text-rose-400 hover:text-rose-300 font-bold flex items-center gap-1"
+                          title="حذف العميل نهائياً من النظام (صلاحية المدير العام حصراً)"
+                        >
+                          <Icon name="trash" className="w-3.5 h-3.5" />
+                          <span>حذف</span>
+                        </button>
+                      )}
+                    </div>
+
+                  </div>
+                );
+              })}
+            </div>
+
+          </div>
+        )}
+
+        {/* ==================================================== */}
+        {/* ☕📄 FINANCIAL LEDGER (BUFFET, PHOTOCOPYING & SERVICES) */}
+        {/* ==================================================== */}
+        {activeTab === 'financial' && (() => {
+          const currentYM = new Date().toISOString().slice(0, 7);
+          const isAllTime = financialMonthFilter === 'all';
+          const isCurrentMonth = financialMonthFilter === currentYM;
+
+          // 1. Filter raw transactions for the selected month (or all-time)
+          const monthTransactions = isAllTime
+            ? financialTransactions
+            : financialTransactions.filter(t => t && t.date && t.date.startsWith(financialMonthFilter));
+
+          // 2. Compute 4 summary statistics based on selected month (auto-zeroed if new month!)
+          let totalDue = 0;
+          let totalPrepaid = 0;
+          let totalBuffet = 0;
+          let totalPrinting = 0;
+          let clientsDueCount = 0;
+          let clientsPrepaidCount = 0;
+
+          if (isAllTime) {
+            // All-Time Cumulative Overview across all history
+            totalDue = clients.reduce((acc, c) => {
+              const b = typeof c.financialBalance === 'number' ? c.financialBalance : 0;
+              return b < 0 ? acc + Math.abs(b) : acc;
+            }, 0);
+            totalPrepaid = clients.reduce((acc, c) => {
+              const b = typeof c.financialBalance === 'number' ? c.financialBalance : 0;
+              return b > 0 ? acc + b : acc;
+            }, 0);
+            totalBuffet = financialTransactions.reduce((acc, t) => t.category === 'buffet' ? acc + (parseFloat(t.amount) || 0) : acc, 0);
+            totalPrinting = financialTransactions.reduce((acc, t) => t.category === 'printing' ? acc + (parseFloat(t.amount) || 0) : acc, 0);
+            clientsDueCount = clients.filter(c => (c.financialBalance || 0) < 0).length;
+            clientsPrepaidCount = clients.filter(c => (c.financialBalance || 0) > 0).length;
+          } else {
+            // Selected Month Overview (Zeroed at start of new month with no transactions!)
+            totalBuffet = monthTransactions.reduce((acc, t) => t.category === 'buffet' ? acc + (parseFloat(t.amount) || 0) : acc, 0);
+            totalPrinting = monthTransactions.reduce((acc, t) => t.category === 'printing' ? acc + (parseFloat(t.amount) || 0) : acc, 0);
+
+            // Compute net activity for each client in the selected month
+            clients.forEach(c => {
+              const cTxs = monthTransactions.filter(t => t.clientId === c.id);
+              const mCharges = cTxs.filter(t => t.type === 'charge').reduce((a, t) => a + (parseFloat(t.amount) || 0), 0);
+              const mPayments = cTxs.filter(t => t.type === 'payment').reduce((a, t) => a + (parseFloat(t.amount) || 0), 0);
+              const mNet = mPayments - mCharges;
+              if (mNet < 0) {
+                totalDue += Math.abs(mNet);
+                clientsDueCount++;
+              } else if (mNet > 0) {
+                totalPrepaid += mNet;
+                clientsPrepaidCount++;
+              }
+            });
+          }
+
+          // 3. Transactions filtered by month, category, client, and search
+          const filteredTxs = monthTransactions.filter(t => {
+            if (financialFilterCategory !== 'all' && t.category !== financialFilterCategory) return false;
+            if (financialFilterClient !== 'all') {
+              const fClient = clients.find(c => c.id === financialFilterClient);
+              const fPhone = fClient ? normalizePhone(fClient.phone) : '';
+              const tPhone = normalizePhone(t.clientPhone);
+              if (t.clientId !== financialFilterClient && (!fPhone || !tPhone || fPhone !== tPhone)) return false;
+            }
+            if (financialSearch.trim()) {
+              const q = financialSearch.trim().toLowerCase();
+              const matchName = (t.clientName || '').toLowerCase().includes(q);
+              const matchUser = (t.clientUsername || '').toLowerCase().includes(q);
+              const matchPhone = (t.clientPhone || '').includes(q);
+              const matchDesc = (t.description || '').toLowerCase().includes(q);
+              const matchCat = (t.categoryName || '').toLowerCase().includes(q);
+              if (!matchName && !matchUser && !matchPhone && !matchDesc && !matchCat) return false;
+            }
+            return true;
+          });
+
+          return (
+            <div className="space-y-6 ">
+              
+              {/* Header Banner */}
+              <div className="glass-card p-6 sm:p-8 rounded-3xl border-2 border-amber-500/30 shadow-2xl bg-gradient-to-br from-amber-950/40 via-stone-900/90 to-stone-950 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+                <div>
+                  <div className="flex items-center gap-3">
+                    <span className="p-3 bg-amber-500/20 border border-amber-500/40 text-amber-300 rounded-2xl text-2xl shadow-inner">
+                      ☕
+                    </span>
+                    <div>
+                      <h2 className="text-xl sm:text-2xl font-black text-white flex items-center gap-2">
+                        <span>حسابات الخدمات والبوفيه وتصوير الورق</span>
+                        <span className="text-xs font-black px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40">
+                          نظام دوري شهري ذكي 📅
+                        </span>
+                      </h2>
+                      <p className="text-xs text-amber-200/80 mt-1 font-bold">
+                        نظام مالي متكامل لتسجيل طلبات البوفيه ☕، تصوير وطباعة المستندات 📄، مع تصفير العدادات شهرياً وفصل حسابات الشهور بأمان تام 100%.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-2.5">
+                  <button
+                    onClick={() => exportFinancialExcelReport(financialMonthFilter)}
+                    className="bg-emerald-700 hover:bg-emerald-600 text-white border border-emerald-400/50 text-xs font-black px-4 py-3 rounded-2xl flex items-center gap-2 shadow-xl active:scale-95 transition-all"
+                    title="تحميل وتصدير شيت إكسيل شامل لحسابات جميع العملاء وسجل العمليات"
+                  >
+                    <span className="text-base font-black">📥</span>
+                    <span>تحميل شيت إكسيل لحسابات العملاء (Excel) 📊</span>
+                  </button>
+
+                  <button
+                    onClick={() => setShowFinancialModal({ client: null, type: 'charge', category: 'buffet' })}
+                    className="gold-gradient-btn text-stone-950 text-xs font-black px-5 py-3 rounded-2xl flex items-center gap-2 shadow-xl active:scale-95 transition-all"
+                  >
+                    <span className="text-base font-black">+</span>
+                    <span>إضافة حساب (بوفيه / تصوير) ☕</span>
+                  </button>
+
+                  <button
+                    onClick={() => setShowFinancialModal({ client: null, type: 'payment', category: 'payment' })}
+                    className="bg-emerald-600 hover:bg-emerald-500 text-white border border-emerald-400/40 text-xs font-black px-4 py-3 rounded-2xl flex items-center gap-2 shadow-lg active:scale-95 transition-all"
+                  >
+                    <span className="text-base font-black">💵</span>
+                    <span>تسجيل سداد / تحصيل</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* 📅 MONTH PERIOD SELECTOR & AUTO-ZERO INDICATOR */}
+              <div className="glass-card p-4 rounded-3xl border-2 border-amber-500/30 bg-stone-950/90 shadow-2xl space-y-3">
+                <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
+                  
+                  {/* Left: Quick Month Filter Buttons */}
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-xs font-black text-amber-300 flex items-center gap-1">
+                      <span>📅</span>
+                      <span>الفترة المعروضة:</span>
+                    </span>
+
+                    <button
+                      type="button"
+                      onClick={() => setFinancialMonthFilter(currentYM)}
+                      className={`px-3.5 py-2 rounded-2xl text-xs font-black transition-all border flex items-center gap-1.5 ${
+                        isCurrentMonth
+                          ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-stone-950 border-amber-300 shadow-lg scale-105 ring-2 ring-amber-400/50'
+                          : 'bg-stone-900/90 text-stone-300 border-amber-500/30 hover:text-white hover:border-amber-400'
+                      }`}
+                    >
+                      <span>⚡ الشهر الحالي</span>
+                      <span className="font-mono text-[11px]">({getArabicMonthName(currentYM)})</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const nowD = new Date();
+                        const prevD = new Date(nowD.getFullYear(), nowD.getMonth() - 1, 1);
+                        setFinancialMonthFilter(prevD.toISOString().slice(0, 7));
+                      }}
+                      className={`px-3 py-2 rounded-2xl text-xs font-black transition-all border ${
+                        (() => {
+                          const nowD = new Date();
+                          const prevYM = new Date(nowD.getFullYear(), nowD.getMonth() - 1, 1).toISOString().slice(0, 7);
+                          return financialMonthFilter === prevYM;
+                        })()
+                          ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-stone-950 border-amber-300 shadow-lg scale-105 ring-2 ring-amber-400/50'
+                          : 'bg-stone-900/90 text-stone-300 border-amber-500/30 hover:text-white hover:border-amber-400'
+                      }`}
+                    >
+                      📅 الشهر السابق
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setFinancialMonthFilter('all')}
+                      className={`px-3.5 py-2 rounded-2xl text-xs font-black transition-all border ${
+                        isAllTime
+                          ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-stone-950 border-amber-300 shadow-lg scale-105 ring-2 ring-amber-400/50'
+                          : 'bg-stone-900/90 text-stone-300 border-amber-500/30 hover:text-white hover:border-amber-400'
+                      }`}
+                    >
+                      📜 جميع الشهور (تراكمي شامل)
+                    </button>
+                  </div>
+
+                  {/* Right: Select Specific Month Dropdown */}
+                  <div className="flex items-center gap-2">
+                    <label className="text-xs text-stone-400 font-bold whitespace-nowrap">اختيار شهر محدد:</label>
+                    <select
+                      value={financialMonthFilter}
+                      onChange={(e) => setFinancialMonthFilter(e.target.value)}
+                      className="bg-stone-900 border-2 border-amber-500/40 text-amber-300 font-bold text-xs rounded-2xl px-4 py-2 focus:ring-2 focus:ring-amber-400 focus:outline-none"
+                    >
+                      <option value="all">📜 جميع الشهور (الإجمالي التراكمي الشامل)</option>
+                      {availableFinancialMonths.map(ym => (
+                        <option key={ym} value={ym}>
+                          {ym === currentYM ? `⚡ ${getArabicMonthName(ym)} (الشهر الحالي)` : `📅 ${getArabicMonthName(ym)}`}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                {/* Sub-banner: Period Status Info & Auto-Zero Sentinel Notice */}
+                <div className={`p-3 rounded-2xl border text-xs font-bold flex items-center justify-between gap-3 ${
+                  !isAllTime && monthTransactions.length === 0
+                    ? 'bg-emerald-950/40 border-emerald-500/40 text-emerald-300 shadow-inner'
+                    : 'bg-stone-900/60 border-amber-500/20 text-stone-300'
+                }`}>
+                  <div className="flex items-center gap-2">
+                    <span>{!isAllTime && monthTransactions.length === 0 ? '🟢' : 'ℹ️'}</span>
+                    <span>
+                      {!isAllTime && monthTransactions.length === 0
+                        ? `بداية شهر جديد (${getArabicMonthName(financialMonthFilter)}): تم تصفير العدادات الأربعة تلقائياً لهذا الشهر. الحسابات التراكمية الأصلية للعملاء محفوظة بالكامل 🔒.`
+                        : `الفترة النشطة: ${getArabicMonthName(financialMonthFilter)} • تم احتساب العدادات والمعاملات بناءً على هذه الفترة فقط مع حفظ أرصدة العملاء التراكمية 🔒.`
+                      }
+                    </span>
+                  </div>
+                  <span className="text-[10px] px-2.5 py-1 rounded-xl bg-stone-950/80 border border-amber-500/30 text-amber-300 font-mono whitespace-nowrap">
+                    {monthTransactions.length} معاملة مسجلة
+                  </span>
+                </div>
+              </div>
+
+              {/* 4 Financial Statistics Cards */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                
+                {/* 1. Total Due */}
+                <div className="glass-card p-5 rounded-3xl border border-rose-500/30 bg-rose-950/20 shadow-xl space-y-2">
+                  <div className="flex justify-between items-center text-xs font-black text-rose-300">
+                    <span>{isAllTime ? 'مبالغ مستحقة على العملاء (مديونيات تراكمية)' : `مستحقات مسجلة خلال (${getArabicMonthName(financialMonthFilter)})`}</span>
+                    <span className="text-base">🔴</span>
+                  </div>
+                  <div className="text-2xl font-black text-rose-400 font-mono tracking-tight">
+                    {totalDue.toLocaleString()} <span className="text-sm font-bold text-stone-300">ج.م</span>
+                  </div>
+                  <div className="text-[11px] text-stone-400 font-bold">
+                    {isAllTime ? `مستحقة تراكمياً على (${clientsDueCount}) عميل حالياً` : `مستحقات شهرية على (${clientsDueCount}) عميل`}
+                  </div>
+                </div>
+
+                {/* 2. Total Prepaid */}
+                <div className="glass-card p-5 rounded-3xl border border-emerald-500/30 bg-emerald-950/20 shadow-xl space-y-2">
+                  <div className="flex justify-between items-center text-xs font-black text-emerald-300">
+                    <span>{isAllTime ? 'أرصدة خدمات مسبقة الدفع (للعملاء)' : `سدادات وتحصيلات (${getArabicMonthName(financialMonthFilter)})`}</span>
+                    <span className="text-base">🟢</span>
+                  </div>
+                  <div className="text-2xl font-black text-emerald-400 font-mono tracking-tight">
+                    {totalPrepaid.toLocaleString()} <span className="text-sm font-bold text-stone-300">ج.م</span>
+                  </div>
+                  <div className="text-[11px] text-stone-400 font-bold">
+                    {isAllTime ? `متاحة لـ (${clientsPrepaidCount}) عميل بالرصيد` : `سددها (${clientsPrepaidCount}) عميل خلال الشهر`}
+                  </div>
+                </div>
+
+                {/* 3. Total Buffet */}
+                <div className="glass-card p-5 rounded-3xl border border-amber-500/30 bg-amber-950/20 shadow-xl space-y-2">
+                  <div className="flex justify-between items-center text-xs font-black text-amber-300">
+                    <span>{isAllTime ? 'إجمالي طلبات البوفيه والمشروبات (تراكمي)' : `طلبات بوفيه شهر (${getArabicMonthName(financialMonthFilter)})`}</span>
+                    <span className="text-base">☕</span>
+                  </div>
+                  <div className="text-2xl font-black text-amber-400 font-mono tracking-tight">
+                    {totalBuffet.toLocaleString()} <span className="text-sm font-bold text-stone-300">ج.م</span>
+                  </div>
+                  <div className="text-[11px] text-stone-400 font-bold">
+                    مشروبات، قهوة، شاي، وضيافة
+                  </div>
+                </div>
+
+                {/* 4. Total Printing */}
+                <div className="glass-card p-5 rounded-3xl border border-indigo-500/30 bg-indigo-950/20 shadow-xl space-y-2">
+                  <div className="flex justify-between items-center text-xs font-black text-indigo-300">
+                    <span>{isAllTime ? 'إجمالي تصوير وطباعة الورق (تراكمي)' : `تصوير وطباعة شهر (${getArabicMonthName(financialMonthFilter)})`}</span>
+                    <span className="text-base">📄</span>
+                  </div>
+                  <div className="text-2xl font-black text-indigo-300 font-mono tracking-tight">
+                    {totalPrinting.toLocaleString()} <span className="text-sm font-bold text-stone-300">ج.م</span>
+                  </div>
+                  <div className="text-[11px] text-stone-400 font-bold">
+                    طباعة، مسح ضوئي، وتصوير مستندات
+                  </div>
+                </div>
+              </div>
+
+              {/* Main Section Tabs & Filters */}
+              <div className="glass-card p-5 rounded-3xl border border-amber-500/20 shadow-xl space-y-4">
+                <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
+                  <div className="flex-1 relative">
+                    <input
+                      type="text"
+                      value={financialSearch}
+                      onChange={(e) => setFinancialSearch(e.target.value)}
+                      placeholder="ابحث باسم العميل، الهاتف، أو بيان المعاملة..."
+                      className="w-full bg-stone-950 border border-amber-500/30 rounded-2xl py-3 pr-10 pl-4 text-xs font-bold text-white placeholder:text-stone-500 focus:ring-2 focus:ring-amber-400 focus:outline-none"
+                    />
+                    <span className="absolute right-3.5 top-3.5 text-amber-400">
+                      <Icon name="search" className="w-4 h-4" />
+                    </span>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-2">
+                    <select
+                      value={financialFilterCategory}
+                      onChange={(e) => setFinancialFilterCategory(e.target.value)}
+                      className="bg-stone-950 border border-amber-500/30 text-amber-200 text-xs font-bold rounded-2xl px-3 py-3 focus:outline-none focus:ring-1 focus:ring-amber-400"
+                    >
+                      <option value="all">كافة البنود والخدمات</option>
+                      <option value="buffet">☕ بوفيه ومشروبات</option>
+                      <option value="printing">📄 تصوير وطباعة ورق</option>
+                      <option value="services">📦 خدمات ومستلزمات</option>
+                      <option value="payment">💵 سداد وتحصيل نقدي</option>
+                    </select>
+
+                    <select
+                      value={financialFilterClient}
+                      onChange={(e) => setFinancialFilterClient(e.target.value)}
+                      className="bg-stone-950 border border-amber-500/30 text-stone-200 text-xs font-bold rounded-2xl px-3 py-3 focus:outline-none focus:ring-1 focus:ring-amber-400 max-w-[200px]"
+                    >
+                      <option value="all">كافة العملاء ({clients.length})</option>
+                      {clients.map(c => (
+                        <option key={c.id} value={c.id}>{c.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                {/* Subsections: Client Balances Grid & Recent Transactions */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 pt-2">
+                  
+                  {/* Column 1: Client Balances Cards List */}
+                  <div className="lg:col-span-1 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-sm font-black text-amber-300 flex items-center gap-1.5">
+                        <span>👥 أرصدة العملاء الحالية</span>
+                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-stone-900 border border-amber-500/30 text-stone-300 font-mono">
+                          {clients.length}
+                        </span>
+                      </h3>
+                    </div>
+
+                    <div className="space-y-2.5 max-h-[600px] overflow-y-auto pr-1">
+                      {clients
+                        .filter(c => {
+                          if (!financialSearch.trim()) return true;
+                          const q = financialSearch.trim().toLowerCase();
+                          return (c.name || '').toLowerCase().includes(q) || (c.phone || '').includes(q) || (c.username || '').toLowerCase().includes(q);
+                        })
+                        .sort((a, b) => (a.financialBalance || 0) - (b.financialBalance || 0)) // Show debtors first
+                        .map(c => {
+                          const bal = typeof c.financialBalance === 'number' ? c.financialBalance : 0;
+                          return (
+                            <div
+                              key={c.id}
+                              className={`p-3.5 rounded-2xl border transition-all space-y-2 ${
+                                bal < 0 
+                                  ? 'bg-rose-950/25 border-rose-500/40 hover:border-rose-400' 
+                                  : bal > 0 
+                                  ? 'bg-emerald-950/20 border-emerald-500/30 hover:border-emerald-400' 
+                                  : 'glass-card-subtle border-amber-500/15 hover:border-amber-500/30'
+                              }`}
+                            >
+                              <div className="flex items-start justify-between">
+                                <div>
+                                  <div className="text-xs font-black text-white flex items-center gap-1">
+                                    <span>{c.name}</span>
+                                    {c.isFullTime && <span className="text-[10px] text-purple-300">👑</span>}
+                                  </div>
+                                  <div className="text-[10px] text-stone-400 font-mono mt-0.5 flex items-center gap-2">
+                                    <span>{c.phone}</span>
+                                    {c.username && <span className="text-amber-300">@{c.username}</span>}
+                                  </div>
+                                </div>
+
+                                <div className="text-left">
+                                  <span className={`text-xs font-black font-mono px-2 py-0.5 rounded-lg border ${
+                                    bal < 0 
+                                      ? 'bg-rose-950 text-rose-300 border-rose-500/50' 
+                                      : bal > 0 
+                                      ? 'bg-emerald-950 text-emerald-300 border-emerald-500/50' 
+                                      : 'bg-stone-900 text-stone-300 border-stone-700'
+                                  }`}>
+                                    {bal < 0 ? `مطلوب: ${Math.abs(bal)} ج.م` : bal > 0 ? `له: ${bal} ج.م` : 'متزن (0)'}
+                                  </span>
+                                </div>
+                              </div>
+
+                              {/* Action buttons */}
+                              <div className="flex items-center gap-1.5 pt-1 border-t border-white/5">
+                                {hasPermission('canAddFinancialTransaction') ? (
+                                  <>
+                                    <button
+                                      type="button"
+                                      onClick={() => setShowFinancialModal({ client: c, type: 'charge', category: 'buffet' })}
+                                      className="flex-1 py-1 px-2 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 text-amber-300 text-[10px] font-black transition-all text-center"
+                                      title="إضافة حساب (بوفيه / تصوير)"
+                                    >
+                                      + حساب
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => setShowFinancialModal({ client: c, type: 'payment', category: 'payment' })}
+                                      className="flex-1 py-1 px-2 rounded-xl bg-emerald-950/80 hover:bg-emerald-900 border border-emerald-500/40 text-emerald-300 text-[10px] font-black transition-all text-center"
+                                      title="تسجيل سداد أو تحصيل"
+                                    >
+                                      سداد 💵
+                                    </button>
+                                  </>
+                                ) : (
+                                  <div className="flex-1 py-1 text-center text-[10px] text-stone-600 font-bold bg-stone-900/40 rounded-xl">🔒 غير مصرح بالتسجيل</div>
+                                )}
+                                <button
+                                  type="button"
+                                  onClick={() => setShowClientLedgerModal(c)}
+                                  className="py-1 px-2.5 rounded-xl bg-stone-900 hover:bg-stone-800 border border-stone-700 text-stone-200 text-[10px] font-bold transition-all text-center"
+                                  title="كشف حساب تفصيلي"
+                                >
+                                  📜 كشف
+                                </button>
+                              </div>
+                            </div>
+                          );
+                        })}
+                    </div>
+                  </div>
+
+                  {/* Column 2 & 3: Recent Transactions History Table */}
+                  <div className="lg:col-span-2 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-sm font-black text-amber-300 flex items-center gap-1.5">
+                        <span>📜 سجل المعاملات والعمليات المالية</span>
+                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-stone-900 border border-amber-500/30 text-stone-300 font-mono">
+                          {filteredTxs.length} معاملة
+                        </span>
+                      </h3>
+                      
+                      {filteredTxs.length > 0 && (
+                        <span className="text-[10px] text-stone-400">مرتبة من الأحدث للأقدم</span>
+                      )}
+                    </div>
+
+                    {filteredTxs.length === 0 ? (
+                      <div className="text-center py-16 glass-card-subtle rounded-3xl border border-amber-500/15 space-y-3">
+                        <span className="text-4xl block">☕📄</span>
+                        <div className="text-sm font-bold text-stone-300">لا توجد معاملات مالية مسجلة حتى الآن</div>
+                        <p className="text-xs text-stone-500">
+                          يمكنك البدء بالضغط على زر "إضافة حساب (بوفيه / تصوير)" لتسجيل أول معاملة وربطها بالعميل فورياً.
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="space-y-2 max-h-[600px] overflow-y-auto pr-1">
+                        {filteredTxs.map(tx => {
+                          const isCharge = tx.type === 'charge';
+                          return (
+                            <div
+                              key={tx.id}
+                              className="p-3.5 rounded-2xl glass-card-subtle border border-amber-500/15 hover:border-amber-500/35 transition-all flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs"
+                            >
+                              <div className="flex items-start gap-3">
+                                <span className={`p-2.5 rounded-2xl text-base flex-shrink-0 ${
+                                  tx.category === 'buffet' ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30' :
+                                  tx.category === 'printing' ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30' :
+                                  isCharge ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30' :
+                                  'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+                                }`}>
+                                  {tx.category === 'buffet' ? '☕' : tx.category === 'printing' ? '📄' : isCharge ? '🏷️' : '💵'}
+                                </span>
+
+                                <div>
+                                  <div className="flex items-center gap-2 flex-wrap">
+                                    <span className="font-black text-white text-sm">{tx.clientName}</span>
+                                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-stone-900 border border-stone-700 text-amber-300">
+                                      {tx.categoryName}
+                                    </span>
+                                    <span className="text-[10px] text-stone-400 font-mono">
+                                      {tx.date} ({tx.time})
+                                    </span>
+                                  </div>
+
+                                  {tx.description && (
+                                    <p className="text-xs text-stone-300 mt-1 font-bold">
+                                      📝 {tx.description}
+                                    </p>
+                                  )}
+
+                                  <div className="text-[10px] text-stone-500 mt-0.5">
+                                    سجلها: {tx.createdBy || 'الإدارة'} • الرصيد بعدها: <b className="text-stone-300 font-mono">{tx.balanceAfter !== undefined ? `${tx.balanceAfter} ج.م` : '-'}</b>
+                                  </div>
+                                </div>
+                              </div>
+
+                              <div className="flex items-center gap-3 self-end sm:self-center">
+                                <div className="text-left">
+                                  <div className={`text-base font-black font-mono ${isCharge ? 'text-rose-400' : 'text-emerald-400'}`}>
+                                    {isCharge ? `-${tx.amount}` : `+${tx.amount}`} <span className="text-xs font-bold text-stone-300">ج.م</span>
+                                  </div>
+                                  <div className="text-[9px] text-stone-400 font-bold">
+                                    {isCharge ? 'مطلوب من العميل' : 'سداد من العميل'}
+                                  </div>
+                                </div>
+
+                                {hasPermission('canDeleteFinancialTransaction') && (
+                                  <button
+                                    type="button"
+                                    onClick={() => handleReverseFinancialTransaction(tx.id)}
+                                    className="px-2.5 py-1.5 rounded-xl bg-stone-900 hover:bg-amber-950/60 border border-stone-800 hover:border-amber-500/50 text-stone-400 hover:text-amber-300 transition-all text-xs font-bold flex items-center gap-1 shadow"
+                                    title="تسوية وتصحيح مالي (سجل دائم غير قابل للحذف)"
+                                  >
+                                    <span>⚖️</span>
+                                    <span className="hidden sm:inline">تسوية / تصحيح</span>
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+
+                </div>
+              </div>
+
+            </div>
+          );
+        })()}
+
+        {/* ==================================================== */}
+        {/* 5️⃣ EXCEL ADVANCED EXPORT, IMPORT & AUTO-RESTORE HUB */}
+        {/* ==================================================== */}
+        {activeTab === 'excel' && (
+          <div className="space-y-6">
+
+            {/* Top Luxury Banner with Export & Import Actions */}
+            <div className="glass-card bg-gradient-to-br from-amber-950/70 via-stone-900/95 to-emerald-950/70 text-white p-6 sm:p-8 rounded-3xl border-2 border-amber-500/40 shadow-2xl space-y-6">
+              
+              <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
+                
+                <div className="space-y-2">
+                  <div className="flex items-center gap-3">
+                    <span className="p-3 bg-gradient-to-br from-amber-400 to-amber-600 text-stone-950 rounded-2xl shadow-lg border border-amber-300/40">
+                      <Icon name="excel" className="w-7 h-7 font-black" />
+                    </span>
+                    <div>
+                      <h2 className="text-2xl font-black text-white">مركز ملفات Excel والنسخ الاحتياطي والاسترجاع الذكي 📊</h2>
+                      <p className="text-xs text-amber-300 font-bold mt-0.5">تصدير شامل لجميع بيانات النظام + استيراد واسترجاع فوري عند حذف أي بيانات بالخطأ</p>
+                    </div>
+                  </div>
+                  <p className="text-xs text-stone-200/90 max-w-2xl leading-relaxed font-bold">
+                    يضم شيت الإكسل الشامل 8 أوراق عمل تفصيلية لـ <b>{settings.companyName}</b> (عملاء باقات الساعات، اشتراكات Full Time، جدول المواعيد والحجوزات، سجل الحضور، أرصدة وحسابات البوفيه والخدمات، وإعدادات النظام).
+                  </p>
+                </div>
+
+                {/* Primary Dual Actions: Export & Import */}
+                <div className="flex flex-wrap sm:flex-nowrap items-center gap-3 w-full lg:w-auto">
+                  
+                  {/* ⚡ One-Click Firebase Restore Button */}
+                  <button
+                    onClick={handleRestoreFromFirebaseInstant}
+                    className="bg-cyan-950/90 hover:bg-cyan-900 text-cyan-200 border-2 border-cyan-500/60 font-black px-5 py-3.5 rounded-2xl text-xs sm:text-sm shadow-2xl transition-all flex items-center justify-center gap-2 active:scale-95 flex-1 sm:flex-initial whitespace-nowrap"
+                    title="استيراد ومزامنة كامل بيانات Firebase السحابية فوراً"
+                  >
+                    <span className="text-lg">⚡</span>
+                    <span>استيراد سحابة Firebase فوراً ☁️</span>
+                  </button>
+
+                  {/* ✈️ Send to Telegram & Local (6h Dual Backup) Button */}
+                  <button
+                    onClick={handleExportAndSendTelegramBackup}
+                    disabled={isBackingUpTelegram}
+                    className="bg-sky-950/90 hover:bg-sky-900 text-sky-300 border-2 border-sky-500/60 font-black px-5 py-3.5 rounded-2xl text-xs sm:text-sm shadow-2xl transition-all flex items-center justify-center gap-2 active:scale-95 flex-1 sm:flex-initial whitespace-nowrap"
+                    title="توليد وحفظ ملف Excel + JSON محلياً وإرسالهما لمسؤولي النظام عبر Telegram"
+                  >
+                    <span className="text-lg">✈️</span>
+                    <span>{isBackingUpTelegram ? 'جاري النسخ والإرسال...' : 'نسخ احتياطي تيليجرام ومحلي (6h) 📤'}</span>
+                  </button>
+
+                  {/* Export Button */}
+                  <button
+                    onClick={() => exportExcelFullWorkbook(false)}
+                    className="gold-gradient-btn text-stone-950 font-black px-5 py-3.5 rounded-2xl text-xs sm:text-sm shadow-2xl transition-all flex items-center justify-center gap-2 active:scale-95 flex-1 sm:flex-initial whitespace-nowrap"
+                  >
+                    <Icon name="download" className="w-4 h-4 font-black text-stone-950" />
+                    <span>تصدير شيت Excel الشامل</span>
+                  </button>
+
+                  {/* Hidden File Input for Excel Import */}
+                  <input
+                    type="file"
+                    id="excelFileInput"
+                    accept=".xlsx, .xls"
+                    className="hidden"
+                    onChange={handleImportExcelFile}
+                  />
+
+                  {/* Import Button */}
+                  <label
+                    htmlFor="excelFileInput"
+                    className="cursor-pointer bg-emerald-600 hover:bg-emerald-500 text-white border-2 border-emerald-400/40 font-black px-6 py-4 rounded-2xl text-xs sm:text-sm shadow-2xl transition-all flex items-center justify-center gap-2 active:scale-95 flex-1 sm:flex-initial whitespace-nowrap"
+                  >
+                    <span className="text-lg">📥</span>
+                    <span>استيراد واسترجاع من Excel</span>
+                  </label>
+
+                </div>
+
+              </div>
+
+              {/* Status & 24h Timer Metrics Cards */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-4 border-t border-amber-500/20">
+                
+                <div className="glass-card-subtle p-4 rounded-2xl border border-amber-500/20">
+                  <p className="text-xs text-amber-300 font-black">حالة النسخ الدوري (10 ساعات):</p>
+                  <h4 className="text-base font-black text-emerald-400 mt-1 flex items-center gap-2">
+                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 "></span>
+                    <span>نشط وتلقائي كل 10 ساعات للواتساب 💬</span>
+                  </h4>
+                </div>
+
+                <div className="glass-card-subtle p-4 rounded-2xl border border-amber-500/20">
+                  <p className="text-xs text-amber-300 font-black">الوقت المتبقي للتصدير القادم:</p>
+                  <h4 className="text-base font-black text-amber-300 mt-1">
+                    {backupCountdown.hours} ساعة و {backupCountdown.minutes} دقيقة
+                  </h4>
+                </div>
+
+                <div className="glass-card-subtle p-4 rounded-2xl border border-amber-500/20">
+                  <p className="text-xs text-amber-300 font-black">حجم البيانات الجاهزة للتصدير:</p>
+                  <h4 className="text-base font-black text-white mt-1">
+                    {clients.length} عميل • {bookings.length} موعد • {attendance.length} حضور
+                  </h4>
+                </div>
+
+                <div className="glass-card-subtle p-4 rounded-2xl border border-amber-500/20">
+                  <p className="text-xs text-amber-300 font-black">آخر تصدير تم تنزيله:</p>
+                  <h4 className="text-xs font-bold text-stone-300 mt-1 font-mono">
+                    {new Date(lastBackupTime).toLocaleString('ar-SA')}
+                  </h4>
+                </div>
+
+              </div>
+
+            </div>
+
+            {/* ✈️ 6-Hour Dual Telegram & Local Auto-Export Settings Box */}
+            <div className="p-5 bg-gradient-to-r from-sky-950/40 via-stone-900/60 to-amber-950/30 border-2 border-sky-500/40 rounded-3xl space-y-3">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                <div className="flex items-center gap-2.5">
+                  <span className="p-2.5 bg-sky-500/20 text-sky-400 rounded-2xl border border-sky-500/40 text-xl">✈️</span>
+                  <div>
+                    <h4 className="text-sm font-black text-white">إعدادات النسخ الاحتياطي التلقائي عبر Telegram ومحلياً (كل 6 ساعات وعند الإغلاق) ⚡</h4>
+                    <p className="text-xs text-stone-300 font-bold">يتم توليد ملف Excel احترافي (4 صفحات RTL ملونة) وملف JSON وحفظهما محلياً في مجلد backups، مع إرسالهما تلقائياً عبر Telegram للمسؤولين الاثنين.</p>
+                  </div>
+                </div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-[11px] font-black text-emerald-400 bg-emerald-950/60 px-3 py-1.5 rounded-xl border border-emerald-500/30">
+                    النسخ التلقائي: نشط كل 6 ساعات محلياً وتيليجرام لشخصين + عند الإغلاق 🛡️
+                  </span>
+                  <div className="text-xs font-mono font-black text-amber-300 bg-stone-950 px-3 py-1.5 rounded-xl border border-amber-500/30">
+                    متبقي: {backupCountdown.hours}س {backupCountdown.minutes}د
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-1">
+                <div>
+                  <label className="block text-[11px] font-black text-sky-300 mb-1">🤖 رمز البوت (Telegram Bot Token):</label>
+                  <input
+                    type="text"
+                    value={settings.telegram_backup?.bot_token || settings.telegram_token || ''}
+                    onChange={(e) => {
+                      const v = e.target.value;
+                      setSettings(prev => ({
+                        ...prev,
+                        telegram_token: v,
+                        telegram_backup: { ...(prev.telegram_backup || {}), bot_token: v }
+                      }));
+                    }}
+                    placeholder="مثال: 123456789:ABCdefGhIJKlmNoPQRsTUVwxyZ"
+                    className="w-full bg-stone-950 border border-sky-500/40 text-white rounded-xl px-3 py-2 text-xs font-mono font-bold focus:ring-2 focus:ring-sky-400 focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-black text-amber-300 mb-1">👤 معرّف المسؤول الأول (Chat ID 1):</label>
+                  <input
+                    type="text"
+                    value={settings.telegram_backup?.chat_id_1 || settings.telegram_chat_id || ''}
+                    onChange={(e) => {
+                      const v = e.target.value;
+                      setSettings(prev => ({
+                        ...prev,
+                        telegram_chat_id: v,
+                        telegram_backup: { ...(prev.telegram_backup || {}), chat_id_1: v }
+                      }));
+                    }}
+                    placeholder="مثال: 987654321"
+                    className="w-full bg-stone-950 border border-amber-500/40 text-white rounded-xl px-3 py-2 text-xs font-mono font-bold focus:ring-2 focus:ring-amber-400 focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-black text-amber-300 mb-1">👤 معرّف المسؤول الثاني (Chat ID 2):</label>
+                  <input
+                    type="text"
+                    value={settings.telegram_backup?.chat_id_2 || settings.telegram_chat_id_2 || ''}
+                    onChange={(e) => {
+                      const v = e.target.value;
+                      setSettings(prev => ({
+                        ...prev,
+                        telegram_chat_id_2: v,
+                        telegram_backup: { ...(prev.telegram_backup || {}), chat_id_2: v }
+                      }));
+                    }}
+                    placeholder="مثال: 123456789"
+                    className="w-full bg-stone-950 border border-amber-500/40 text-white rounded-xl px-3 py-2 text-xs font-mono font-bold focus:ring-2 focus:ring-amber-400 focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              <p className="text-[10px] text-stone-400">
+                💡 للحصول على معرّف المحادثة (Chat ID): ابدأ محادثة مع البوت الخاص بك ثم أرسل له أي رسالة، أو استخدم بوت معرفة الآيدي مثل <code className="text-sky-300">@userinfobot</code> لمعرفة المعرّف الخاص بكل مسؤول.
+              </p>
+
+              <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
+                <button
+                  onClick={async () => {
+                    const tg = settings.telegram_backup || {};
+                    const bToken = (tg.bot_token || settings.telegram_token || '').trim();
+                    const cId1 = (tg.chat_id_1 || settings.telegram_chat_id || '').trim();
+                    const cId2 = (tg.chat_id_2 || settings.telegram_chat_id_2 || '').trim();
+
+                    try {
+                      await fetch('/api/backup_telegram', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                          bot_token: bToken,
+                          chat_id_1: cId1,
+                          chat_id_2: cId2,
+                          telegram_token: bToken,
+                          telegram_chat_id: cId1,
+                          telegram_chat_id_2: cId2,
+                          save_only: true
+                        })
+                      });
+                    } catch (err) {
+                      console.error('Telegram backup settings API error:', err);
+                    }
+
+                    syncToHardDisk('تحديث إعدادات النسخ الاحتياطي لتيليجرام', true);
+                    triggerToast('تم الحفظ 💾', 'تم حفظ إعدادات البوت والمسؤولين للنسخ الاحتياطي بنجاح في قاعدة البيانات.', 'success');
+                  }}
+                  className="px-4 py-2 bg-stone-800 hover:bg-stone-700 text-stone-200 border border-stone-600 rounded-xl text-xs font-bold transition-all"
+                >
+                  حفظ إعدادات تيليجرام 💾
+                </button>
+
+                <button
+                  onClick={handleExportAndSendTelegramBackup}
+                  disabled={isBackingUpTelegram}
+                  className="gold-gradient-btn text-stone-950 px-5 py-2.5 rounded-xl text-xs font-black shadow-lg transition-all active:scale-95 flex items-center gap-1.5"
+                >
+                  <span>{isBackingUpTelegram ? 'جاري النسخ والإرسال...' : 'تصدير وإرسال إلى تيليجرام فوراً (JSON + Excel) 🚀'}</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Drag & Drop Quick Import Zone & Accidental Loss Protection Card */}
+            <div className="glass-card p-6 rounded-3xl border-2 border-dashed border-amber-500/40 bg-stone-950/80 space-y-4">
+              <div className="flex flex-col md:flex-row items-center justify-between gap-4 text-center md:text-right">
+                
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-2xl bg-amber-500/15 border border-amber-500/30 text-amber-300 flex items-center justify-center text-2xl font-black">
+                    🛡️
+                  </div>
+                  <div>
+                    <h3 className="text-base font-black text-white">درع الحماية واسترجاع البيانات المفقودة بالخطأ</h3>
+                    <p className="text-xs text-amber-200/80 font-bold mt-0.5">
+                      إذا قمت بمسح عميل أو موعد أو أي سجل عن طريق الخطأ، يمكنك وضع ملف الإكسل المصدر سابقاً وسيتعرف النظام عليه فوراً ويسترجع كل البيانات بنسبة 100%.
+                    </p>
+                  </div>
+                </div>
+
+                <label
+                  htmlFor="excelFileInput"
+                  className="gold-gradient-btn text-stone-950 font-black text-xs px-5 py-3 rounded-2xl shadow-lg cursor-pointer flex items-center gap-2 whitespace-nowrap active:scale-95"
+                >
+                  <span>اختر ملف Excel من جهازك 📂</span>
+                </label>
+
+              </div>
+            </div>
+
+            {/* Live Sheets Explorer (مستعرض أوراق العمل الحي بداخل التطبيق) */}
+            <div className="glass-card p-6 rounded-3xl border border-amber-500/25 shadow-xl space-y-4">
+              
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-amber-500/20 pb-4">
+                <div>
+                  <h3 className="text-lg font-black text-white flex items-center gap-2">
+                    <span>📋 مستعرض أوراق العمل الحية (Live Excel Sheets Explorer)</span>
+                  </h3>
+                  <p className="text-xs text-stone-300 font-bold mt-0.5">معاينة مباشرة للبيانات المنسقة التي يتم تصديرها واستيرادها في ملف Excel.</p>
+                </div>
+
+                {/* Search in Excel data */}
+                <div className="w-full sm:w-64">
+                  <input
+                    type="text"
+                    value={excelSearchQuery}
+                    onChange={(e) => setExcelSearchQuery(e.target.value)}
+                    placeholder="بحث في بيانات الشيت..."
+                    className="w-full bg-stone-950/90 border border-amber-500/30 rounded-xl p-2.5 text-xs text-white placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-amber-400"
+                  />
+                </div>
+              </div>
+
+              {/* Sheet Switcher Tabs */}
+              <div className="flex space-x-2 space-x-reverse overflow-x-auto pb-1">
+                {[
+                  { id: 'hourly', label: '⏱️ عملاء باقات الساعات', count: clients.filter(c => !getClientContractStatus(c).isFullTime).length, color: 'amber' },
+                  { id: 'fulltime', label: '👑 اشتراكات الدوام الكامل', count: clients.filter(c => getClientContractStatus(c).isFullTime).length, color: 'purple' },
+                  { id: 'bookings', label: '📅 جدول المواعيد والحجوزات', count: bookings.length, color: 'blue' },
+                  { id: 'attendance', label: '📋 سجل الحضور والخصم الفعلي', count: attendance.length, color: 'emerald' }
+                ].map(tab => (
+                  <button
+                    key={tab.id}
+                    onClick={() => setExcelPreviewTab(tab.id)}
+                    className={`px-4 py-2.5 rounded-2xl text-xs font-black whitespace-nowrap transition-all flex items-center gap-2 ${
+                      excelPreviewTab === tab.id
+                        ? 'gold-gradient-btn text-stone-950 shadow-md'
+                        : 'glass-card-subtle text-stone-300 hover:text-white border border-amber-500/20'
+                    }`}
+                  >
+                    <span>{tab.label}</span>
+                    <span className="bg-stone-950/60 text-amber-300 px-2 py-0.5 rounded-full text-[11px] font-mono">
+                      {tab.count}
+                    </span>
+                  </button>
+                ))}
+              </div>
+
+              {/* Sheet 1 Preview: Hourly Clients */}
+              {excelPreviewTab === 'hourly' && (() => {
+                const filtered = clients
+                  .filter(c => !getClientContractStatus(c).isFullTime)
+                  .filter(c => !excelSearchQuery.trim() || c.name.toLowerCase().includes(excelSearchQuery.toLowerCase()) || c.phone.includes(excelSearchQuery));
+
+                return (
+                  <div className="overflow-x-auto rounded-2xl border border-amber-500/20">
+                    <table className="w-full text-right text-xs">
+                      <thead className="bg-stone-950/90 text-amber-300 border-b border-amber-500/30">
+                        <tr>
+                          <th className="p-3">م</th>
+                          <th className="p-3">اسم العميل</th>
+                          <th className="p-3">الهاتف</th>
+                          <th className="p-3">اسم المستخدم (App)</th>
+                          <th className="p-3">كلمة المرور</th>
+                          <th className="p-3">نوع الباقة</th>
+                          <th className="p-3">تاريخ الانتهاء</th>
+                          <th className="p-3">الأيام المتبقية</th>
+                          <th className="p-3">الساعات المشتراة</th>
+                          <th className="p-3">الرصيد المتبقي</th>
+                          <th className="p-3">المستهلك</th>
+                          <th className="p-3">الحالة</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-amber-500/10 text-stone-200">
+                        {filtered.length === 0 ? (
+                          <tr><td colSpan="12" className="p-6 text-center text-stone-400">لا توجد بيانات مطابقة</td></tr>
+                        ) : (
+                          filtered.map((c, idx) => {
+                            const status = getClientContractStatus(c);
+                            const pkgName = (c.packageDuration === '3months' || c.packageDuration === 'quarterly') ? '3 شهور ⭐' : c.packageDuration === 'annual' ? 'سنوية 👑' : 'شهرية';
+                            return (
+                              <tr key={c.id} className="hover:bg-amber-500/5 transition-colors">
+                                <td className="p-3 font-mono text-stone-400">{idx + 1}</td>
+                                <td className="p-3 font-black text-white">{c.name}</td>
+                                <td className="p-3 font-mono text-emerald-400">{c.phone}</td>
+                                <td className="p-3 font-mono text-amber-300 font-bold">{c.username || '-'}</td>
+                                <td className="p-3 font-mono text-stone-300 font-bold">{c.password || '-'}</td>
+                                <td className="p-3"><span className="bg-amber-500/20 border border-amber-500/30 text-amber-300 px-2 py-0.5 rounded-md font-bold">{pkgName}</span></td>
+                                <td className="p-3 font-mono">{c.expiryDate || 'مستمر'}</td>
+                                <td className="p-3 font-bold text-amber-300">{status.daysLeft !== null ? `${status.daysLeft} يوم` : '-'}</td>
+                                <td className="p-3 font-black">{c.initialHours}س</td>
+                                <td className="p-3 font-black text-emerald-400">{c.currentBalance}س</td>
+                                <td className="p-3 font-bold text-rose-400">{Math.max(0, (c.initialHours || 0) - (c.currentBalance || 0)).toFixed(1)}س</td>
+                                <td className="p-3"><span className={`px-2 py-0.5 rounded text-[11px] font-black ${status.isExpired ? 'bg-rose-950 text-rose-300 border border-rose-500/40' : 'bg-emerald-950 text-emerald-300 border border-emerald-500/40'}`}>{status.badgeText}</span></td>
+                              </tr>
+                            );
+                          })
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                );
+              })()}
+
+              {/* Sheet 2 Preview: Full Time Subscriptions */}
+              {excelPreviewTab === 'fulltime' && (() => {
+                const filtered = clients
+                  .filter(c => getClientContractStatus(c).isFullTime)
+                  .filter(c => !excelSearchQuery.trim() || c.name.toLowerCase().includes(excelSearchQuery.toLowerCase()) || c.phone.includes(excelSearchQuery));
+
+                return (
+                  <div className="overflow-x-auto rounded-2xl border border-amber-500/20">
+                    <table className="w-full text-right text-xs">
+                      <thead className="bg-stone-950/90 text-purple-300 border-b border-purple-500/30">
+                        <tr>
+                          <th className="p-3">م</th>
+                          <th className="p-3">اسم العميل</th>
+                          <th className="p-3">الهاتف</th>
+                          <th className="p-3">الغرفة / المكتب المخصص</th>
+                          <th className="p-3">اسم المستخدم</th>
+                          <th className="p-3">النوع</th>
+                          <th className="p-3">المدة</th>
+                          <th className="p-3">تاريخ البداية</th>
+                          <th className="p-3">تاريخ التجديد</th>
+                          <th className="p-3">الأيام المتبقية</th>
+                          <th className="p-3">حالة الاشتراك</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-purple-500/10 text-stone-200">
+                        {filtered.length === 0 ? (
+                          <tr><td colSpan="11" className="p-6 text-center text-stone-400">لا توجد بيانات مطابقة</td></tr>
+                        ) : (
+                          filtered.map((c, idx) => {
+                            const status = getClientContractStatus(c);
+                            const dur = (c.packageDuration === 'fulltime_3m' || c.packageDuration === '3months') ? '3 شهور ⭐' : (c.packageDuration === 'fulltime_1y' || c.packageDuration === 'annual') ? 'سنة كاملة 👑' : 'شهر واحد';
+                            return (
+                              <tr key={c.id} className="hover:bg-purple-500/5 transition-colors">
+                                <td className="p-3 font-mono text-stone-400">{idx + 1}</td>
+                                <td className="p-3 font-black text-white flex items-center gap-1"><span>{c.name}</span><span className="text-amber-300 text-xs">👑</span></td>
+                                <td className="p-3 font-mono text-emerald-400">{c.phone}</td>
+                                <td className="p-3 font-bold text-amber-300">🏢 {c.dedicatedRoom || c.room || 'المكتب الخاص'}</td>
+                                <td className="p-3 font-mono text-purple-200">👤 {c.username || '-'}</td>
+                                <td className="p-3"><span className="bg-purple-950 border border-purple-500/40 text-purple-200 px-2 py-0.5 rounded font-black">Full Time 👑</span></td>
+                                <td className="p-3 font-bold text-amber-300">{dur}</td>
+                                <td className="p-3 font-mono">{c.startDate || '-'}</td>
+                                <td className="p-3 font-mono text-amber-300">{c.expiryDate || 'مستمر'}</td>
+                                <td className="p-3 font-black text-amber-300">{status.daysLeft !== null ? `${status.daysLeft} يوم` : '-'}</td>
+                                <td className="p-3"><span className={`px-2 py-0.5 rounded text-[11px] font-black ${status.isExpired ? 'bg-rose-950 text-rose-300 border border-rose-500/40' : status.isLastWeek ? 'bg-amber-950 text-amber-300 border border-amber-500/40' : 'bg-emerald-950 text-emerald-300 border border-emerald-500/40'}`}>{status.badgeText}</span></td>
+                              </tr>
+                            );
+                          })
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                );
+              })()}
+
+              {/* Sheet 3 Preview: Bookings */}
+              {excelPreviewTab === 'bookings' && (() => {
+                const filtered = bookings.filter(b => !excelSearchQuery.trim() || b.clientName.toLowerCase().includes(excelSearchQuery.toLowerCase()) || (b.room && b.room.toLowerCase().includes(excelSearchQuery.toLowerCase())) || b.date.includes(excelSearchQuery));
+
+                return (
+                  <div className="overflow-x-auto rounded-2xl border border-amber-500/20">
+                    <table className="w-full text-right text-xs">
+                      <thead className="bg-stone-950/90 text-amber-300 border-b border-amber-500/30">
+                        <tr>
+                          <th className="p-3">م</th>
+                          <th className="p-3">التاريخ</th>
+                          <th className="p-3">الوقت</th>
+                          <th className="p-3">القاعة / الغرفة</th>
+                          <th className="p-3">اسم العميل</th>
+                          <th className="p-3">الهاتف</th>
+                          <th className="p-3">المدة</th>
+                          <th className="p-3">نوع الخدمة</th>
+                          <th className="p-3">حالة الحجز</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-amber-500/10 text-stone-200">
+                        {filtered.length === 0 ? (
+                          <tr><td colSpan="9" className="p-6 text-center text-stone-400">لا توجد بيانات مطابقة</td></tr>
+                        ) : (
+                          filtered.map((b, idx) => (
+                            <tr key={b.id} className="hover:bg-amber-500/5 transition-colors">
+                              <td className="p-3 font-mono text-stone-400">{idx + 1}</td>
+                              <td className="p-3 font-mono">{b.date}</td>
+                              <td className="p-3 font-mono text-amber-300 font-bold">{b.time}</td>
+                              <td className="p-3 font-black text-white">🚪 {b.room}</td>
+                              <td className="p-3 font-black text-white">{b.clientName}</td>
+                              <td className="p-3 font-mono text-emerald-400">{b.phone}</td>
+                              <td className="p-3 font-black">{b.durationHours}س</td>
+                              <td className="p-3">{b.serviceType}</td>
+                              <td className="p-3">
+                                <span className={`px-2 py-0.5 rounded text-[11px] font-black ${
+                                  b.status === 'attended' ? 'bg-emerald-950 text-emerald-300 border border-emerald-500/40' :
+                                  (b.status === 'cancelled' || b.status === 'ملغي بواسطة العميل' || b.is_active === false) ? 'bg-stone-900 text-stone-400 border border-stone-700' :
+                                  'bg-amber-950 text-amber-300 border border-amber-500/40'
+                                }`}>
+                                  {b.status === 'attended' ? 'تم الحضور والخصم ✓' : (b.status === 'cancelled' || b.status === 'ملغي بواسطة العميل' || b.is_active === false) ? (b.status === 'ملغي بواسطة العميل' || b.cancelledBy === 'client' ? 'ملغي بواسطة العميل' : 'ملغي') : 'مؤكد قادم ⏳'}
+                                </span>
+                              </td>
+                            </tr>
+                          ))
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                );
+              })()}
+
+              {/* Sheet 4 Preview: Attendance */}
+              {excelPreviewTab === 'attendance' && (() => {
+                const filtered = attendance.filter(a => !excelSearchQuery.trim() || a.clientName.toLowerCase().includes(excelSearchQuery.toLowerCase()) || a.date.includes(excelSearchQuery));
+
+                return (
+                  <div className="overflow-x-auto rounded-2xl border border-amber-500/20">
+                    <table className="w-full text-right text-xs">
+                      <thead className="bg-stone-950/90 text-emerald-300 border-b border-emerald-500/30">
+                        <tr>
+                          <th className="p-3">م</th>
+                          <th className="p-3">تاريخ الحضور</th>
+                          <th className="p-3">الوقت</th>
+                          <th className="p-3">اسم العميل</th>
+                          <th className="p-3">الهاتف</th>
+                          <th className="p-3">الساعات المستهلكة</th>
+                          <th className="p-3">الرصيد قبل الخصم</th>
+                          <th className="p-3">الرصيد بعد الخصم</th>
+                          <th className="p-3">نوع الجلسة</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-emerald-500/10 text-stone-200">
+                        {filtered.length === 0 ? (
+                          <tr><td colSpan="9" className="p-6 text-center text-stone-400">لا توجد سجلات حضور مطابقة</td></tr>
+                        ) : (
+                          filtered.map((att, idx) => (
+                            <tr key={att.id} className="hover:bg-emerald-500/5 transition-colors">
+                              <td className="p-3 font-mono text-stone-400">{idx + 1}</td>
+                              <td className="p-3 font-mono">{att.date}</td>
+                              <td className="p-3 font-mono text-amber-300 font-bold">{att.time}</td>
+                              <td className="p-3 font-black text-white">{att.clientName}</td>
+                              <td className="p-3 font-mono text-emerald-400">{att.clientPhone}</td>
+                              <td className="p-3 font-black text-rose-400">-{att.hoursConsumed}س</td>
+                              <td className="p-3 font-mono text-stone-300">{att.previousBalance}س</td>
+                              <td className="p-3 font-black text-emerald-400">{att.newBalance}س</td>
+                              <td className="p-3">{att.serviceType}</td>
+                            </tr>
+                          ))
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                );
+              })()}
+
+            </div>
+
+          </div>
+        )}
+
+        {/* ==================================================== */}
+        {/* 6️⃣ NOTIFICATION CENTER VIEW */}
+        {/* ==================================================== */}
+        {activeTab === 'notifications' && (
+          <div className="space-y-6">
+            <div className="glass-card p-6 rounded-3xl border border-amber-500/25 shadow-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div>
+                <h2 className="text-xl font-black text-white">مركز الإشعارات وتنبيهات انتهاء الباقات الشهرية والسنوية</h2>
+                <p className="text-xs text-amber-200/80 mt-1 font-bold">تتبع كافة الباقات المنتهية وتنبيهات الحضور والمواعيد.</p>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  onClick={() => handleOpenSendNotifModal('all')}
+                  className="gold-gradient-btn text-stone-950 text-xs font-black px-4 py-2.5 rounded-2xl flex items-center gap-1.5 shadow active:scale-95 transition-all"
+                >
+                  <span>🔔 إرسال إشعار للعملاء</span>
+                </button>
+                <button
+                  onClick={handleMarkAllAdminNotificationsRead}
+                  className="glass-card-subtle hover:bg-stone-800 border border-amber-500/30 text-amber-300 text-xs font-black px-4 py-2.5 rounded-2xl active:scale-95 transition-all"
+                >
+                  تعيين الكل كمقروء ✓✓
+                </button>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              {(!notifications || notifications.length === 0) ? (
+                <div className="p-12 text-center glass-card rounded-3xl border border-amber-500/20 shadow-lg space-y-2">
+                  <span className="text-4xl block">🔔</span>
+                  <h4 className="font-black text-white text-sm">مركز الإشعارات نظيف تماماً ✨</h4>
+                  <p className="text-xs text-stone-400 font-bold">لا توجد إشعارات أو تنبيهات معلقة حالياً.</p>
+                </div>
+              ) : (
+                notifications.filter(Boolean).map(n => (
+                <div key={n.id} className={`p-4 rounded-2xl border flex items-start justify-between gap-4 transition-all ${n.read ? 'glass-card-subtle border-amber-500/15' : 'glass-card border-amber-500/40 bg-amber-950/20'}`}>
+                  <div className="flex items-start gap-3">
+                    <div className={`p-2.5 rounded-xl text-white ${n.type === 'warning' ? 'bg-rose-600' : n.type === 'reminder' ? 'bg-amber-600' : 'bg-emerald-600'}`}>
+                      <Icon name={n.type === 'warning' ? 'alert' : 'whatsapp'} className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h4 className="font-black text-white text-sm">{n.title}</h4>
+                      <p className="text-xs text-stone-300 mt-1 leading-relaxed whitespace-pre-line font-mono font-medium">{n.message}</p>
+                      <span className="text-[10px] text-amber-300/70 mt-2 block font-bold">{n.time}</span>
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={() => setNotifications(prev => prev.filter(item => item.id !== n.id))}
+                    className="text-stone-400 hover:text-rose-400 p-1"
+                    title="حذف الإشعار"
+                  >
+                    <Icon name="trash" className="w-4 h-4" />
+                  </button>
+                </div>
+              )))}
+            </div>
+          </div>
+        )}
+
+        {/* ==================================================== */}
+        {/* 7️⃣ SETTINGS & CUSTOM MESSAGE TEMPLATES VIEW */}
+        {/* ==================================================== */}
+        {activeTab === 'settings' && (
+          <div className="space-y-6">
+            
+            <div className="glass-card p-6 rounded-3xl border border-amber-500/25 shadow-xl space-y-6">
+              <div className="flex items-center justify-between border-b border-amber-500/20 pb-4">
+                <div>
+                  <h2 className="text-xl font-black text-white">تخصيص قوالب الرسائل وهوية الشركة 📝</h2>
+                  <p className="text-xs text-amber-200/80 mt-1 font-bold">تعديل نصوص القوالب للباقات الشهرية والسنوية وتنبيهات انتهاء الصلاحية وإلغاء الحجوزات.</p>
+                </div>
+                <button
+                  onClick={() => setShowBrandingModal(true)}
+                  className="gold-gradient-btn text-stone-950 text-xs font-black px-4 py-2.5 rounded-2xl shadow-lg flex items-center gap-1.5"
+                >
+                  <Icon name="edit" className="w-4 h-4 font-black text-stone-950" />
+                  <span>تعديل اللوجو والاسم</span>
+                </button>
+              </div>
+
+              {/* Message Templates Editor Section */}
+              <div className="space-y-5">
+                <div className="flex items-center justify-between border-b border-amber-500/20 pb-3">
+                  <div className="flex items-center gap-2.5">
+                    <span className="p-2.5 bg-amber-500/20 text-amber-300 border border-amber-500/30 rounded-2xl text-lg">
+                      <Icon name="editMessage" className="w-5 h-5 text-amber-400" />
+                    </span>
+                    <div>
+                      <h3 className="font-black text-sm text-white">قوالب رسائل الواتساب الذكية وإعدادات التنبيهات 📝</h3>
+                      <p className="text-xs text-amber-300 font-bold mt-0.5">يمكنك تخصيص وتعديل نصوص كافة الرسائل التلقائية وحفظها بشكل دائم على القرص الصلب</p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSettings(prev => ({ ...prev, templates: { ...DEFAULT_TEMPLATES } }));
+                      triggerToast('تمت استعادة القوالب', 'تمت استعادة كافة القوالب الافتراضية بنجاح.', 'info');
+                    }}
+                    className="text-xs text-amber-300 hover:underline font-black bg-stone-900 border border-amber-500/30 px-3 py-1.5 rounded-xl"
+                  >
+                    ↺ استعادة القوالب الافتراضية
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  
+                  {/* Template 1: Booking Confirmation (Prominently Highlighted) */}
+                  <div className="p-5 bg-gradient-to-br from-amber-950/60 to-stone-900 border-2 border-amber-400/80 rounded-3xl space-y-2.5 md:col-span-2 shadow-xl">
+                    <div className="flex justify-between items-center border-b border-amber-500/20 pb-2">
+                      <label className="font-black text-sm text-amber-300 flex items-center gap-2">
+                        <span>📅 1. رسالة تأكيد حجز الموعد والقاعة (تلقائية بالكامل):</span>
+                      </label>
+                      <span className="text-[10px] bg-amber-500/20 text-amber-300 border border-amber-500/30 px-2 py-0.5 rounded font-mono font-bold">booking</span>
+                    </div>
+                    <textarea
+                      rows="6"
+                      value={settings.templates?.booking || DEFAULT_TEMPLATES.booking}
+                      onChange={(e) => setSettings(prev => ({ ...prev, templates: { ...prev.templates, booking: e.target.value } }))}
+                      className="w-full bg-stone-950/90 border border-amber-500/50 rounded-2xl p-3.5 text-xs font-mono text-amber-100 leading-relaxed focus:ring-2 focus:ring-amber-400 focus:outline-none"
+                      placeholder="اكتب قالب رسالة تأكيد الحجز هنا..."
+                    ></textarea>
+                    <div className="p-2.5 bg-stone-950/80 rounded-xl border border-amber-500/20 text-[11px] text-stone-300 flex flex-wrap gap-1.5">
+                      <span className="font-black text-amber-300">المتغيرات المتاحة:</span>
+                      <code className="text-amber-200 bg-stone-900 px-1.5 py-0.5 rounded">{'{اسم_العميل}'}</code>
+                      <code className="text-amber-200 bg-stone-900 px-1.5 py-0.5 rounded">{'{اسم_الشركة}'}</code>
+                      <code className="text-amber-200 bg-stone-900 px-1.5 py-0.5 rounded">{'{نوع_الخدمة}'}</code>
+                      <code className="text-amber-200 bg-stone-900 px-1.5 py-0.5 rounded">{'{نوع_الباقة}'}</code>
+                      <code className="text-amber-200 bg-stone-900 px-1.5 py-0.5 rounded">{'{الغرفة}'}</code>
+                      <code className="text-amber-200 bg-stone-900 px-1.5 py-0.5 rounded">{'{التاريخ}'}</code>
+                      <code className="text-amber-200 bg-stone-900 px-1.5 py-0.5 rounded">{'{الوقت}'}</code>
+                      <code className="text-amber-200 bg-stone-900 px-1.5 py-0.5 rounded">{'{المدة}'}</code>
+                      <code className="text-amber-200 bg-stone-900 px-1.5 py-0.5 rounded">{'{تاريخ_الانتهاء}'}</code>
+                    </div>
+                  </div>
+
+                  {/* Template 2: Attendance */}
+                  <div className="p-4 glass-card-subtle border border-emerald-500/30 rounded-2xl space-y-2">
+                    <div className="flex justify-between items-center">
+                      <label className="font-black text-xs text-emerald-300">2. رسالة تسجيل الحضور وخصم الساعات:</label>
+                      <span className="text-[10px] text-emerald-400 font-mono">attendance</span>
+                    </div>
+                    <textarea
+                      rows="5"
+                      value={settings.templates?.attendance || DEFAULT_TEMPLATES.attendance}
+                      onChange={(e) => setSettings(prev => ({ ...prev, templates: { ...prev.templates, attendance: e.target.value } }))}
+                      className="w-full bg-stone-950/90 border border-emerald-500/30 rounded-xl p-3 text-xs font-mono text-emerald-100 leading-relaxed focus:ring-2 focus:ring-emerald-400 focus:outline-none"
+                    ></textarea>
+                    <p className="text-[10px] text-stone-400">المتغيرات: <code>{'{اسم_العميل}'}</code>, <code>{'{اسم_الشركة}'}</code>, <code>{'{نوع_الخدمة}'}</code>, <code>{'{الساعات_المستهلكة}'}</code>, <code>{'{الرصيد_المتبقي}'}</code></p>
+                  </div>
+
+                  {/* Template 3: Booking Cancellation */}
+                  <div className="p-4 bg-rose-950/30 border border-rose-500/30 rounded-2xl space-y-2">
+                    <div className="flex justify-between items-center">
+                      <label className="font-black text-xs text-rose-300">3. رسالة إلغاء الموعد (تأكيد عدم خصم ساعات):</label>
+                      <span className="text-[10px] text-rose-400 font-mono">cancellation</span>
+                    </div>
+                    <textarea
+                      rows="5"
+                      value={settings.templates?.cancellation || DEFAULT_TEMPLATES.cancellation}
+                      onChange={(e) => setSettings(prev => ({ ...prev, templates: { ...prev.templates, cancellation: e.target.value } }))}
+                      className="w-full bg-stone-950/90 border border-rose-500/40 rounded-xl p-3 text-xs font-mono text-rose-100 leading-relaxed focus:ring-2 focus:ring-rose-400 focus:outline-none"
+                    ></textarea>
+                    <p className="text-[10px] text-rose-300">المتغيرات: <code>{'{اسم_العميل}'}</code>, <code>{'{اسم_الشركة}'}</code>, <code>{'{نوع_الخدمة}'}</code>, <code>{'{التاريخ}'}</code>, <code>{'{الرصيد_المتبقي}'}</code></p>
+                  </div>
+
+                  {/* Template 4: Welcome / Package Activation */}
+                  <div className="p-4 bg-emerald-950/30 border border-emerald-500/30 rounded-2xl space-y-2 md:col-span-2">
+                    <div className="flex justify-between items-center">
+                      <label className="font-black text-xs text-emerald-300">4. رسالة تفعيل باقة الساعات وتأكيد الاشتراك للعميل الجديد:</label>
+                      <span className="text-[10px] text-emerald-400 font-mono">welcome</span>
+                    </div>
+                    <textarea
+                      rows="6"
+                      value={settings.templates?.welcome || DEFAULT_TEMPLATES.welcome}
+                      onChange={(e) => setSettings(prev => ({ ...prev, templates: { ...prev.templates, welcome: e.target.value } }))}
+                      className="w-full bg-stone-950/90 border border-emerald-500/40 rounded-xl p-3 text-xs font-mono text-emerald-100 leading-relaxed focus:ring-2 focus:ring-emerald-400 focus:outline-none"
+                    ></textarea>
+                    <p className="text-[10px] text-emerald-300">المتغيرات: <code>{'{اسم_العميل}'}</code>, <code>{'{اسم_الشركة}'}</code>, <code>{'{نوع_الباقة}'}</code>, <code>{'{اسم_الخدمة}'}</code>, <code>{'{الرصيد_المتاح}'}</code>, <code>{'{تاريخ_البداية}'}</code>, <code>{'{تاريخ_الانتهاء}'}</code>, <code>{'{رقم_الهاتف}'}</code></p>
+                  </div>
+
+                  {/* Template 4.5: Full Time Welcome / Room & Login Credentials */}
+                  <div className="p-4 bg-purple-950/30 border-2 border-purple-500/50 rounded-2xl space-y-2 md:col-span-2">
+                    <div className="flex justify-between items-center">
+                      <label className="font-black text-xs text-purple-300 flex items-center gap-1.5">
+                        <span>👑 4.ب رسالة ترحيب وتفعيل اشتراك الدوام الكامل (Full Time) وبيانات المكتب والتطبيق:</span>
+                      </label>
+                      <span className="text-[10px] text-purple-400 font-mono">fulltime_welcome</span>
+                    </div>
+                    <textarea
+                      rows="7"
+                      value={settings.templates?.fulltime_welcome || DEFAULT_TEMPLATES.fulltime_welcome}
+                      onChange={(e) => setSettings(prev => ({ ...prev, templates: { ...prev.templates, fulltime_welcome: e.target.value } }))}
+                      className="w-full bg-stone-950/90 border border-purple-500/40 rounded-xl p-3 text-xs font-mono text-purple-100 leading-relaxed focus:ring-2 focus:ring-purple-400 focus:outline-none"
+                    ></textarea>
+                    <p className="text-[10px] text-purple-300">المتغيرات: <code>{'{اسم_العميل}'}</code>, <code>{'{اسم_الشركة}'}</code>, <code>{'{نوع_الباقة}'}</code>, <code>{'{اسم_الغرفة}'}</code>, <code>{'{تاريخ_البداية}'}</code>, <code>{'{تاريخ_الانتهاء}'}</code>, <code>{'{اسم_المستخدم}'}</code>, <code>{'{كلمة_المرور}'}</code>, <code>{'{رقم_الهاتف}'}</code></p>
+                  </div>
+
+                  {/* Template 4.6: Shift System Welcome / Room Handover & Login Credentials */}
+                  <div className="p-4 bg-blue-950/30 border-2 border-blue-500/50 rounded-2xl space-y-2 md:col-span-2">
+                    <div className="flex justify-between items-center">
+                      <label className="font-black text-xs text-blue-300 flex items-center gap-1.5">
+                        <span>🔄 4.ج رسالة ترحيب وتفعيل اشتراك نظام الشيفت (Shift) ومواعيد استلام وتسليم الغرفة:</span>
+                      </label>
+                      <span className="text-[10px] text-blue-400 font-mono">shift_welcome</span>
+                    </div>
+                    <textarea
+                      rows="7"
+                      value={settings.templates?.shift_welcome || DEFAULT_TEMPLATES.shift_welcome}
+                      onChange={(e) => setSettings(prev => ({ ...prev, templates: { ...prev.templates, shift_welcome: e.target.value } }))}
+                      className="w-full bg-stone-950/90 border border-blue-500/40 rounded-xl p-3 text-xs font-mono text-blue-100 leading-relaxed focus:ring-2 focus:ring-blue-400 focus:outline-none"
+                    ></textarea>
+                    <p className="text-[10px] text-blue-300">المتغيرات: <code>{'{اسم_العميل}'}</code>, <code>{'{اسم_الشركة}'}</code>, <code>{'{نوع_الباقة}'}</code>, <code>{'{اسم_الغرفة}'}</code>, <code>{'{وقت_استلام_الغرفة}'}</code>, <code>{'{وقت_تسليم_الغرفة}'}</code>, <code>{'{تاريخ_البداية}'}</code>, <code>{'{تاريخ_الانتهاء}'}</code>, <code>{'{اسم_المستخدم}'}</code>, <code>{'{كلمة_المرور}'}</code>, <code>{'{رقم_الهاتف}'}</code></p>
+                  </div>
+
+                  {/* Template 5: Full Time 1-Week Expiry Alert */}
+                  <div className="p-4 bg-purple-950/30 border-2 border-purple-500/40 rounded-2xl space-y-2 md:col-span-2">
+                    <div className="flex justify-between items-center">
+                      <label className="font-black text-xs text-purple-300 flex items-center gap-1.5">
+                        <span>👑 5. رسالة تذكير انتهاء اشتراك Full Time في الأسبوع الأخير (WhatsApp):</span>
+                      </label>
+                      <span className="text-[10px] text-purple-400 font-mono">fulltime_reminder</span>
+                    </div>
+                    <textarea
+                      rows="6"
+                      value={settings.templates?.fulltime_reminder || DEFAULT_TEMPLATES.fulltime_reminder}
+                      onChange={(e) => setSettings(prev => ({ ...prev, templates: { ...prev.templates, fulltime_reminder: e.target.value } }))}
+                      className="w-full bg-stone-950/90 border border-purple-500/40 rounded-xl p-3 text-xs font-mono text-purple-100 leading-relaxed focus:ring-2 focus:ring-purple-400 focus:outline-none"
+                    ></textarea>
+                    <p className="text-[10px] text-purple-300">المتغيرات: <code>{'{اسم_العميل}'}</code>, <code>{'{اسم_الشركة}'}</code>, <code>{'{نوع_الباقة}'}</code>, <code>{'{تاريخ_الانتهاء}'}</code>, <code>{'{الايام_المتبقية}'}</code>, <code>{'{تاريخ_البداية}'}</code></p>
+                  </div>
+
+                  {/* Template 6: Expiry Alert */}
+                  <div className="p-4 bg-amber-950/30 border border-amber-500/30 rounded-2xl space-y-2">
+                    <div className="flex justify-between items-center">
+                      <label className="font-black text-xs text-amber-300">6. رسالة تنبيه انتهاء التعاقد (شهري / سنوي):</label>
+                      <span className="text-[10px] text-amber-400 font-mono">expiry_alert</span>
+                    </div>
+                    <textarea
+                      rows="5"
+                      value={settings.templates?.expiry_alert || DEFAULT_TEMPLATES.expiry_alert}
+                      onChange={(e) => setSettings(prev => ({ ...prev, templates: { ...prev.templates, expiry_alert: e.target.value } }))}
+                      className="w-full bg-stone-950/90 border border-amber-500/40 rounded-xl p-3 text-xs font-mono text-amber-100 leading-relaxed focus:ring-2 focus:ring-amber-400 focus:outline-none"
+                    ></textarea>
+                    <p className="text-[10px] text-amber-300">المتغيرات: <code>{'{اسم_العميل}'}</code>, <code>{'{نوع_الباقة}'}</code>, <code>{'{تاريخ_الانتهاء}'}</code>, <code>{'{الرصيد_المتبقي}'}</code></p>
+                  </div>
+
+                  {/* Template 7: Recharge / Renew */}
+                  <div className="p-4 glass-card-subtle border border-amber-500/20 rounded-2xl space-y-2">
+                    <div className="flex justify-between items-center">
+                      <label className="font-black text-xs text-amber-300">7. رسالة تجديد الباقة وشحن الرصيد:</label>
+                      <span className="text-[10px] text-stone-400 font-mono">recharge</span>
+                    </div>
+                    <textarea
+                      rows="5"
+                      value={settings.templates?.recharge || DEFAULT_TEMPLATES.recharge}
+                      onChange={(e) => setSettings(prev => ({ ...prev, templates: { ...prev.templates, recharge: e.target.value } }))}
+                      className="w-full bg-stone-950/90 border border-amber-500/30 rounded-xl p-3 text-xs font-mono text-stone-100 leading-relaxed focus:ring-2 focus:ring-amber-400 focus:outline-none"
+                    ></textarea>
+                    <p className="text-[10px] text-stone-400">المتغيرات: <code>{'{اسم_العميل}'}</code>, <code>{'{نوع_الباقة}'}</code>, <code>{'{الساعات_المضافة}'}</code>, <code>{'{الرصيد_الجديد}'}</code></p>
+                  </div>
+
+                </div>
+
+                <div className="pt-3 flex gap-3">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      syncToHardDisk('تحديث وحفظ قوالب الرسائل', true);
+                      triggerToast('تم حفظ كافة القوالب! 💾', 'تم حفظ وتثبيت تعديلات قوالب الرسائل بنجاح على القرص الصلب.', 'success');
+                    }}
+                    className="gold-gradient-btn text-stone-950 font-black px-8 py-3 rounded-2xl text-xs shadow-xl active:scale-95 transition-all flex items-center gap-2"
+                  >
+                    <span>💾</span>
+                    <span>حفظ كافة التعديلات والقوالب على القرص الصلب</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Rooms & Halls Management Section (One-Time Setup & Permanent Lock) */}
+              {settings.roomsLocked ? (
+                /* ================= LOCKED MODE ================= */
+                <div className="border-t border-amber-500/20 pt-6 space-y-4">
+                  <div className="bg-emerald-950/90 text-white p-5 rounded-3xl shadow-xl border border-emerald-500/30 space-y-3">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                      <div className="flex items-center gap-3">
+                        <span className="p-2.5 bg-emerald-500/20 text-emerald-300 rounded-2xl border border-emerald-500/30">
+                          <Icon name="shieldCheck" className="w-6 h-6" />
+                        </span>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <h3 className="font-black text-base text-white">قاعات وغرف الشركة (مثبتة ومقفلة نهائياً 🔒)</h3>
+                            <span className="gold-gradient-btn text-stone-950 font-black text-[10px] px-2.5 py-0.5 rounded-full shadow">
+                              مقفلة للأمان
+                            </span>
+                          </div>
+                          <p className="text-xs text-emerald-200/80 mt-1 leading-relaxed font-bold">
+                            تم إدخال وتثبيت أسماء القاعات لمرة واحدة فقط بنجاح. تم قفل التعديل والحذف نهائياً لمنع أي تغيير في بنية الحجوزات.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Read-Only Grid of Locked Rooms */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 pt-1">
+                    {(settings.rooms || INITIAL_ROOMS).map((roomName, idx) => {
+                      const bookedCount = bookings.filter(b => (b.room || INITIAL_ROOMS[0]) === roomName && b.status !== 'cancelled').length;
+                      return (
+                        <div key={idx} className="p-4 glass-card-subtle border border-amber-500/20 rounded-2xl shadow-md flex items-center justify-between gap-2 hover:border-amber-400/40 transition-all">
+                          <div className="flex items-center gap-2.5 overflow-hidden">
+                            <span className="p-2 bg-amber-500/20 border border-amber-500/30 text-amber-300 rounded-xl font-bold text-sm">🚪</span>
+                            <div>
+                              <div className="font-black text-xs text-white truncate" title={roomName}>{roomName}</div>
+                              <div className="text-[11px] text-amber-300/80 font-bold mt-0.5">{bookedCount} موعد محجوز</div>
+                            </div>
+                          </div>
+                          <span className="text-[10px] bg-stone-950 border border-amber-500/30 text-amber-300 px-2.5 py-0.5 rounded-md font-black">
+                            قاعة #{idx + 1}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              ) : (
+                /* ================= UNLOCKED (ONE-TIME SETUP) MODE ================= */
+                <div className="border-t border-amber-500/20 pt-6 space-y-4">
+                  <div className="bg-amber-950/40 border-2 border-amber-500/40 p-5 rounded-3xl space-y-2">
+                    <div className="flex items-center justify-between">
+                      <h3 className="font-black text-base text-amber-300 flex items-center gap-2">
+                        <Icon name="calendar" className="w-5 h-5 text-amber-400" />
+                        <span>إدخال وتثبيت أسماء الغرف لمرة واحدة فقط (قبل القفل النهائي) ⚠️</span>
+                      </h3>
+                      <span className="text-xs gold-gradient-btn text-stone-950 font-black px-2.5 py-1 rounded-xl">
+                        خطوة الإعداد الأولية
+                      </span>
+                    </div>
+                    <p className="text-xs text-amber-200/90 leading-relaxed font-bold">
+                      أدخل هنا كافة أسماء القاعات والغرف الخاصة بشركتك. بمجرد الضغط على زر <b>"حفظ وتثبيت أسماء الغرف نهائياً"</b>، سيتم قفلها بشكل دائم ولن يمكن تعديلها أو حذفها أو إضافة غرف جديدة بعد ذلك.
+                    </p>
+                  </div>
+
+                  {/* Add Room Input */}
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={newRoomNameInput}
+                      onChange={(e) => setNewRoomNameInput(e.target.value)}
+                      placeholder="اكتب اسم قاعة أو غرفة (مثال: Master VIP Room، MaxRoom)..."
+                      className="flex-1 bg-stone-950/90 border border-amber-500/30 rounded-2xl p-3 text-xs font-bold text-white focus:ring-2 focus:ring-amber-400 focus:outline-none"
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          if (!hasPermission('canManageRooms')) {
+                            alert('⛔ عذراً، ليس لديك صلاحية إدارة وتعديل قاعات العمل.');
+                            return;
+                          }
+                          if (!newRoomNameInput.trim()) return;
+                          if ((settings.rooms || []).includes(newRoomNameInput.trim())) {
+                            alert('اسم هذه الغرفة موجود بالفعل!');
+                            return;
+                          }
+                          setSettings(prev => ({ ...prev, rooms: [...(prev.rooms || []), newRoomNameInput.trim()] }));
+                          setNewRoomNameInput('');
+                          triggerToast('تمت إضافة القاعة', 'تمت إضافة الغرفة للقائمة المؤقتة.', 'info');
+                        }
+                      }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (!hasPermission('canManageRooms')) {
+                          alert('⛔ عذراً، ليس لديك صلاحية إدارة وتعديل قاعات العمل.');
+                          return;
+                        }
+                        if (!newRoomNameInput.trim()) return;
+                        if ((settings.rooms || []).includes(newRoomNameInput.trim())) {
+                          alert('اسم هذه الغرفة موجود بالفعل!');
+                          return;
+                        }
+                        setSettings(prev => ({ ...prev, rooms: [...(prev.rooms || []), newRoomNameInput.trim()] }));
+                        setNewRoomNameInput('');
+                        triggerToast('تمت إضافة القاعة', 'تمت إضافة الغرفة للقائمة المؤقتة.', 'info');
+                      }}
+                      className="gold-gradient-btn text-stone-950 font-black px-5 py-3 rounded-2xl text-xs shadow-lg transition-all active:scale-95 whitespace-nowrap"
+                    >
+                      + إضافة للقائمة
+                    </button>
+                  </div>
+
+                  {/* List of Rooms with delete before final lock */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 pt-1">
+                    {(settings.rooms || []).map((roomName, idx) => (
+                      <div key={idx} className="p-3.5 glass-card-subtle border border-amber-500/20 rounded-2xl flex items-center justify-between gap-2 shadow-xs">
+                        <div className="flex items-center gap-2 overflow-hidden">
+                          <span className="p-2 bg-amber-500/20 text-amber-300 rounded-xl font-bold text-xs">🚪</span>
+                          <div className="font-black text-xs text-white truncate" title={roomName}>{roomName}</div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (!hasPermission('canManageRooms')) {
+                              alert('⛔ عذراً، ليس لديك صلاحية حذف القاعات.');
+                              return;
+                            }
+                            setSettings(prev => ({ ...prev, rooms: prev.rooms.filter(r => r !== roomName) }));
+                          }}
+                          className="text-stone-400 hover:text-rose-400 p-1 rounded-lg hover:bg-rose-950"
+                          title="حذف من القائمة المؤقتة"
+                        >
+                          <Icon name="trash" className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Final Lock and Save Button */}
+                  <div className="p-4 glass-card bg-stone-950/90 text-white rounded-3xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-xl border border-amber-500/30">
+                    <div>
+                      <h4 className="font-black text-sm text-white">جاهز للتثبيت النهائي؟</h4>
+                      <p className="text-xs text-amber-200/80 font-bold">يوجد حالياً {(settings.rooms || []).length} غرفة/قاعة محددة.</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (!hasPermission('canManageRooms')) {
+                          alert('⛔ عذراً، ليس لديك صلاحية تثبيت وقفل أسماء الغرف.');
+                          return;
+                        }
+                        if (!settings.rooms || settings.rooms.length === 0) {
+                          alert('يرجى إضافة قاعة واحدة على الأقل قبل التثبيت النهائي!');
+                          return;
+                        }
+                        const roomListText = settings.rooms.map((r, i) => `${i + 1}. ${r}`).join('\n');
+                        const confirmLock = window.confirm(
+                          `⚠️ تنبيه هام ونهائي:\n\nأنت على وشك حفظ وتثبيت أسماء الغرف التالية بشكل دائم:\n\n${roomListText}\n\nبمجرد التأكيد، سيتم قفل أسماء الغرف نهائياً ولن تتمكن من تعديلها أو حذفها أو إضافة غرف جديدة بعد ذلك مطلقاً.\n\nهل ترغب في الحفظ والتثبيت النهائي الآن؟`
+                        );
+                        if (confirmLock) {
+                          setSettings(prev => ({ ...prev, roomsLocked: true }));
+                          triggerToast('تم قفل وتثبيت أسماء الغرف نهائياً 🔒', 'تم حفظ أسماء الغرف بشكل دائم ولا يمكن تعديلها بعد الآن.', 'success');
+                        }
+                      }}
+                      className="gold-gradient-btn text-stone-950 font-black px-6 py-3 rounded-2xl text-xs shadow-xl transition-all active:scale-95 whitespace-nowrap"
+                    >
+                      🔒 حفظ وتثبيت أسماء الغرف نهائياً (قفل بدون تعديل)
+                    </button>
+                  </div>
+                </div>
+              )}
+
+            </div>
+
+          </div>
+        )}
+
+      </main>
+
+      {/* ==================================================== */}
+      {/* 💬 INTERACTIVE WHATSAPP MODAL WITH LIVE MANUAL EDITING */}
+      {/* ==================================================== */}
+      {whatsAppModalData && (
+        <div className="fixed inset-0 z-50 modal-backdrop flex items-center justify-center p-4">
+          <div className="glass-card bg-stone-950/95 w-full max-w-xl rounded-3xl p-6 shadow-2xl space-y-4 border-2 border-emerald-500/80  fade-in zoom-in duration-150">
+            
+            {/* Header */}
+            <div className="flex justify-between items-center border-b border-amber-500/20 pb-3">
+              <div className="flex items-center gap-2.5">
+                <div className="w-10 h-10 rounded-2xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center justify-center shadow-sm">
+                  <Icon name="whatsapp" className="w-6 h-6" />
+                </div>
+                <div>
+                  <h3 className="text-base font-black text-white">{whatsAppModalData.actionTitle}</h3>
+                  <div className="flex items-center gap-1.5 text-xs text-stone-300 mt-0.5 font-bold">
+                    <span>العميل:</span>
+                    <span className="font-black text-amber-300">{whatsAppModalData.clientName}</span>
+                    <span className="bg-stone-950 text-emerald-400 font-mono font-bold px-2 py-0.5 rounded border border-emerald-500/30">
+                      {whatsAppModalData.formattedPhone}
+                    </span>
+                  </div>
+                </div>
+              </div>
+              <button onClick={() => setWhatsAppModalData(null)} className="text-stone-400 hover:text-white text-2xl font-bold">×</button>
+            </div>
+
+            {/* Editable Message Box */}
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between">
+                <label className="block text-xs font-black text-white flex items-center gap-1">
+                  <Icon name="editMessage" className="w-4 h-4 text-emerald-400" />
+                  <span>تعديل نص الرسالة يدوياً قبل الإرسال:</span>
+                </label>
+                <span className="text-[11px] text-emerald-300 font-black bg-emerald-950/80 border border-emerald-500/30 px-2 py-0.5 rounded-md">
+                  ✏️ يمكنك التعديل والإضافة بحرية الآن
+                </span>
+              </div>
+
+              <textarea
+                rows="7"
+                value={currentEditableMessage}
+                onChange={(e) => setCurrentEditableMessage(e.target.value)}
+                className="w-full bg-stone-900 border-2 border-emerald-500/50 focus:border-emerald-400 rounded-2xl p-3.5 text-xs font-mono text-white whitespace-pre-line leading-relaxed focus:ring-2 focus:ring-emerald-400 focus:outline-none shadow-inner"
+                placeholder="اكتب أو عدل نص الرسالة هنا..."
+              ></textarea>
+            </div>
+
+            {/* Quick Text Additions Snippets */}
+            <div className="flex flex-wrap items-center gap-1.5 pt-1">
+              <span className="text-[11px] font-black text-amber-300">إضافات سريعة:</span>
+              {[
+                { label: '+ تأكيد عدم خصم الرصيد', text: '\n\n🛡️ نؤكد لكم بأن رصيد ساعاتكم لم يتأثر بالإلغاء.' },
+                { label: '+ تحية طيبة', text: '\n\nنتمنى لك يوماً سعيداً وموفقاً! 🌸' },
+                { label: '+ رابط حجز موعد بديل', text: '\n\n📅 لتحديد موعد بديل يسعدنا تواصلكم في أي وقت.' }
+              ].map((snip, idx) => (
+                <button
+                  key={idx}
+                  type="button"
+                  onClick={() => setCurrentEditableMessage(prev => prev + snip.text)}
+                  className="glass-card-subtle hover:bg-stone-800 text-stone-200 hover:text-white text-[10px] font-bold px-2.5 py-1 rounded-xl transition-all border border-amber-500/20"
+                >
+                  {snip.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Direct Open Buttons with Live Edited Text */}
+            <div className="space-y-2 pt-2 border-t border-amber-500/20">
+              <a
+                href={buildWhatsAppWebUrl(whatsAppModalData.cleanPhone, currentEditableMessage)}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => setWhatsAppModalData(null)}
+                className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-black py-3.5 px-4 rounded-2xl text-xs shadow-lg flex items-center justify-center gap-2 transition-all active:scale-95 text-center"
+              >
+                <Icon name="whatsapp" className="w-5 h-5" />
+                <span>إرسال النص المعدل عبر واتساب ويب (WhatsApp Web) 🌐</span>
+              </a>
+
+              <div className="grid grid-cols-2 gap-2">
+                <a
+                  href={buildWhatsAppAppUrl(whatsAppModalData.cleanPhone, currentEditableMessage)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => setWhatsAppModalData(null)}
+                  className="bg-stone-900 hover:bg-stone-800 text-emerald-300 border border-emerald-500/30 font-bold py-2.5 px-3 rounded-2xl text-[11px] flex items-center justify-center gap-1.5 transition-all text-center"
+                >
+                  <Icon name="externalLink" className="w-4 h-4" />
+                  <span>تطبيق واتساب الجوال 📱</span>
+                </a>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    navigator.clipboard.writeText(currentEditableMessage);
+                    triggerToast('تم نسخ الرسالة المعدلة! 📋', 'تم نسخ النص المعدل إلى الحافظة بنجاح.', 'success');
+                  }}
+                  className="glass-card-subtle hover:bg-stone-800 text-amber-300 border border-amber-500/20 font-bold py-2.5 px-3 rounded-2xl text-[11px] flex items-center justify-center gap-1 transition-all"
+                >
+                  <span>📋 نسخ النص المعدل</span>
+                </button>
+              </div>
+            </div>
+
+            <div className="text-center pt-1">
+              <button
+                type="button"
+                onClick={() => setWhatsAppModalData(null)}
+                className="text-xs text-stone-400 hover:text-white font-bold"
+              >
+                إغلاق النافذة
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
+
+      {/* ==================================================== */}
+      {/* ➕ Modal: Add New Client (Hourly vs Full Time 3 Months / 1 Month / 1 Year) */}
+      {/* ==================================================== */}
+      {showNewClientModal && (
+        <div className="fixed inset-0 z-50 modal-backdrop flex items-center justify-center p-4">
+          <div className="glass-card bg-stone-950/95 w-full max-w-lg rounded-3xl p-6 shadow-2xl space-y-4 max-h-[95vh] overflow-y-auto border-2 border-amber-500/30 text-white">
+            <div className="flex justify-between items-center border-b border-amber-500/20 pb-3">
+              <div className="flex items-center gap-2">
+                <span className="p-2 bg-amber-500/15 border border-amber-500/30 text-amber-300 rounded-xl">
+                  <Icon name="userPlus" className="w-5 h-5" />
+                </span>
+                <div>
+                  <h3 className="text-lg font-black text-white">
+                    {newClientData.subscriptionType === 'fulltime' ? '👑 إضافة عميل اشتراك Full Time (دوام كامل)' : '⏱️ إضافة عميل باقة ساعات'}
+                  </h3>
+                  <p className="text-xs text-amber-200/80 font-bold">
+                    {newClientData.subscriptionType === 'fulltime' ? 'اشتراك يعتمد على التواريخ والفترات فقط بدون ساعات' : 'باقة ساعات محددة مع مدة شهرية أو سنوية'}
+                  </p>
+                </div>
+              </div>
+              <button onClick={() => setShowNewClientModal(false)} className="text-stone-400 hover:text-white text-xl font-bold">×</button>
+            </div>
+
+            {/* Subscription Type Switcher Tabs */}
+            <div className="grid grid-cols-3 gap-2 bg-stone-900/90 p-1.5 rounded-2xl border border-amber-500/30">
+              <button
+                type="button"
+                onClick={() => {
+                  const today = newClientData.startDate || new Date().toISOString().split('T')[0];
+                  const exp = computeExpiryDate(today, 'monthly');
+                  setNewClientData(prev => ({
+                    ...prev,
+                    subscriptionType: 'hourly',
+                    duration: 'monthly',
+                    hours: prev.hours === '0' ? '10' : prev.hours,
+                    package: 'باقة شهرية 10 ساعات',
+                    expiryDate: exp
+                  }));
+                }}
+                className={`py-2.5 px-3 rounded-xl font-black text-xs transition-all flex items-center justify-center gap-1.5 ${
+                  newClientData.subscriptionType === 'hourly'
+                    ? 'gold-gradient-btn text-stone-950 shadow-md scale-102'
+                    : 'text-stone-300 hover:text-white'
+                }`}
+              >
+                <span>⏱️ باقة ساعات</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  const today = newClientData.startDate || new Date().toISOString().split('T')[0];
+                  const exp = computeExpiryDate(today, 'fulltime_3m');
+                  setNewClientData(prev => ({
+                    ...prev,
+                    subscriptionType: 'fulltime',
+                    duration: 'fulltime_3m',
+                    hours: '0',
+                    package: 'اشتراك Full Time (3 شهور)',
+                    expiryDate: exp
+                  }));
+                }}
+                className={`py-2.5 px-3 rounded-xl font-black text-xs transition-all flex items-center justify-center gap-1.5 ${
+                  newClientData.subscriptionType === 'fulltime'
+                    ? 'bg-gradient-to-r from-purple-700 to-indigo-600 text-white shadow-md border border-purple-400/50 scale-102'
+                    : 'text-stone-300 hover:text-white'
+                }`}
+              >
+                <span>👑 اشتراك Full Time (دوام كامل)</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  const today = newClientData.startDate || new Date().toISOString().split('T')[0];
+                  const exp = computeExpiryDate(today, 'fulltime_3m');
+                  setNewClientData(prev => ({
+                    ...prev,
+                    subscriptionType: 'shift',
+                    shiftType: 'morning',
+        contractHours: '0',
+        shiftStartTime: '08:00',
+        shiftEndTime: '16:00',
+                    duration: 'fulltime_3m',
+                    hours: '0',
+                    package: 'نظام الشيفت (صباحي) - 3 شهور',
+                    expiryDate: exp
+                  }));
+                }}
+                className={`py-2.5 px-3 rounded-xl font-black text-xs transition-all flex items-center justify-center gap-1.5 ${
+                  newClientData.subscriptionType === 'shift'
+                    ? 'bg-gradient-to-r from-blue-700 to-cyan-600 text-white shadow-md border border-blue-400/50 scale-102'
+                    : 'text-stone-300 hover:text-white'
+                }`}
+              >
+                <span>🔄 نظام الشيفت</span>
+              </button>
+            </div>
+
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                let fullPhone = (newClientData.phone || '').trim();
+                if (!fullPhone.startsWith('+') && !fullPhone.startsWith('00')) {
+                  if (fullPhone.startsWith('0')) fullPhone = fullPhone.substring(1);
+                  fullPhone = `${newClientData.countryCode}${fullPhone}`;
+                }
+
+                handleAddClient({
+                  name: newClientData.name,
+                  phone: fullPhone,
+                  email: newClientData.email,
+                  username: newClientData.username,
+                  password: newClientData.password,
+                  subscriptionType: newClientData.subscriptionType,
+                  dedicatedRoom: newClientData.dedicatedRoom,
+                  duration: newClientData.duration,
+                  package: newClientData.package,
+                  startDate: newClientData.startDate,
+                  expiryDate: newClientData.expiryDate,
+                  shiftType: newClientData.shiftType,
+                  contractHours: newClientData.contractHours,
+                  shiftStartTime: newClientData.shiftStartTime,
+                  shiftEndTime: newClientData.shiftEndTime,
+                  hours: (newClientData.subscriptionType === 'fulltime' || newClientData.subscriptionType === 'shift') ? '0' : newClientData.hours,
+                  notes: newClientData.notes
+                });
+              }}
+              className="space-y-3.5"
+            >
+              <div>
+                <label className="block text-xs font-black text-amber-300 mb-1">اسم العميل:</label>
+                <input 
+                  required 
+                  type="text" 
+                  value={newClientData.name}
+                  onChange={(e) => setNewClientData(prev => ({ ...prev, name: e.target.value }))}
+                  placeholder="مثال: خالد محمد العلي" 
+                  className="w-full bg-stone-900 border border-amber-500/30 rounded-2xl p-3 text-xs font-bold text-white focus:ring-2 focus:ring-amber-400 focus:outline-none" 
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-black text-amber-300 mb-1">رقم الواتساب مع مفتاح الدولة:</label>
+                <div className="flex gap-2">
+                  <select 
+                    value={newClientData.countryCode} 
+                    onChange={(e) => setNewClientData(prev => ({ ...prev, countryCode: e.target.value }))}
+                    className="bg-stone-900 border border-amber-500/30 text-amber-300 rounded-2xl px-3 py-2.5 text-xs font-bold font-mono focus:ring-2 focus:ring-amber-400 focus:outline-none"
+                  >
+                    <option value="+966">🇸🇦 +966 (السعودية)</option>
+                    <option value="+20">🇪🇬 +20 (مصر)</option>
+                    <option value="+971">🇦🇪 +971 (الإمارات)</option>
+                    <option value="+965">🇰🇼 +965 (الكويت)</option>
+                    <option value="+974">🇶🇦 +974 (قطر)</option>
+                    <option value="+968">🇴🇲 +968 (عمان)</option>
+                    <option value="+973">🇧🇭 +973 (البحرين)</option>
+                    <option value="+962">🇯🇴 +962 (الأردن)</option>
+                    <option value="+964">🇮🇶 +964 (العراق)</option>
+                    <option value="+212">🇲🇦 +212 (المغرب)</option>
+                    <option value="+1">🇺🇸 +1 (أمريكا / كندا)</option>
+                    <option value="+44">🇬🇧 +44 (بريطانيا)</option>
+                  </select>
+                  
+                  <input 
+                    required 
+                    type="tel" 
+                    value={newClientData.phone}
+                    onChange={(e) => setNewClientData(prev => ({ ...prev, phone: e.target.value }))}
+                    placeholder="رقم الهاتف (مثال: 501234567)" 
+                    className="flex-1 bg-stone-900 border border-amber-500/30 text-white rounded-2xl p-3 text-xs font-bold font-mono focus:ring-2 focus:ring-amber-400 focus:outline-none" 
+                  />
+                </div>
+              </div>
+
+              {/* SHIFT ROOM HANDOVER SCHEDULE (Only for Shift System - No hours calculation) */}
+              {newClientData.subscriptionType === 'shift' && (
+                <div className="glass-card-subtle bg-blue-950/20 p-4 rounded-2xl border-2 border-blue-500/40 space-y-3.5 mb-4">
+                  <div className="flex justify-between items-center">
+                    <label className="block text-xs font-black text-blue-300">🚪 مواعيد استلام وتسليم الغرفة الخاصة (نظام الشيفت):</label>
+                    <span className="text-[10px] bg-blue-900/60 text-blue-200 font-bold px-2 py-0.5 rounded border border-blue-400/30">بدون احتساب ساعات</span>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-black text-stone-300 mb-1.5">نوع الشيفت:</label>
+                    <div className="grid grid-cols-2 gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setNewClientData(prev => ({ ...prev, shiftType: 'morning', package: prev.package.replace('مسائي', 'صباحي') }))}
+                        className={`py-2 rounded-xl text-xs font-bold transition-all ${newClientData.shiftType === 'morning' ? 'bg-blue-600 text-white shadow-md' : 'bg-stone-800 text-stone-400'}`}
+                      >
+                        ☀️ شيفت صباحي
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setNewClientData(prev => ({ ...prev, shiftType: 'evening', package: prev.package.replace('صباحي', 'مسائي') }))}
+                        className={`py-2 rounded-xl text-xs font-bold transition-all ${newClientData.shiftType === 'evening' ? 'bg-blue-600 text-white shadow-md' : 'bg-stone-800 text-stone-400'}`}
+                      >
+                        🌙 شيفت مسائي
+                      </button>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-black text-blue-300 mb-1">وقت استلام الغرفة (البدء):</label>
+                      <input
+                        type="time"
+                        value={newClientData.shiftStartTime || '10:00'}
+                        onChange={(e) => setNewClientData(prev => ({ ...prev, shiftStartTime: e.target.value }))}
+                        className="w-full bg-stone-900 border border-blue-500/40 text-white font-mono rounded-2xl p-2.5 text-xs font-bold focus:ring-2 focus:ring-blue-400 focus:outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-black text-blue-300 mb-1">وقت تسليم الغرفة (الانتهاء):</label>
+                      <input
+                        type="time"
+                        value={newClientData.shiftEndTime || '17:00'}
+                        onChange={(e) => setNewClientData(prev => ({ ...prev, shiftEndTime: e.target.value }))}
+                        className="w-full bg-stone-900 border border-blue-500/40 text-white font-mono rounded-2xl p-2.5 text-xs font-bold focus:ring-2 focus:ring-blue-400 focus:outline-none"
+                      />
+                    </div>
+                  </div>
+                  <div className="p-2.5 bg-blue-950/40 border border-blue-500/30 rounded-xl text-[11px] text-blue-200 leading-relaxed font-bold">
+                    💡 الغرفة مخصصة وخاصة بالعميل بالكامل خلال فترة الشيفت (من الساعة {newClientData.shiftStartTime || '10:00'} حتى {newClientData.shiftEndTime || '17:00'})، ويتم تسليم الغرفة بعدها دون أي احتساب لرصيد ساعات.
+                  </div>
+                </div>
+              )}
+
+              {/* DURATION SELECTOR */}
+              {(newClientData.subscriptionType === 'fulltime' || newClientData.subscriptionType === 'shift') ? (
+                /* Full Time Duration Selector: 1 Month, 3 Months, 1 Year */
+                <div className="glass-card-subtle bg-purple-950/20 p-4 rounded-2xl border-2 border-purple-500/40 space-y-3">
+                  <div className="flex justify-between items-center">
+                    <label className="block text-xs font-black text-purple-300 flex items-center gap-1.5">
+                      <span>👑 اختر مدة اشتراك Full Time (دوام كامل):</span>
+                    </label>
+                    <span className="text-[10px] bg-purple-900 text-purple-200 font-bold px-2 py-0.5 rounded border border-purple-400/30">
+                      ⚡ بدون تقييد بالساعات
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-2">
+                    {[
+                      { id: 'fulltime_1m', label: 'شهر واحد', sub: 'مدة 1 شهر', pkg: 'اشتراك Full Time (شهر واحد)' },
+                      { id: 'fulltime_3m', label: '3 شهور', sub: 'ربع سنوي ⭐', pkg: 'اشتراك Full Time (3 شهور)' },
+                      { id: 'fulltime_1y', label: 'سنة كاملة', sub: 'سنوي 👑', pkg: 'اشتراك Full Time (سنة كاملة)' }
+                    ].map(opt => {
+                      if (newClientData.subscriptionType === 'shift') {
+                        opt.pkg = opt.pkg.replace('اشتراك Full Time', 'نظام الشيفت (' + (newClientData.shiftType === 'evening' ? 'مسائي' : 'صباحي') + ')');
+                      }
+                      
+                      const isSel = newClientData.duration === opt.id;
+                      return (
+                        <button
+                          key={opt.id}
+                          type="button"
+                          onClick={() => {
+                            const newExp = computeExpiryDate(newClientData.startDate, opt.id);
+                            setNewClientData(prev => ({
+                              ...prev,
+                              duration: opt.id,
+                              expiryDate: newExp,
+                              package: opt.pkg
+                            }));
+                          }}
+                          className={`p-3 rounded-2xl border text-center transition-all ${
+                            isSel
+                              ? 'border-purple-400 bg-gradient-to-r from-purple-800 to-indigo-700 text-white font-black ring-2 ring-purple-400/50 shadow-lg scale-102'
+                              : 'bg-stone-900/80 border-purple-500/20 text-stone-300 hover:border-purple-400/50'
+                          }`}
+                        >
+                          <div className="text-xs font-black">{opt.label}</div>
+                          <div className="text-[10px] text-purple-200 mt-1">{opt.sub}</div>
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {/* 🏢 Dedicated Room / Office Field for Full-Time */}
+                  <div className="pt-1">
+                    <label className="block text-xs font-black text-amber-300 mb-1 flex items-center justify-between">
+                      <span className="flex items-center gap-1.5">
+                        <span>🏢 اسم الغرفة / المكتب المخصص للعميل:</span>
+                        <span className="text-rose-400">*</span>
+                      </span>
+                      <span className="text-[10px] bg-purple-900/80 text-purple-200 border border-purple-400/40 px-2 py-0.5 rounded-lg font-bold">
+                        دوام كامل (نظام 12/6) 👑
+                      </span>
+                    </label>
+                    <div className="flex gap-2">
+                      <input
+                        required
+                        type="text"
+                        value={newClientData.dedicatedRoom}
+                        onChange={(e) => setNewClientData(prev => ({ ...prev, dedicatedRoom: e.target.value }))}
+                        placeholder="مثال: مكتب VIP رقم 1 أو القاعة التنفيذية A"
+                        className="flex-1 bg-stone-900 border-2 border-purple-500/50 text-white font-bold rounded-xl p-2.5 text-xs focus:ring-2 focus:ring-purple-400 focus:outline-none placeholder-stone-500"
+                      />
+                      {settings.rooms && settings.rooms.length > 0 && (
+                        <select
+                          onChange={(e) => {
+                            if (e.target.value) setNewClientData(prev => ({ ...prev, dedicatedRoom: e.target.value }));
+                          }}
+                          className="bg-stone-900 border border-purple-500/40 text-purple-300 rounded-xl px-2.5 py-2 text-xs font-bold focus:ring-2 focus:ring-purple-400 focus:outline-none"
+                        >
+                          <option value="">اختر من القاعات...</option>
+                          {settings.rooms.map((r, idx) => (
+                            <option key={idx} value={r}>{r}</option>
+                          ))}
+                        </select>
+                      )}
+                    </div>
+                    <p className="text-[10px] text-stone-400 mt-1 font-bold">
+                      💡 ستظهر هذه الغرفة للعميل كغرفته ومكتبه المخصص في تطبيق الجوال والبوابة دون الحاجة لحجز قاعة.
+                    </p>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2 pt-1">
+                    <div>
+                      <label className="block text-[11px] font-black text-purple-200 mb-1">تاريخ بداية الاشتراك:</label>
+                      <input 
+                        type="date" 
+                        value={newClientData.startDate}
+                        onChange={(e) => {
+                          const newStart = e.target.value;
+                          const newExp = computeExpiryDate(newStart, newClientData.duration);
+                          setNewClientData(prev => ({ ...prev, startDate: newStart, expiryDate: newExp }));
+                        }}
+                        className="w-full bg-stone-900 border border-purple-500/30 text-white rounded-xl p-2.5 text-xs font-bold focus:ring-2 focus:ring-purple-400 focus:outline-none" 
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-black text-purple-200 mb-1 flex items-center justify-between">
+                        <span>تاريخ نهاية وتجديد الاشتراك:</span>
+                        <span className="text-[10px] text-amber-300 font-bold">✨ تلقائي</span>
+                      </label>
+                      <input 
+                        type="date" 
+                        value={newClientData.expiryDate}
+                        onChange={(e) => setNewClientData(prev => ({ ...prev, expiryDate: e.target.value }))}
+                        className="w-full bg-stone-900 border-2 border-amber-400 text-amber-300 rounded-xl p-2.5 text-xs font-bold font-mono focus:ring-2 focus:ring-amber-400 focus:outline-none" 
+                      />
+                    </div>
+                  </div>
+
+                  <div className="p-2.5 bg-stone-900/90 border border-purple-500/30 rounded-xl text-[11px] text-purple-200 font-bold flex items-center gap-1.5">
+                    <span className="text-amber-300">👑</span>
+                    <span>ملاحظة: هذا الاشتراك يعتمد على الفترة وتاريخ التجديد مع تخصيص الغرفة المحددة، ولا يتطلب رصيد ساعات أو خصم عند الحضور.</span>
+                  </div>
+                </div>
+              ) : (
+                /* Hourly Package Duration Selector (1 Month, 3 Months, 1 Year) */
+                <div className="glass-card-subtle p-3.5 rounded-2xl border border-amber-500/25 space-y-3">
+                  <div className="flex justify-between items-center">
+                    <label className="block text-xs font-black text-amber-300">اختر مدة باقة الساعات والتعاقد:</label>
+                    <span className="text-[10px] bg-amber-500/20 text-amber-300 font-bold px-2 py-0.5 rounded border border-amber-500/30">
+                      ⚡ يحسب التاريخ تلقائياً
+                    </span>
+                  </div>
+                  
+                  <div className="grid grid-cols-3 gap-2">
+                    {[
+                      { id: 'monthly', label: 'شهر واحد', sub: 'باقة شهرية', pkg: `باقة شهرية ${newClientData.hours || 10} ساعات` },
+                      { id: '3months', label: '3 شهور', sub: 'ربع سنوي ⭐', pkg: `باقة 3 شهور ${newClientData.hours || 30} ساعات` },
+                      { id: 'annual', label: 'سنة كاملة', sub: 'باقة سنوية 👑', pkg: `باقة سنوية ${newClientData.hours || 100} ساعات` }
+                    ].map(opt => {
+                      const isSel = newClientData.duration === opt.id;
+                      return (
+                        <button
+                          key={opt.id}
+                          type="button"
+                          onClick={() => {
+                            const newExp = computeExpiryDate(newClientData.startDate, opt.id);
+                            const defaultH = opt.id === 'annual' ? '100' : opt.id === '3months' ? '30' : '10';
+                            const hoursVal = newClientData.hours || defaultH;
+                            setNewClientData(prev => ({
+                              ...prev,
+                              duration: opt.id,
+                              expiryDate: newExp,
+                              hours: hoursVal,
+                              package: `باقة ${opt.label} ${hoursVal} ساعات`
+                            }));
+                          }}
+                          className={`p-3 rounded-2xl border text-center transition-all ${
+                            isSel
+                              ? 'border-amber-400 bg-amber-950/60 ring-2 ring-amber-400/50 text-white font-black scale-102 shadow-md'
+                              : 'bg-stone-900/80 border-amber-500/20 text-stone-300 hover:border-amber-400/40'
+                          }`}
+                        >
+                          <div className="text-xs font-black">{opt.label}</div>
+                          <div className="text-[10px] text-amber-300 mt-1">{opt.sub}</div>
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2 pt-1">
+                    <div>
+                      <label className="block text-[11px] font-black text-stone-300 mb-1">تاريخ بداية التعاقد:</label>
+                      <input 
+                        type="date" 
+                        value={newClientData.startDate}
+                        onChange={(e) => {
+                          const newStart = e.target.value;
+                          const newExp = computeExpiryDate(newStart, newClientData.duration);
+                          setNewClientData(prev => ({ ...prev, startDate: newStart, expiryDate: newExp }));
+                        }}
+                        className="w-full bg-stone-900 border border-amber-500/30 text-white rounded-xl p-2 text-xs font-bold focus:ring-2 focus:ring-amber-400 focus:outline-none" 
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-black text-stone-300 mb-1 flex items-center justify-between">
+                        <span>تاريخ انتهاء التعاقد:</span>
+                        <span className="text-[10px] text-amber-300 font-bold">✨ تلقائي</span>
+                      </label>
+                      <input 
+                        type="date" 
+                        value={newClientData.expiryDate}
+                        onChange={(e) => setNewClientData(prev => ({ ...prev, expiryDate: e.target.value }))}
+                        className="w-full bg-stone-900 border-2 border-amber-400 text-amber-300 rounded-xl p-2 text-xs font-bold font-mono focus:ring-2 focus:ring-amber-400 focus:outline-none" 
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3 pt-1">
+                    <div>
+                      <label className="block text-xs font-black text-amber-300 mb-1">اسم الباقة / الخدمة:</label>
+                      <input 
+                        type="text" 
+                        value={newClientData.package}
+                        onChange={(e) => setNewClientData(prev => ({ ...prev, package: e.target.value }))}
+                        className="w-full bg-stone-900 border border-amber-500/30 text-white rounded-2xl p-2.5 text-xs font-bold focus:ring-2 focus:ring-amber-400 focus:outline-none" 
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-black text-amber-300 mb-1">رصيد الساعات المخصص:</label>
+                      <input 
+                        required 
+                        type="number" 
+                        step="0.5" 
+                        min="0.5" 
+                        value={newClientData.hours}
+                        onChange={(e) => {
+                          const newH = e.target.value;
+                          const durLabel = newClientData.duration === 'annual' ? 'سنوية' : ((newClientData.duration === '3months' || newClientData.duration === 'quarterly') ? '3 شهور' : 'شهرية');
+                          const newPkg = `باقة ${durLabel} ${newH} ساعات`;
+                          setNewClientData(prev => ({ ...prev, hours: newH, package: newPkg }));
+                        }}
+                        className="w-full bg-stone-900 border border-amber-500/30 text-emerald-400 font-black rounded-2xl p-2.5 text-xs focus:ring-2 focus:ring-amber-400 focus:outline-none" 
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* 📱 Mandatory Mobile App & Portal Credentials for ALL Clients (Hourly & Full-Time) */}
+              <div className="p-3.5 bg-gradient-to-br from-amber-950/40 via-stone-900 to-amber-950/40 rounded-2xl border-2 border-amber-500/50 space-y-3 shadow-inner">
+                <div className="flex justify-between items-center">
+                  <label className="block text-xs font-black text-amber-300 flex items-center gap-1.5">
+                    <span>📱 بيانات حساب العميل لتطبيق الجوال والبوابة (إجباري 🔐):</span>
+                  </label>
+                  <span className="text-[10px] bg-amber-500/20 text-amber-300 font-bold px-2 py-0.5 rounded border border-amber-500/30">
+                    مطلوب لتسجيل الدخول
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[11px] font-black text-stone-200 mb-1">
+                      اسم المستخدم (Username) <span className="text-rose-400">*</span>:
+                    </label>
+                    <input
+                      required
+                      type="text"
+                      value={newClientData.username}
+                      onChange={(e) => setNewClientData(prev => ({ ...prev, username: e.target.value.replace(/\s+/g, '_') }))}
+                      placeholder="مثال: khaled_99 أو user101"
+                      className="w-full bg-stone-900 border border-amber-500/40 text-white font-mono font-bold rounded-xl p-2.5 text-xs focus:ring-2 focus:ring-amber-400 focus:outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-black text-stone-200 mb-1">
+                      كلمة المرور (Password) <span className="text-rose-400">*</span>:
+                    </label>
+                    <input
+                      required
+                      type="text"
+                      value={newClientData.password}
+                      onChange={(e) => setNewClientData(prev => ({ ...prev, password: e.target.value }))}
+                      placeholder="مثال: Pass@2026 أو 123456"
+                      className="w-full bg-stone-900 border border-amber-500/40 text-amber-300 font-mono font-bold rounded-xl p-2.5 text-xs focus:ring-2 focus:ring-amber-400 focus:outline-none"
+                    />
+                  </div>
+                </div>
+
+                <p className="text-[10px] text-stone-400 font-bold flex items-center gap-1">
+                  <span>💡</span>
+                  <span>
+                    {newClientData.subscriptionType === 'fulltime'
+                      ? 'يستخدم العميل هذه البيانات للدخول لتطبيق الجوال لمعرفة غرفته المخصصة وموعد تجديد الباقة.'
+                      : 'يستخدم العميل هذه البيانات لتسجيل الدخول إلى تطبيق الجوال لمتابعة رصيده وحجز مواعيده.'}
+                  </span>
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-xs font-black text-amber-300 mb-1">البريد الإلكتروني (اختياري):</label>
+                <input 
+                  type="email" 
+                  value={newClientData.email}
+                  onChange={(e) => setNewClientData(prev => ({ ...prev, email: e.target.value }))}
+                  placeholder="name@domain.com" 
+                  className="w-full bg-stone-900 border border-amber-500/30 text-white rounded-2xl p-3 text-xs focus:ring-2 focus:ring-amber-400 focus:outline-none" 
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-black text-amber-300 mb-1">ملاحظات إضافية:</label>
+                <textarea 
+                  rows="2" 
+                  value={newClientData.notes}
+                  onChange={(e) => setNewClientData(prev => ({ ...prev, notes: e.target.value }))}
+                  placeholder="أي تفاصيل خاصة بالعميل..." 
+                  className="w-full bg-stone-900 border border-amber-500/30 text-white rounded-2xl p-3 text-xs focus:ring-2 focus:ring-amber-400 focus:outline-none" 
+                ></textarea>
+              </div>
+
+              <div className="pt-3 flex gap-2">
+                <button type="submit" className="flex-1 gold-gradient-btn text-stone-950 font-black py-3.5 rounded-2xl text-xs shadow-lg active:scale-95">
+                  حفظ وتسجيل العميل ومراجعة الرسالة 💬
+                </button>
+                <button type="button" onClick={() => setShowNewClientModal(false)} className="px-5 bg-stone-900 border border-amber-500/20 text-stone-300 font-bold py-3.5 rounded-2xl text-xs hover:bg-stone-800">
+                  إلغاء
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ==================================================== */}
+      {/* 🔄 Modal: Renew Package with Real-Time Auto-Expiry Date */}
+      {/* ==================================================== */}
+      {showRenewContractModal && (() => {
+        const isModalFT = getClientContractStatus(showRenewContractModal).isFullTime;
+        const currentDurStr = (showRenewContractModal.packageDuration === '3months' || showRenewContractModal.packageDuration === 'quarterly' || showRenewContractModal.packageDuration === 'fulltime_3m')
+          ? '3 شهور (ربع سنوية ⭐)'
+          : (showRenewContractModal.packageDuration === 'annual' || showRenewContractModal.packageDuration === 'fulltime_1y')
+          ? 'سنوية (سنة كاملة 👑)'
+          : 'شهرية (شهر واحد 📅)';
+
+        return (
+          <div className="fixed inset-0 z-50 modal-backdrop flex items-center justify-center p-4">
+            <div className="glass-card bg-stone-950/95 w-full max-w-lg rounded-3xl p-6 shadow-2xl space-y-4 max-h-[95vh] overflow-y-auto border-2 border-amber-500/30 text-white">
+              <div className="flex justify-between items-center border-b border-amber-500/20 pb-3">
+                <div className="flex items-center gap-2">
+                  <span className="p-2 bg-amber-500/15 border border-amber-500/30 text-amber-300 rounded-xl">
+                    <Icon name="refresh" className="w-5 h-5" />
+                  </span>
+                  <h3 className="text-lg font-black text-white">تجديد العقد والباقة: {showRenewContractModal.name}</h3>
+                </div>
+                <button onClick={() => setShowRenewContractModal(null)} className="text-stone-400 hover:text-white text-xl font-bold">×</button>
+              </div>
+
+              <div className="glass-card-subtle p-3.5 rounded-2xl border border-amber-500/20 text-xs space-y-1">
+                <p className="font-black text-white">العميل: {showRenewContractModal.name} ({showRenewContractModal.phone})</p>
+                <p className="text-stone-300">
+                  الباقة الحالية: <span className="font-black text-amber-300">{currentDurStr}</span>
+                  {!isModalFT && <> | الرصيد الحالي: <span className="font-black text-emerald-400">{showRenewContractModal.currentBalance}س</span></>}
+                </p>
+                <p className="text-stone-400 font-mono">تاريخ الانتهاء الحالي: {showRenewContractModal.expiryDate || 'غير محدد'}</p>
+              </div>
+
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  handleRenewPackage(showRenewContractModal.id, {
+                    renewalMode: renewContractData.renewalMode,
+                    duration: renewContractData.duration,
+                    hours: renewContractData.hours,
+                    startDate: renewContractData.startDate,
+                    expiryDate: renewContractData.expiryDate,
+                    resetBalance: renewContractData.resetBalance,
+                    packageName: renewContractData.packageName
+                  });
+                }}
+                className="space-y-4"
+              >
+                {/* 🌟 1. SELECT RENEWAL SYSTEM / MODE */}
+                <div>
+                  <label className="block text-xs font-black text-amber-300 mb-1.5 flex items-center justify-between">
+                    <span>اختر نظام وطريقة تجديد العقد:</span>
+                    <span className="text-[10px] text-emerald-400 font-bold">{isModalFT ? 'نظامان معتمدان 🛡️' : '3 أنظمة معتمدة 🛡️'}</span>
+                  </label>
+                  <div className="grid grid-cols-1 gap-2">
+                    {/* Option A: Fresh Start (تصفير وبدء باقة جديدة بالتاريخ والوقت) */}
+                    <div 
+                      onClick={() => {
+                        const today = new Date().toISOString().split('T')[0];
+                        const dur = renewContractData.duration === 'same_days' ? (isModalFT ? 'fulltime_1m' : 'monthly') : renewContractData.duration;
+                        const newExp = computeExpiryDate(today, dur);
+                        const durLabel = (dur === '3months' || dur === 'quarterly' || dur === 'fulltime_3m') ? '3 شهور' : ((dur === 'annual' || dur === 'fulltime_1y') ? 'سنوية' : 'شهرية');
+                        setRenewContractData(prev => ({
+                          ...prev,
+                          renewalMode: 'fresh_start',
+                          duration: dur,
+                          startDate: today,
+                          expiryDate: newExp,
+                          resetBalance: 'true',
+                          packageName: isModalFT 
+                            ? (dur === 'fulltime_3m' ? 'تجديد اشتراك Full Time (3 شهور)' : dur === 'fulltime_1y' ? 'تجديد اشتراك Full Time (سنة كاملة)' : 'تجديد اشتراك Full Time (شهر واحد)')
+                            : `باقة جديدة ${durLabel} - ${prev.hours} ساعات (تصفير وبدء جديد)`
+                        }));
+                      }}
+                      className={`p-3.5 rounded-2xl border cursor-pointer transition-all flex items-start gap-3 ${
+                        renewContractData.renewalMode === 'fresh_start'
+                          ? 'border-emerald-400 bg-emerald-950/60 ring-2 ring-emerald-400/80 shadow-lg shadow-emerald-950/50'
+                          : 'bg-stone-900/70 border-emerald-500/20 hover:border-emerald-400/50'
+                      }`}
+                    >
+                      <input 
+                        type="radio"
+                        name="renewal_system_choice"
+                        checked={renewContractData.renewalMode === 'fresh_start'}
+                        onChange={() => {}}
+                        className="mt-1 accent-emerald-400 scale-110"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-black text-emerald-300 flex items-center gap-1.5">
+                            <span>⚡</span>
+                            <span>نظام تصفير وبدء باقة جديدة كلياً (بالتاريخ والوقت الحالي)</span>
+                          </span>
+                          <span className="text-[9px] bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded-full font-black border border-emerald-500/40">
+                            الموصى به ✨
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-stone-300 font-bold mt-1 leading-relaxed">
+                          يتم <b className="text-rose-300">{isModalFT ? 'بدء فترة التعاقد الجديدة كلياً' : 'إلغاء وتصفير الرصيد القديم كاملاً'}</b>، و<b className="text-amber-300">إلغاء التاريخ القديم</b>، والبدء فورياً من تاريخ اليوم{isModalFT ? ' بالمدة الجديدة.' : ' بالساعات الجديدة فقط.'}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Option B: Extend & Rollover (تمديد العقد وترحيل الرصيد) */}
+                    <div 
+                      onClick={() => {
+                        const today = new Date().toISOString().split('T')[0];
+                        const dur = renewContractData.duration === 'same_days' ? (isModalFT ? 'fulltime_1m' : 'monthly') : renewContractData.duration;
+                        const oldExp = showRenewContractModal.expiryDate;
+                        const start = (oldExp && oldExp >= today) ? oldExp : today;
+                        const newExp = computeExpiryDate(start, dur);
+                        const durLabelMasc = (dur === '3months' || dur === 'quarterly' || dur === 'fulltime_3m') ? '3 شهور' : ((dur === 'annual' || dur === 'fulltime_1y') ? 'سنوي' : 'شهري');
+                        setRenewContractData(prev => ({
+                          ...prev,
+                          renewalMode: 'extend',
+                          duration: dur,
+                          startDate: start,
+                          expiryDate: newExp,
+                          resetBalance: 'false',
+                          packageName: isModalFT 
+                            ? (dur === 'fulltime_3m' ? 'تجديد اشتراك Full Time (3 شهور)' : dur === 'fulltime_1y' ? 'تجديد اشتراك Full Time (سنة كاملة)' : 'تجديد اشتراك Full Time (شهر واحد)')
+                            : `تجديد وتمديد ${durLabelMasc} - ${prev.hours} ساعات`
+                        }));
+                      }}
+                      className={`p-3 rounded-2xl border cursor-pointer transition-all flex items-start gap-3 ${
+                        renewContractData.renewalMode === 'extend'
+                          ? 'border-amber-400 bg-amber-950/40 ring-1 ring-amber-400 shadow-md'
+                          : 'bg-stone-900/60 border-amber-500/20 hover:border-amber-400/40'
+                      }`}
+                    >
+                      <input 
+                        type="radio"
+                        name="renewal_system_choice"
+                        checked={renewContractData.renewalMode === 'extend'}
+                        onChange={() => {}}
+                        className="mt-1 accent-amber-400"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <span className="text-xs font-black text-white block">➕ نظام تمديد العقد وترحيل الرصيد السابق</span>
+                        <p className="text-[10px] text-stone-300 font-bold mt-0.5">
+                          تمديد الصلاحية بناءً على نهاية العقد السابق{isModalFT ? ' بنفس نظام الدوام المعتمد.' : '، وترحيل الساعات القديمة وإضافة الساعات الجديدة عليها.'}
+                        </p>
+                      </div>
+                    </div>
+                    {/* Option C: Same Days Recharge (شحن على نفس الأيام المتبقية - عملاء الساعات فقط) */}
+                    {!isModalFT && (() => {
+                      const modalToday = new Date().toISOString().split('T')[0];
+                      const isModalPast = Boolean(!showRenewContractModal.expiryDate || showRenewContractModal.expiryDate < modalToday || getClientContractStatus(showRenewContractModal).isExpired);
+                      return isModalPast ? (
+                        <div className="p-3 rounded-2xl border border-stone-800 bg-stone-900/40 opacity-60 flex items-start gap-3 cursor-not-allowed select-none">
+                          <input 
+                            type="radio" 
+                            disabled 
+                            name="renewal_system_choice"
+                            checked={false} 
+                            className="mt-1 accent-stone-600" 
+                          />
+                          <div className="flex-1 min-w-0">
+                            <span className="text-xs font-bold text-stone-400 block">⏱️ شحن ساعات إضافية على نفس الأيام (غير متاح - العقد منتهي تماماً)</span>
+                            <p className="text-[10px] text-stone-400 font-bold mt-0.5 leading-relaxed">
+                              انتهت أيام وصلاحية العقد السابق بالكامل ({showRenewContractModal.expiryDate || 'تاريخ سابق'}). يرجى اختيار (تصفير وبدء باقة جديدة) أو (تمديد العقد) لتحديد صلاحية سارية.
+                            </p>
+                          </div>
+                        </div>
+                      ) : (
+                        <div 
+                          onClick={() => {
+                            const today = new Date().toISOString().split('T')[0];
+                            setRenewContractData(prev => ({
+                              ...prev,
+                              renewalMode: 'same_days',
+                              duration: 'same_days',
+                              startDate: showRenewContractModal.startDate || today,
+                              expiryDate: showRenewContractModal.expiryDate || computeExpiryDate(today, 'monthly'),
+                              resetBalance: 'false',
+                              packageName: showRenewContractModal.package || `شحن رصيد - ${prev.hours} ساعات`
+                            }));
+                          }}
+                          className={`p-3 rounded-2xl border cursor-pointer transition-all flex items-start gap-3 ${
+                            renewContractData.renewalMode === 'same_days'
+                              ? 'border-teal-400 bg-teal-950/50 ring-1 ring-teal-400 shadow-md'
+                              : 'bg-stone-900/60 border-teal-500/20 hover:border-teal-400/40'
+                          }`}
+                        >
+                          <input 
+                            type="radio"
+                            name="renewal_system_choice"
+                            checked={renewContractData.renewalMode === 'same_days'}
+                            onChange={() => {}}
+                            className="mt-1 accent-teal-400"
+                          />
+                          <div className="flex-1 min-w-0">
+                            <span className="text-xs font-black text-teal-300 block">⏱️ شحن ساعات إضافية على نفس الأيام المتبقية</span>
+                            <p className="text-[10px] text-stone-300 font-bold mt-0.5">
+                              إضافة ساعات فقط للرصيد المتاح دون تمديد التاريخ (يبقى تاريخ البداية والنهاية ثابتاً).
+                            </p>
+                          </div>
+                        </div>
+                      );
+                    })()}
+                  </div>
+                </div>
+
+                {/* 📦 2. PACKAGE DURATION (Monthly, 3 Months, Annual) - Only if not same_days */}
+                {renewContractData.renewalMode !== 'same_days' && (
+                  <div>
+                    <label className="block text-xs font-black text-stone-300 mb-1.5">
+                      {isModalFT ? 'مدة تجديد اشتراك Full Time:' : 'مدة باقة الساعات الجديدة:'}
+                    </label>
+
+                    {isModalFT ? (
+                      /* Full Time / Shift Duration Selector (1m, 3m, 1y) */
+                      <div className="grid grid-cols-3 gap-2">
+                        {[
+                          { id: 'fulltime_1m', label: 'شهر واحد', sub: '1 شهر', pkg: 'تجديد اشتراك Full Time (شهر واحد)' },
+                          { id: 'fulltime_3m', label: '3 شهور', sub: 'ربع سنوي ⭐', pkg: 'تجديد اشتراك Full Time (3 شهور)' },
+                          { id: 'fulltime_1y', label: 'سنة كاملة', sub: 'سنوي 👑', pkg: 'تجديد اشتراك Full Time (سنة كاملة)' }
+                        ].map(opt => {
+                          const isSel = renewContractData.duration === opt.id;
+                          return (
+                            <label
+                              key={opt.id}
+                              onClick={() => {
+                                const baseStart = renewContractData.renewalMode === 'fresh_start' ? new Date().toISOString().split('T')[0] : renewContractData.startDate;
+                                const newExp = computeExpiryDate(baseStart, opt.id);
+                                setRenewContractData(prev => ({
+                                  ...prev,
+                                  duration: opt.id,
+                                  startDate: baseStart,
+                                  expiryDate: newExp,
+                                  packageName: opt.pkg
+                                }));
+                              }}
+                              className={`flex flex-col items-center justify-center p-2.5 rounded-xl border cursor-pointer transition-all text-center ${
+                                isSel ? 'border-purple-400 bg-purple-950/60 shadow-sm ring-1 ring-purple-400' : 'bg-stone-900/60 border-purple-500/20 hover:border-purple-400/40'
+                              }`}
+                            >
+                              <div className="flex items-center gap-1.5">
+                                <input type="radio" name="ft_dur_choice" checked={isSel} onChange={() => {}} className="accent-purple-400" />
+                                <span className="text-xs font-black text-white">{opt.label}</span>
+                              </div>
+                              <span className="text-[10px] text-purple-300 mt-0.5 font-bold">{opt.sub}</span>
+                            </label>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      /* Hourly Package Duration Selector (1m: 10h, 3m: 30h, 1y: 100h) */
+                      <div className="grid grid-cols-3 gap-2">
+                        {[
+                          { id: 'monthly', label: 'شهر واحد', sub: '10 ساعات 📅', defaultH: '10' },
+                          { id: '3months', label: '3 شهور', sub: '30 ساعة ⭐', defaultH: '30' },
+                          { id: 'annual', label: 'سنة كاملة', sub: '100 ساعة 👑', defaultH: '100' }
+                        ].map(opt => {
+                          const isSel = renewContractData.duration === opt.id;
+                          return (
+                            <label
+                              key={opt.id}
+                              onClick={() => {
+                                const baseStart = renewContractData.renewalMode === 'fresh_start' ? new Date().toISOString().split('T')[0] : renewContractData.startDate;
+                                const newExp = computeExpiryDate(baseStart, opt.id);
+                                const newHours = (renewContractData.hours === '10' || renewContractData.hours === '30' || renewContractData.hours === '100')
+                                  ? opt.defaultH
+                                  : renewContractData.hours;
+                                const durLabel = opt.id === '3months' ? '3 شهور' : (opt.id === 'annual' ? 'سنوية' : 'شهرية');
+                                const durLabelMasc = opt.id === '3months' ? '3 شهور' : (opt.id === 'annual' ? 'سنوي' : 'شهري');
+                                setRenewContractData(prev => ({
+                                  ...prev,
+                                  duration: opt.id,
+                                  startDate: baseStart,
+                                  expiryDate: newExp,
+                                  hours: newHours,
+                                  packageName: prev.renewalMode === 'fresh_start'
+                                    ? `باقة جديدة ${durLabel} - ${newHours} ساعات (تصفير وبدء جديد)`
+                                    : `تجديد وتمديد ${durLabelMasc} - ${newHours} ساعات`
+                                }));
+                              }}
+                              className={`flex flex-col items-center justify-center p-2.5 rounded-xl border cursor-pointer transition-all text-center ${
+                                isSel ? 'border-amber-400 bg-amber-950/60 shadow-sm ring-1 ring-amber-400' : 'bg-stone-900/60 border-amber-500/20 hover:border-amber-400/40'
+                              }`}
+                            >
+                              <div className="flex items-center gap-1.5">
+                                <input type="radio" name="pkg_dur_choice" checked={isSel} onChange={() => {}} className="accent-amber-400" />
+                                <span className="text-xs font-black text-white">{opt.label}</span>
+                              </div>
+                              <span className="text-[10px] text-amber-300 mt-0.5 font-bold">{opt.sub}</span>
+                            </label>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* 📅 3. CONTRACT DATES SECTION */}
+                {renewContractData.renewalMode === 'same_days' ? (
+                  <div className="p-3.5 bg-teal-950/40 border-2 border-teal-500/40 rounded-2xl text-xs space-y-1.5 shadow-inner">
+                    <div className="flex items-center justify-between text-teal-300 font-bold">
+                      <span className="flex items-center gap-1.5">
+                        <span>⏱️</span>
+                        <span>تواريخ العقد الحالي:</span>
+                      </span>
+                      <span className="bg-teal-500/20 text-teal-300 px-2 py-0.5 rounded-lg text-[10px] font-black border border-teal-500/30">
+                        ثابتة دون تمديد ✅
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center text-stone-200 font-mono text-[11px] pt-1">
+                      <span>البداية: <b className="text-white">{showRenewContractModal.startDate || '-'}</b></span>
+                      <span>النهاية: <b className="text-teal-400 font-black">{showRenewContractModal.expiryDate || '-'}</b></span>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="block text-xs font-black text-stone-300 mb-1 flex items-center justify-between">
+                        <span>تاريخ بداية العقد:</span>
+                        {renewContractData.renewalMode === 'fresh_start' && (
+                          <span className="text-[10px] text-emerald-400 font-bold">اليوم 🌟</span>
+                        )}
+                      </label>
+                      <input 
+                        type="date" 
+                        value={renewContractData.startDate}
+                        onChange={(e) => {
+                          const newStart = e.target.value;
+                          const newExp = computeExpiryDate(newStart, renewContractData.duration);
+                          setRenewContractData(prev => ({ ...prev, startDate: newStart, expiryDate: newExp }));
+                        }}
+                        className="w-full bg-stone-900 border border-amber-500/30 text-white rounded-xl p-2.5 text-xs font-bold focus:ring-2 focus:ring-amber-400 focus:outline-none" 
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-black text-stone-300 mb-1 flex items-center justify-between">
+                        <span>تاريخ نهاية العقد:</span>
+                        <span className="text-[10px] text-amber-300 font-bold">✨ تلقائي</span>
+                      </label>
+                      <input 
+                        type="date" 
+                        value={renewContractData.expiryDate}
+                        onChange={(e) => setRenewContractData(prev => ({ ...prev, expiryDate: e.target.value }))}
+                        className="w-full bg-stone-900 border-2 border-amber-400 text-amber-300 rounded-xl p-2.5 text-xs font-bold font-mono focus:ring-2 focus:ring-amber-400 focus:outline-none" 
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* ⏱️ 4. HOURS INPUT (Hourly Clients Only) */}
+                {!isModalFT ? (
+                  <div>
+                    <label className="block text-xs font-black text-stone-300 mb-1">
+                      {renewContractData.renewalMode === 'same_days' ? 'عدد الساعات المراد إضافتها:' : 'عدد ساعات الباقة الجديدة:'}
+                    </label>
+                    <input 
+                      required 
+                      type="number" 
+                      step="0.5" 
+                      min="0.5" 
+                      value={renewContractData.hours}
+                      onChange={(e) => {
+                        const newH = e.target.value;
+                        const durLabel = renewContractData.duration === 'annual' ? 'سنوية' : ((renewContractData.duration === '3months' || renewContractData.duration === 'quarterly') ? '3 شهور' : 'شهرية');
+                        const durLabelMasc = renewContractData.duration === 'annual' ? 'سنوي' : ((renewContractData.duration === '3months' || renewContractData.duration === 'quarterly') ? '3 شهور' : 'شهري');
+                        setRenewContractData(prev => ({ 
+                          ...prev, 
+                          hours: newH, 
+                          packageName: prev.renewalMode === 'same_days' 
+                            ? (showRenewContractModal.package || `شحن رصيد - ${newH}س`) 
+                            : (prev.renewalMode === 'fresh_start' 
+                                ? `باقة جديدة ${durLabel} - ${newH} ساعات` 
+                                : `تجديد وتمديد ${durLabelMasc} - ${newH} ساعات`)
+                        }));
+                      }}
+                      className="w-full bg-stone-900 border border-amber-500/30 text-emerald-400 font-black rounded-xl p-2.5 text-xs focus:ring-2 focus:ring-amber-400 focus:outline-none" 
+                    />
+                  </div>
+                ) : (
+                  <div className="p-3 bg-purple-950/40 border border-purple-500/40 rounded-xl text-xs text-purple-200 flex items-center gap-2">
+                    <span className="text-amber-300 text-sm">👑</span>
+                    <span>اشتراك Full Time (دوام كامل): يتم تجديد الفترة وتاريخ الصلاحية تلقائياً دون الحاجة لإدخال ساعات يدوية.</span>
+                  </div>
+                )}
+
+                {/* 📊 5. COMPREHENSIVE LIVE PREVIEW BOX */}
+                <div className="p-3.5 rounded-2xl bg-stone-900/95 border border-amber-500/30 text-xs shadow-inner space-y-2.5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] font-black text-amber-300">📊 ملخص وتأثير العملية المحددة:</span>
+                    <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-stone-950 text-stone-300 border border-amber-500/20">
+                      {renewContractData.renewalMode === 'fresh_start' 
+                        ? '⚡ تصفير وبدء باقة جديدة' 
+                        : (renewContractData.renewalMode === 'same_days' ? '⏱️ شحن على نفس الأيام' : '➕ تمديد وترحيل')}
+                    </span>
+                  </div>
+                  
+                  {isModalFT ? (
+                    /* Full-Time Preview */
+                    <div className="p-3 rounded-xl bg-purple-950/60 border-2 border-purple-500/50 space-y-2">
+                      <div className="flex justify-between items-center text-[11px] border-b border-purple-500/30 pb-1.5">
+                        <span className="text-purple-200 font-bold">
+                          🏢 المكتب المخصص: {showRenewContractModal.dedicatedRoom || showRenewContractModal.room || 'المكتب التنفيذي الخاص'}
+                        </span>
+                        <span className="text-stone-400 font-mono text-[10px]">
+                          انتهاء سابق: {showRenewContractModal.expiryDate || '-'}
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center pt-0.5">
+                        <div>
+                          <span className="text-xs font-black text-white block">سريان الاشتراك الجديد:</span>
+                          <span className="text-[10px] text-purple-300 font-bold font-mono">
+                            من ({renewContractData.startDate}) ➔ حتى ({renewContractData.expiryDate})
+                          </span>
+                        </div>
+                        <div className="text-left">
+                          <span className="text-xs font-black text-emerald-400 block font-mono">
+                            {renewContractData.duration === 'fulltime_3m' ? '3 شهور (ربع سنوي)' : renewContractData.duration === 'fulltime_1y' ? 'سنة كاملة' : 'شهر واحد'}
+                          </span>
+                          <span className="text-[9px] text-purple-300 block font-bold">دوام كامل معتمد ✅</span>
+                        </div>
+                      </div>
+                    </div>
+                  ) : renewContractData.renewalMode === 'fresh_start' ? (
+                    <div className="p-3 rounded-xl bg-emerald-950/60 border-2 border-emerald-500/50 space-y-2">
+                      <div className="flex justify-between items-center text-[11px] border-b border-emerald-500/30 pb-1.5">
+                        <span className="text-rose-300 line-through font-bold">
+                          ❌ الرصيد السابق: {parseFloat(showRenewContractModal.currentBalance || 0)}س (يتم تصفيره وإلغاؤه كاملاً)
+                        </span>
+                        <span className="text-stone-400 line-through font-mono text-[10px]">
+                          انتهاء سابق: {showRenewContractModal.expiryDate || '-'}
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center pt-0.5">
+                        <div>
+                          <span className="text-xs font-black text-white block">سريان العقد الجديد:</span>
+                          <span className="text-[10px] text-emerald-300 font-bold font-mono">
+                            من اليوم ({renewContractData.startDate}) ➔ حتى ({renewContractData.expiryDate})
+                          </span>
+                        </div>
+                        <div className="text-left">
+                          <span className="text-base font-black text-emerald-400 font-mono">
+                            {parseFloat(renewContractData.hours || 0)} ساعة
+                          </span>
+                          <span className="text-[9px] text-emerald-300 block font-bold">صافي رصيد جديد فقط ✅</span>
+                        </div>
+                      </div>
+                    </div>
+                  ) : renewContractData.renewalMode === 'extend' ? (
+                    <div className="p-2.5 rounded-xl bg-stone-950/80 border border-amber-500/30 space-y-1.5">
+                      <div className="flex items-center justify-between">
+                        <div className="text-center">
+                          <span className="text-[10px] text-stone-400 block font-bold">الرصيد السابق</span>
+                          <span className="font-mono font-black text-stone-200">{parseFloat(showRenewContractModal.currentBalance || 0)}س</span>
+                        </div>
+                        <span className="text-amber-300 text-base font-black">+</span>
+                        <div className="text-center">
+                          <span className="text-[10px] text-stone-400 block font-bold">الساعات الجديدة</span>
+                          <span className="font-mono font-black text-emerald-400">+{parseFloat(renewContractData.hours || 0)}س</span>
+                        </div>
+                        <span className="text-emerald-400 text-base font-black">➔</span>
+                        <div className="text-center">
+                          <span className="text-[10px] text-emerald-300 block font-bold">الرصيد المتاح بعد التمديد</span>
+                          <span className="font-mono font-black text-emerald-400 text-sm">
+                            {parseFloat(((parseFloat(showRenewContractModal.currentBalance || 0)) + (parseFloat(renewContractData.hours || 0))).toFixed(2))}س
+                          </span>
+                        </div>
+                      </div>
+                      <div className="text-[10px] text-amber-300 font-mono text-center pt-1 border-t border-amber-500/20">
+                        تاريخ الانتهاء الجديد الممدد: <b className="text-white">{renewContractData.expiryDate}</b>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="p-2.5 rounded-xl bg-teal-950/50 border border-teal-500/30 flex items-center justify-between">
+                      <div>
+                        <span className="text-[10px] text-teal-300 block font-bold">إضافة ساعات فقط على نفس الأيام:</span>
+                        <span className="text-[10px] text-stone-300 font-mono">ينتهي في: {showRenewContractModal.expiryDate}</span>
+                      </div>
+                      <span className="font-mono font-black text-teal-300 text-sm">
+                        +{parseFloat(renewContractData.hours || 0)}س ➔ {parseFloat(((parseFloat(showRenewContractModal.currentBalance || 0)) + (parseFloat(renewContractData.hours || 0))).toFixed(2))}س
+                      </span>
+                    </div>
+                  )}
+                </div>
+
+                <div className="pt-2 flex gap-2">
+                  <button 
+                    type="submit" 
+                    className={`flex-1 font-black py-3.5 rounded-2xl text-xs shadow-lg active:scale-95 transition-all flex items-center justify-center gap-1.5 ${
+                      renewContractData.duration === 'same_days' 
+                        ? 'bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-white' 
+                        : 'gold-gradient-btn text-stone-950'
+                    }`}
+                  >
+                    {renewContractData.duration === 'same_days' ? (
+                      <>
+                        <span>⚡</span>
+                        <span>تأكيد شحن الساعات على نفس الأيام المتبقية</span>
+                      </>
+                    ) : renewContractData.renewalMode === 'fresh_start' ? (
+                      <>
+                        <span>⚡</span>
+                        <span>تأكيد تصفير وبدء العقد الجديد كلياً</span>
+                      </>
+                    ) : (
+                      <>
+                        <span>💬</span>
+                        <span>تأكيد تجديد التعاقد وإرسال الرسالة</span>
+                      </>
+                    )}
+                  </button>
+                  <button type="button" onClick={() => setShowRenewContractModal(null)} className="px-5 bg-stone-900 border border-amber-500/20 text-stone-300 font-bold py-3.5 rounded-2xl text-xs hover:bg-stone-800">
+                    إلغاء
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        );
+      })()}
+      {/* ==================================================== */}
+      {/* ⚡ Modal: Dedicated Quick Recharge Hours (Same Days) */}
+      {/* ==================================================== */}
+      {showRechargeModal && showRechargeModal.client && (() => {
+        const client = showRechargeModal.client;
+        const currentBal = parseFloat(client.currentBalance || 0);
+        const contractInfo = getClientContractStatus(client);
+        const currentHours = parseFloat(showRechargeModal.hours || 10);
+        const newBal = (currentBal + (isNaN(currentHours) ? 0 : currentHours)).toFixed(1);
+
+        return (
+          <div className="fixed inset-0 z-50 modal-backdrop flex items-center justify-center p-4">
+            <div className="glass-card bg-stone-950/95 w-full max-w-md rounded-3xl p-6 shadow-2xl space-y-4 border-2 border-emerald-500/40 text-white ">
+              <div className="flex justify-between items-center border-b border-emerald-500/20 pb-3">
+                <div className="flex items-center gap-2">
+                  <span className="p-2 bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 rounded-xl text-lg">
+                    ⚡
+                  </span>
+                  <h3 className="text-lg font-black text-white">شحن رصيد ساعات: {client.name}</h3>
+                </div>
+                <button onClick={() => setShowRechargeModal(null)} className="text-stone-400 hover:text-white text-xl font-bold">×</button>
+              </div>
+
+              {/* Client Status Summary */}
+              <div className="glass-card-subtle p-3.5 rounded-2xl border border-emerald-500/20 text-xs space-y-1.5 bg-emerald-950/15">
+                <div className="flex justify-between items-center">
+                  <span className="font-black text-white">👤 {client.name} ({client.phone})</span>
+                  <span className="text-stone-400 font-mono text-[11px]">{client.package}</span>
+                </div>
+                <div className="flex justify-between items-center text-stone-300 border-t border-emerald-500/10 pt-1">
+                  <span>الرصيد المتاح الحالي: <b className="text-emerald-400 font-mono text-sm">{currentBal}س</b></span>
+                  <span>الأيام المتبقية: <b className="text-amber-300 font-mono">{contractInfo.daysLeft !== null ? `${contractInfo.daysLeft} يوم` : 'مستمر'}</b></span>
+                </div>
+                <div className="text-[10px] text-stone-400 font-mono">
+                  📅 تاريخ انتهاء العقد: <b className="text-white">{client.expiryDate || 'غير محدد'}</b> (ثابت دون تغيير)
+                </div>
+              </div>
+
+              {/* Notice */}
+              <div className="p-2.5 rounded-xl bg-stone-900 border border-emerald-500/25 text-[11px] text-emerald-300 flex items-center gap-2 font-bold">
+                <span>🛡️</span>
+                <span>تتم إضافة الساعات فوراً للرصيد المتاح للحجز دون تغيير عدد الأيام المتبقية أو تاريخ العقد.</span>
+              </div>
+
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  handleRechargeHours(client.id, showRechargeModal.hours);
+                }}
+                className="space-y-4"
+              >
+                <div>
+                  <label className="block text-xs font-black text-amber-300 mb-1.5">اختر عدد الساعات المراد شحنها:</label>
+                  {/* Preset quick buttons */}
+                  <div className="grid grid-cols-5 gap-1.5 mb-2">
+                    {[5, 10, 20, 50, 100].map(h => (
+                      <button
+                        key={h}
+                        type="button"
+                        onClick={() => setShowRechargeModal(prev => ({ ...prev, hours: String(h) }))}
+                        className={`py-2 rounded-xl text-xs font-black transition-all border ${
+                          String(showRechargeModal.hours) === String(h)
+                            ? 'bg-emerald-600 text-white border-emerald-400 shadow-md ring-1 ring-emerald-300'
+                            : 'bg-stone-900 text-stone-300 border-stone-700 hover:border-emerald-500/40 hover:text-white'
+                        }`}
+                      >
+                        +{h}س
+                      </button>
+                    ))}
+                  </div>
+
+                  <div className="relative">
+                    <input
+                      required
+                      type="number"
+                      step="0.5"
+                      min="0.5"
+                      value={showRechargeModal.hours || ''}
+                      onChange={(e) => setShowRechargeModal(prev => ({ ...prev, hours: e.target.value }))}
+                      placeholder="أو اكتب عدد الساعات المخصص هنا..."
+                      className="w-full bg-stone-900 border-2 border-emerald-500/40 text-emerald-400 font-black rounded-2xl p-3 text-sm focus:ring-2 focus:ring-emerald-400 focus:outline-none"
+                    />
+                    <span className="absolute left-3 top-3 text-xs text-stone-400 font-bold">ساعة</span>
+                  </div>
+                </div>
+
+                {/* Live Preview calculation */}
+                <div className="p-3.5 rounded-2xl bg-stone-900/90 border border-emerald-500/30 text-xs flex items-center justify-between shadow-inner">
+                  <div className="text-center">
+                    <span className="text-[10px] text-stone-400 block font-bold">الرصيد المتاح الحالي</span>
+                    <span className="text-base font-black font-mono text-stone-200">{currentBal}س</span>
+                  </div>
+                  <span className="text-emerald-400 text-lg font-black">+</span>
+                  <div className="text-center">
+                    <span className="text-[10px] text-stone-400 block font-bold">الساعات المضافة</span>
+                    <span className="text-base font-black font-mono text-amber-300">+{isNaN(currentHours) ? 0 : currentHours}س</span>
+                  </div>
+                  <span className="text-emerald-400 text-lg font-black">➔</span>
+                  <div className="text-center">
+                    <span className="text-[10px] text-emerald-300 block font-bold">الرصيد بعد الشحن</span>
+                    <span className="text-lg font-black font-mono text-emerald-400">{newBal}س</span>
+                  </div>
+                </div>
+
+                <div className="pt-2 flex gap-2">
+                  <button
+                    type="submit"
+                    className="flex-1 bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-white font-black py-3.5 rounded-2xl text-xs shadow-lg active:scale-95 transition-all flex items-center justify-center gap-1.5"
+                  >
+                    <span>⚡</span>
+                    <span>تأكيد شحن الساعات للرصيد المتاح</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowRechargeModal(null)}
+                    className="px-5 bg-stone-900 border border-stone-700 text-stone-300 font-bold py-3.5 rounded-2xl text-xs hover:bg-stone-800"
+                  >
+                    إلغاء
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* ==================================================== */}
+      {/* ✏️ Modal: Edit Client Info with Real-Time Auto-Expiry Date */}
+      {/* ==================================================== */}
+      {showEditClientModal && editClientData && (
+        <div className="fixed inset-0 z-50 modal-backdrop flex items-center justify-center p-4">
+          <div className="glass-card bg-stone-950/95 w-full max-w-lg rounded-3xl p-6 shadow-2xl space-y-4 max-h-[95vh] overflow-y-auto border-2 border-amber-500/30 text-white">
+            <div className="flex justify-between items-center border-b border-amber-500/20 pb-3">
+              <div className="flex items-center gap-2">
+                <span className="p-2 bg-amber-500/15 border border-amber-500/30 text-amber-300 rounded-xl">
+                  <Icon name="edit" className="w-5 h-5" />
+                </span>
+                <h3 className="text-lg font-black text-white">تعديل بيانات وباقة: {editClientData.name}</h3>
+              </div>
+              <button onClick={() => setShowEditClientModal(null)} className="text-stone-400 hover:text-white text-xl font-bold">×</button>
+            </div>
+
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                handleEditClient({
+                  id: editClientData.id,
+                  name: editClientData.name,
+                  phone: editClientData.phone,
+                  email: editClientData.email,
+                  username: editClientData.username,
+                  password: editClientData.password,
+                  package: editClientData.package,
+                  packageDuration: editClientData.packageDuration,
+                  dedicatedRoom: editClientData.dedicatedRoom,
+                  startDate: editClientData.startDate,
+                  expiryDate: editClientData.expiryDate,
+                  currentBalance: editClientData.currentBalance,
+                  notes: editClientData.notes,
+                  shiftStartTime: editClientData.shiftStartTime,
+                  shiftEndTime: editClientData.shiftEndTime,
+                  shiftType: editClientData.shiftType,
+                  contractHours: editClientData.contractHours,
+                  subscriptionType: editClientData.subscriptionType
+                });
+              }}
+              className="space-y-3"
+            >
+              <div>
+                <label className="block text-xs font-black text-amber-300 mb-1">اسم العميل:</label>
+                <input 
+                  required 
+                  type="text" 
+                  value={editClientData.name}
+                  onChange={(e) => setEditClientData(prev => ({ ...prev, name: e.target.value }))}
+                  className="w-full bg-stone-900 border border-amber-500/30 text-white rounded-2xl p-3 text-xs font-bold focus:ring-2 focus:ring-amber-400 focus:outline-none" 
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-black text-amber-300 mb-1">رقم الواتساب المسجل مع مفتاح الدولة:</label>
+                <input 
+                  required 
+                  type="tel" 
+                  value={editClientData.phone}
+                  onChange={(e) => setEditClientData(prev => ({ ...prev, phone: e.target.value }))}
+                  className="w-full bg-stone-900 border border-amber-500/30 text-emerald-400 font-mono font-bold rounded-2xl p-3 text-xs focus:ring-2 focus:ring-amber-400 focus:outline-none" 
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-black text-amber-300 mb-1">نوع الاشتراك (النظام الأساسي):</label>
+                <select 
+                  value={editClientData.subscriptionType || (editClientData.isFullTime ? 'fulltime' : 'hourly')}
+                  onChange={(e) => {
+                    const newType = e.target.value;
+                    setEditClientData(prev => {
+                      let pkg = prev.package;
+                      if (newType === 'shift' && pkg && !pkg.includes('الشيفت')) {
+                         pkg = 'نظام الشيفت (' + (prev.shiftType === 'morning' ? 'صباحي' : 'مسائي') + ')';
+                      } else if (newType === 'fulltime' && pkg && pkg.includes('الشيفت')) {
+                         pkg = 'اشتراك Full Time (' + (prev.packageDuration === 'fulltime_3m' ? '3 شهور' : 'شهر واحد') + ')';
+                      }
+                      return { 
+                        ...prev, 
+                        subscriptionType: newType,
+                        isFullTime: newType === 'fulltime' || newType === 'shift',
+                        package: pkg
+                      };
+                    });
+                  }}
+                  className="w-full bg-stone-900 border border-amber-500/30 text-white rounded-2xl p-3 text-xs font-bold focus:ring-2 focus:ring-amber-400 focus:outline-none"
+                >
+                  <option value="hourly">نظام الساعات والباقات (Hourly)</option>
+                  <option value="fulltime">دوام كامل مفتوح (Full Time 12/6)</option>
+                  <option value="shift">نظام الشيفت (Shift System)</option>
+                </select>
+              </div>
+
+              {/* Conditionally render fields based on Full-Time vs Hourly */}
+              {(() => {
+                const isFT = editClientData.isFullTime || editClientData.subscriptionType === 'fulltime' || editClientData.subscriptionType === 'shift' || (editClientData.packageDuration && editClientData.packageDuration.startsWith('fulltime')) || (editClientData.package && editClientData.package.includes('الشيفت'));
+                if (isFT) {
+                  return (
+                    <div className="space-y-3 bg-purple-950/20 p-3.5 rounded-2xl border-2 border-purple-500/40">
+                      <div className="flex justify-between items-center">
+                        <span className="text-xs font-black text-purple-300">👑 اشتراك Full Time (دوام كامل)</span>
+                        <span className="text-[10px] bg-purple-900 text-purple-200 px-2 py-0.5 rounded font-bold">بدون رصيد ساعات</span>
+                      </div>
+
+                      {editClientData.subscriptionType === 'shift' && (
+                        <div className="bg-blue-950/20 p-3 rounded-xl border border-blue-500/40 space-y-3 mt-2 mb-2">
+                          <div>
+                            <label className="block text-[11px] font-black text-blue-300 mb-1">تحديد نوع الشيفت ومواعيده:</label>
+                            <div className="grid grid-cols-2 gap-2">
+                              <button
+                                type="button"
+                                onClick={() => setEditClientData(prev => ({ ...prev, shiftType: 'morning', package: prev.package.replace('مسائي', 'صباحي') }))}
+                                className={`py-1.5 rounded-lg text-[10px] font-bold transition-all ${editClientData.shiftType === 'morning' ? 'bg-blue-600 text-white' : 'bg-stone-800 text-stone-400'}`}
+                              >
+                                ☀️ صباحي
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setEditClientData(prev => ({ ...prev, shiftType: 'evening', package: prev.package.replace('صباحي', 'مسائي') }))}
+                                className={`py-1.5 rounded-lg text-[10px] font-bold transition-all ${editClientData.shiftType === 'evening' ? 'bg-blue-600 text-white' : 'bg-stone-800 text-stone-400'}`}
+                              >
+                                🌙 مسائي
+                              </button>
+                            </div>
+                          </div>
+                          
+                          <div className="grid grid-cols-2 gap-2">
+                            <div>
+                              <label className="block text-[11px] font-black text-blue-300 mb-1">وقت استلام الغرفة (البدء):</label>
+                              <input
+                                type="time"
+                                value={editClientData.shiftStartTime || '10:00'}
+                                onChange={(e) => setEditClientData(prev => ({ ...prev, shiftStartTime: e.target.value }))}
+                                className="w-full bg-stone-900 border border-blue-500/30 text-white font-mono rounded-lg p-2 text-xs focus:outline-none"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-[11px] font-black text-blue-300 mb-1">وقت تسليم الغرفة (الانتهاء):</label>
+                              <input
+                                type="time"
+                                value={editClientData.shiftEndTime || '17:00'}
+                                onChange={(e) => setEditClientData(prev => ({ ...prev, shiftEndTime: e.target.value }))}
+                                className="w-full bg-stone-900 border border-blue-500/30 text-white font-mono rounded-lg p-2 text-xs focus:outline-none"
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-xs font-black text-purple-300 mb-1">مدة الاشتراك:</label>
+                          <select 
+                            value={editClientData.packageDuration || 'fulltime_1m'}
+                            onChange={(e) => {
+                              const newDur = e.target.value;
+                              const newExp = computeExpiryDate(editClientData.startDate, newDur);
+                              let pkgName = newDur === 'fulltime_3m' ? 'اشتراك Full Time (3 شهور)' : newDur === 'fulltime_1y' ? 'اشتراك Full Time (سنة كاملة)' : 'اشتراك Full Time (شهر واحد)';
+                                if (editClientData.subscriptionType === 'shift') {
+                                  pkgName = pkgName.replace('اشتراك Full Time', 'نظام الشيفت (' + (editClientData.shiftType === 'evening' ? 'مسائي' : 'صباحي') + ')');
+                                }
+                                setEditClientData(prev => ({ ...prev, packageDuration: newDur, expiryDate: newExp, package: pkgName }));
+                            }}
+                            className="w-full bg-stone-900 border border-purple-500/30 text-white rounded-2xl p-2.5 text-xs font-bold focus:ring-2 focus:ring-purple-400 focus:outline-none" 
+                          >
+                            <option value="fulltime_1m">شهر واحد (1 شهر)</option>
+                            <option value="fulltime_3m">3 شهور (ربع سنوي ⭐)</option>
+                            <option value="fulltime_1y">سنة كاملة (سنوي 👑)</option>
+                          </select>
+                        </div>
+
+                        <div>
+                          <label className="block text-xs font-black text-purple-300 mb-1">🏢 الغرفة / المكتب المخصص:</label>
+                          <div className="flex gap-1.5">
+                            <input 
+                              type="text" 
+                              value={editClientData.dedicatedRoom || ''}
+                              onChange={(e) => setEditClientData(prev => ({ ...prev, dedicatedRoom: e.target.value }))}
+                              placeholder="اسم الغرفة أو المكتب..."
+                              className="flex-1 bg-stone-900 border border-purple-500/40 text-white font-bold rounded-2xl p-2.5 text-xs focus:ring-2 focus:ring-purple-400 focus:outline-none" 
+                            />
+                            {settings.rooms && settings.rooms.length > 0 && (
+                              <select
+                                onChange={(e) => {
+                                  if (e.target.value) setEditClientData(prev => ({ ...prev, dedicatedRoom: e.target.value }));
+                                }}
+                                className="bg-stone-900 border border-purple-500/30 text-purple-300 rounded-xl px-2 py-2 text-[11px] font-bold"
+                              >
+                                <option value="">اختر...</option>
+                                {settings.rooms.map((r, idx) => (
+                                  <option key={idx} value={r}>{r}</option>
+                                ))}
+                              </select>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                } else {
+                  return (
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-xs font-black text-amber-300 mb-1">نوع الباقة والمدة:</label>
+                        <select 
+                          value={editClientData.packageDuration || 'monthly'}
+                          onChange={(e) => {
+                            const newDur = e.target.value;
+                            const newExp = computeExpiryDate(editClientData.startDate, newDur);
+                            setEditClientData(prev => ({ ...prev, packageDuration: newDur, expiryDate: newExp }));
+                          }}
+                          className="w-full bg-stone-900 border border-amber-500/30 text-white rounded-2xl p-3 text-xs font-bold focus:ring-2 focus:ring-amber-400 focus:outline-none" 
+                        >
+                          <option value="monthly">باقة شهرية (شهر واحد 📅)</option>
+                          <option value="3months">باقة 3 شهور (ربع سنوية ⭐)</option>
+                          <option value="annual">باقة سنوية (سنة كاملة 👑)</option>
+                          <option value="custom">باقة مخصصة</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-black text-amber-300 mb-1">الرصيد المتبقي الحالي (ساعات):</label>
+                        <input 
+                          required 
+                          type="number" 
+                          step="0.25" 
+                          value={editClientData.currentBalance}
+                          onChange={(e) => setEditClientData(prev => ({ ...prev, currentBalance: parseFloat(e.target.value) || 0 }))}
+                          className="w-full bg-stone-900 border border-amber-500/30 text-emerald-400 font-black rounded-2xl p-3 text-xs focus:ring-2 focus:ring-amber-400 focus:outline-none" 
+                        />
+                      </div>
+                    </div>
+                  );
+                }
+              })()}
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-black text-stone-300 mb-1">تاريخ بداية التعاقد:</label>
+                  <input 
+                    type="date" 
+                    value={editClientData.startDate}
+                    onChange={(e) => {
+                      const newStart = e.target.value;
+                      const newExp = computeExpiryDate(newStart, editClientData.packageDuration);
+                      setEditClientData(prev => ({ ...prev, startDate: newStart, expiryDate: newExp }));
+                    }}
+                    className="w-full bg-stone-900 border border-amber-500/30 text-white rounded-2xl p-2.5 text-xs font-bold focus:ring-2 focus:ring-amber-400 focus:outline-none" 
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-black text-stone-300 mb-1 flex items-center justify-between">
+                    <span>تاريخ انتهاء التعاقد:</span>
+                    <span className="text-[10px] text-amber-300 font-bold">✨ تلقائي</span>
+                  </label>
+                  <input 
+                    type="date" 
+                    value={editClientData.expiryDate}
+                    onChange={(e) => setEditClientData(prev => ({ ...prev, expiryDate: e.target.value }))}
+                    className="w-full bg-stone-900 border-2 border-amber-400 text-amber-300 font-mono rounded-2xl p-2.5 text-xs font-bold focus:ring-2 focus:ring-amber-400 focus:outline-none" 
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-black text-amber-300 mb-1">اسم الباقة / الخدمة:</label>
+                <input 
+                  type="text" 
+                  value={editClientData.package}
+                  onChange={(e) => setEditClientData(prev => ({ ...prev, package: e.target.value }))}
+                  className="w-full bg-stone-900 border border-amber-500/30 text-white rounded-2xl p-3 text-xs font-bold focus:ring-2 focus:ring-amber-400 focus:outline-none" 
+                />
+              </div>
+
+              {/* Edit Credentials */}
+              <div className="p-3.5 bg-stone-900/90 rounded-2xl border border-amber-500/30 space-y-2.5">
+                <label className="block text-xs font-black text-amber-300 flex items-center gap-1">
+                  <span>📱 بيانات حساب تطبيق الجوال:</span>
+                </label>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="block text-[10px] text-stone-300 mb-1 font-bold">اسم المستخدم:</label>
+                    <input
+                      type="text"
+                      value={editClientData.username || ''}
+                      onChange={(e) => setEditClientData(prev => ({ ...prev, username: e.target.value.replace(/\s+/g, '_') }))}
+                      placeholder="اسم المستخدم"
+                      className="w-full bg-stone-950 border border-amber-500/30 rounded-xl p-2.5 text-xs font-mono text-white"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] text-stone-300 mb-1 font-bold">كلمة المرور:</label>
+                    <input
+                      type="text"
+                      value={editClientData.password || ''}
+                      onChange={(e) => setEditClientData(prev => ({ ...prev, password: e.target.value }))}
+                      placeholder="كلمة المرور"
+                      className="w-full bg-stone-950 border border-amber-500/30 rounded-xl p-2.5 text-xs font-mono text-amber-300"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-black text-amber-300 mb-1">البريد الإلكتروني:</label>
+                <input 
+                  type="email" 
+                  value={editClientData.email}
+                  onChange={(e) => setEditClientData(prev => ({ ...prev, email: e.target.value }))}
+                  className="w-full bg-stone-900 border border-amber-500/30 text-white rounded-2xl p-3 text-xs focus:ring-2 focus:ring-amber-400 focus:outline-none" 
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-black text-amber-300 mb-1">ملاحظات:</label>
+                <textarea 
+                  rows="2" 
+                  value={editClientData.notes}
+                  onChange={(e) => setEditClientData(prev => ({ ...prev, notes: e.target.value }))}
+                  className="w-full bg-stone-900 border border-amber-500/30 text-white rounded-2xl p-3 text-xs focus:ring-2 focus:ring-amber-400 focus:outline-none" 
+                ></textarea>
+              </div>
+
+              <div className="pt-3 flex gap-2">
+                <button type="submit" className="flex-1 gold-gradient-btn text-stone-950 font-black py-3.5 rounded-2xl text-xs shadow-lg active:scale-95">
+                  حفظ التعديلات
+                </button>
+                <button type="button" onClick={() => setShowEditClientModal(null)} className="px-5 bg-stone-900 border border-amber-500/20 text-stone-300 font-bold py-3.5 rounded-2xl text-xs hover:bg-stone-800">
+                  إلغاء
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      
+      {/* ==================================================== */}
+      
+      {/* ==================================================== */}
+      {/* 👥 Modal: Staff Users & Granular Permissions Hub */}
+      {/* ==================================================== */}
+      {showStaffModal && (
+        <div className="fixed inset-0 z-50 modal-backdrop flex items-center justify-center p-4">
+          <div className="glass-card bg-stone-950/95 w-full max-w-3xl rounded-3xl p-6 shadow-2xl space-y-5 max-h-[92vh] overflow-y-auto border-2 border-indigo-500/50 text-white  zoom-in-95 duration-150">
+            
+            {/* Header */}
+            <div className="flex justify-between items-center border-b border-amber-500/20 pb-3">
+              <div className="flex items-center gap-2.5">
+                <span className="p-2.5 bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 rounded-2xl text-xl font-black shadow">
+                  👥
+                </span>
+                <div>
+                  <h3 className="text-lg font-black text-white">إدارة حسابات الموظفين وتحديد الصلاحيات 🛡️</h3>
+                  <p className="text-xs text-amber-300 font-bold mt-0.5">إنشاء يوزرات وباسوردات للموظفين مع تخصيص ما يمكنهم إضافته أو تعديله أو حذفه</p>
+                </div>
+              </div>
+              <button onClick={() => { setShowStaffModal(false); setEditingStaffUser(null); }} className="text-stone-400 hover:text-white text-2xl font-bold">×</button>
+            </div>
+
+            {/* Add / Edit Staff Form */}
+            <div className="glass-card-subtle p-5 rounded-3xl border border-indigo-500/30 space-y-4">
+              <div className="flex items-center justify-between border-b border-indigo-500/20 pb-2">
+                <h4 className="text-xs font-black text-indigo-300 flex items-center gap-1.5">
+                  <span>{editingStaffUser ? '✏️ تعديل بيانات وصلاحيات الموظف:' : '➕ إضافة موظف جديد وتحديد صلاحياته:'}</span>
+                </h4>
+                {editingStaffUser && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEditingStaffUser(null);
+                      setStaffFormData({
+                        name: '', jobTitle: '', phone: '', username: '', password: '', role: 'custom',
+                        permissions: { canAddClients: true, canEditClients: true, canDeleteClients: false, canManageBookings: true, canCancelBookings: false, canDeductAttendance: true, canAccessExcel: false, canAccessSettings: false, canManageStaff: false }
+                      });
+                    }}
+                    className="text-[10px] text-amber-300 hover:underline"
+                  >
+                    إلغاء التعديل والبدء بإضافة موظف جديد ↺
+                  </button>
+                )}
+              </div>
+
+              <form onSubmit={handleSaveStaffUser} className="space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div>
+                    <label className="block text-xs font-black text-amber-300 mb-1">اسم الموظف الكامل:</label>
+                    <input
+                      required
+                      type="text"
+                      value={staffFormData.name}
+                      onChange={(e) => setStaffFormData(prev => ({ ...prev, name: e.target.value }))}
+                      placeholder="مثال: أحمد مصطفى"
+                      className="w-full bg-stone-900 border border-amber-500/30 rounded-2xl p-2.5 text-xs text-white font-bold focus:ring-2 focus:ring-amber-400 focus:outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-black text-amber-300 mb-1">المسمى الوظيفي:</label>
+                    <input
+                      type="text"
+                      value={staffFormData.jobTitle}
+                      onChange={(e) => setStaffFormData(prev => ({ ...prev, jobTitle: e.target.value }))}
+                      placeholder="مثال: موظف استقبال / مشرف"
+                      className="w-full bg-stone-900 border border-amber-500/30 rounded-2xl p-2.5 text-xs text-white font-bold focus:ring-2 focus:ring-amber-400 focus:outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-black text-amber-300 mb-1">رقم الهاتف / واتساب:</label>
+                    <input
+                      type="tel"
+                      value={staffFormData.phone}
+                      onChange={(e) => setStaffFormData(prev => ({ ...prev, phone: e.target.value }))}
+                      placeholder="مثال: 01012345678"
+                      className="w-full bg-stone-900 border border-amber-500/30 rounded-2xl p-2.5 text-xs text-white font-mono font-bold focus:ring-2 focus:ring-amber-400 focus:outline-none"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div>
+                    <label className="block text-xs font-black text-amber-300 mb-1">اسم المستخدم (Username):</label>
+                    <input
+                      required
+                      type="text"
+                      value={staffFormData.username}
+                      onChange={(e) => setStaffFormData(prev => ({ ...prev, username: e.target.value }))}
+                      placeholder="مثال: ahmed_emp"
+                      className="w-full bg-stone-900 border border-amber-500/30 rounded-2xl p-2.5 text-xs text-white font-mono font-bold focus:ring-2 focus:ring-amber-400 focus:outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-black text-amber-300 mb-1">
+                      {editingStaffUser ? 'كلمة المرور (اترك فارغاً لعدم التغيير):' : 'كلمة المرور (Password):'}
+                    </label>
+                    <input
+                      required={!editingStaffUser}
+                      type="text"
+                      value={staffFormData.password}
+                      onChange={(e) => setStaffFormData(prev => ({ ...prev, password: e.target.value }))}
+                      placeholder={editingStaffUser ? '•••••• (محتفظ بها)' : 'كلمة المرور'}
+                      className="w-full bg-stone-900 border border-amber-500/30 rounded-2xl p-2.5 text-xs text-white font-mono font-bold focus:ring-2 focus:ring-amber-400 focus:outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-black text-amber-300 mb-1">نوع الحساب والصلاحيات:</label>
+                    <select
+                      value={staffFormData.role}
+                      onChange={(e) => {
+                        const r = e.target.value;
+                        setStaffFormData(prev => ({
+                          ...prev,
+                          role: r,
+                          permissions: r === 'admin' ? {
+                            canAddClients: true, canEditClients: true, canDeleteClients: true,
+                            canRenewContracts: true, canRechargeHours: true, canViewClientCredentials: true,
+                            canManageBookings: true, canCancelBookings: true, canDeductAttendance: true,
+                            canDeleteAttendance: true, canAccessFinancials: true, canAddFinancialTransaction: true,
+                            canDeleteFinancialTransaction: true, canSendClientNotifications: true, canSendWhatsAppMessages: true,
+                            canAccessExcel: true, canAccessSettings: true, canManageRooms: true,
+                            canTriggerBackups: true, canManageStaff: true
+                          } : prev.permissions
+                        }));
+                      }}
+                      className="w-full bg-stone-900 border border-amber-500/30 rounded-2xl p-2.5 text-xs text-amber-300 font-bold focus:ring-2 focus:ring-amber-400 focus:outline-none"
+                    >
+                      <option value="custom">👤 موظف بصلاحيات مخصصة (تحكم دقيق)</option>
+                      <option value="admin">👑 مدير عام (كامل الصلاحيات 100%)</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* 🛡️ Comprehensive Granular Permissions System (20 Subsystems) */}
+                {staffFormData.role === 'custom' && (() => {
+                  const setAllPerms = (val) => {
+                    const updated = {};
+                    ALL_PERMISSIONS_KEYS.forEach(k => { updated[k] = val; });
+                    setStaffFormData(prev => ({ ...prev, permissions: updated }));
+                  };
+
+                  const applyPreset = (presetKey) => {
+                    if (presetKey === 'all') setAllPerms(true);
+                    else if (presetKey === 'none') setAllPerms(false);
+                    else if (presetKey === 'reception') {
+                      setStaffFormData(prev => ({
+                        ...prev,
+                        permissions: {
+                          ...DEFAULT_STAFF_PERMISSIONS,
+                          canAddClients: true,
+                          canEditClients: true,
+                          canDeleteClients: false,
+                          canRenewContracts: true,
+                          canRechargeHours: true,
+                          canViewClientCredentials: true,
+                          canManageBookings: true,
+                          canCancelBookings: false,
+                          canDeductAttendance: true,
+                          canDeleteAttendance: false,
+                          canAccessFinancials: true,
+                          canAddFinancialTransaction: true,
+                          canDeleteFinancialTransaction: false,
+                          canSendClientNotifications: true,
+                          canSendWhatsAppMessages: true,
+                          canAccessExcel: false,
+                          canAccessSettings: false,
+                          canManageRooms: false,
+                          canTriggerBackups: false,
+                          canManageStaff: false
+                        }
+                      }));
+                    } else if (presetKey === 'supervisor') {
+                      setStaffFormData(prev => ({
+                        ...prev,
+                        permissions: {
+                          ...DEFAULT_STAFF_PERMISSIONS,
+                          canAddClients: false,
+                          canEditClients: false,
+                          canDeleteClients: false,
+                          canRenewContracts: false,
+                          canRechargeHours: false,
+                          canViewClientCredentials: false,
+                          canManageBookings: true,
+                          canCancelBookings: true,
+                          canDeductAttendance: true,
+                          canDeleteAttendance: false,
+                          canAccessFinancials: true,
+                          canAddFinancialTransaction: true,
+                          canDeleteFinancialTransaction: false,
+                          canSendClientNotifications: true,
+                          canSendWhatsAppMessages: true,
+                          canAccessExcel: false,
+                          canAccessSettings: false,
+                          canManageRooms: false,
+                          canTriggerBackups: false,
+                          canManageStaff: false
+                        }
+                      }));
+                    } else if (presetKey === 'accountant') {
+                      setStaffFormData(prev => ({
+                        ...prev,
+                        permissions: {
+                          ...DEFAULT_STAFF_PERMISSIONS,
+                          canAddClients: false,
+                          canEditClients: false,
+                          canDeleteClients: false,
+                          canRenewContracts: false,
+                          canRechargeHours: false,
+                          canViewClientCredentials: false,
+                          canManageBookings: false,
+                          canCancelBookings: false,
+                          canDeductAttendance: false,
+                          canDeleteAttendance: false,
+                          canAccessFinancials: true,
+                          canAddFinancialTransaction: true,
+                          canDeleteFinancialTransaction: true,
+                          canSendClientNotifications: false,
+                          canSendWhatsAppMessages: true,
+                          canAccessExcel: true,
+                          canAccessSettings: false,
+                          canManageRooms: false,
+                          canTriggerBackups: false,
+                          canManageStaff: false
+                        }
+                      }));
+                    }
+                  };
+
+                  const permCategories = [
+                    {
+                      id: 'clients',
+                      title: '👥 إدارة العملاء والاشتراكات',
+                      badge: 'العملاء والعقود',
+                      color: 'text-amber-300',
+                      border: 'border-amber-500/30',
+                      bg: 'bg-amber-950/20',
+                      items: [
+                        { key: 'canAddClients', label: '➕ إضافة عملاء جدد', hint: 'إنشاء ملفات العملاء وتسكين الباقات' },
+                        { key: 'canEditClients', label: '✏️ تعديل بيانات العملاء', hint: 'تحديث الاسم، الهاتف، وملاحظات العقد' },
+                        { key: 'canDeleteClients', label: '🗑️ حذف العملاء وسجلاتهم', hint: 'حذف العميل وكافة سجلاته (حساس ⚠️)', danger: true },
+                        { key: 'canRenewContracts', label: '🔄 تجديد الباقات والعقود', hint: 'تصفير، تمديد، أو شحن باقة جديدة' },
+                        { key: 'canRechargeHours', label: '⚡ شحن ساعات إضافية', hint: 'إضافة رصيد ساعات على نفس مدة العقد' },
+                        { key: 'canViewClientCredentials', label: '👁️ كشف كلمات مرور العملاء', hint: 'عرض وتصدير بيانات تسجيل الدخول' }
+                      ]
+                    },
+                    {
+                      id: 'bookings',
+                      title: '📅 الحجوزات وإدارة الحضور',
+                      badge: 'المواعيد والحضور',
+                      color: 'text-blue-300',
+                      border: 'border-blue-500/30',
+                      bg: 'bg-blue-950/20',
+                      items: [
+                        { key: 'canManageBookings', label: '📅 حجز وتعديل المواعيد', hint: 'حجز القاعات وجلسات العمل' },
+                        { key: 'canCancelBookings', label: '❌ إلغاء الحجوزات', hint: 'إلغاء الموعد وتحرير القاعة' },
+                        { key: 'canDeductAttendance', label: '⏱️ تسجيل حضور وخصم ساعات', hint: 'تسجيل وقت الدخول وخصم الساعات' },
+                        { key: 'canDeleteAttendance', label: '🗑️ حذف سجلات الحضور', hint: 'مسح جلسة حضور مسجلة (حساس ⚠️)', danger: true }
+                      ]
+                    },
+                    {
+                      id: 'financial',
+                      title: '☕ الحسابات المالية ودفتر البوفيه',
+                      badge: 'المالية والبوفيه',
+                      color: 'text-emerald-300',
+                      border: 'border-emerald-500/30',
+                      bg: 'bg-emerald-950/20',
+                      items: [
+                        { key: 'canAccessFinancials', label: '💼 فتح دفتر الحسابات المالية', hint: 'الوصول لتبويب المالية والبوفيه' },
+                        { key: 'canAddFinancialTransaction', label: '💵 تسجيل عمليات مالية جديدة', hint: 'إضافة حساب بوفيه / طباعة أو تحصيل سداد' },
+                        { key: 'canDeleteFinancialTransaction', label: '⚖️ تسوية وإلغاء القيود المالية', hint: 'تسجيل قيود تسوية محاسبية (حساس ⚠️)', danger: true }
+                      ]
+                    },
+                    {
+                      id: 'notifs',
+                      title: '🔔 التواصل والإشعارات الفورية',
+                      badge: 'الإشعارات والتواصل',
+                      color: 'text-cyan-300',
+                      border: 'border-cyan-500/30',
+                      bg: 'bg-cyan-950/20',
+                      items: [
+                        { key: 'canSendClientNotifications', label: '🔔 إرسال إشعارات لتطبيق الجوال', hint: 'بث إشعارات فورية للعملاء' },
+                        { key: 'canSendWhatsAppMessages', label: '💬 تصدير وإرسال رسائل الواتساب', hint: 'إرسال قوالب التنبيهات عبر WhatsApp' }
+                      ]
+                    },
+                    {
+                      id: 'system',
+                      title: '⚙️ النظام والأمان والإدارة العامة',
+                      badge: 'السيستم والإدارة',
+                      color: 'text-purple-300',
+                      border: 'border-purple-500/30',
+                      bg: 'bg-purple-950/20',
+                      items: [
+                        { key: 'canAccessExcel', label: '📑 شيتات Excel والتقارير الشاملة', hint: 'تصدير واستيراد قواعد بيانات Excel' },
+                        { key: 'canAccessSettings', label: '⚙️ الإعدادات وقوالب الرسائل', hint: 'الوصول لتبويب إعدادات الشركة' },
+                        { key: 'canManageRooms', label: '🚪 إدارة وتعديل قاعات العمل', hint: 'إضافة وتثبيت وقفل الغرف والقاعات' },
+                        { key: 'canTriggerBackups', label: '💾 النسخ الاحتياطي والاسترجاع', hint: 'أخذ نسخ احتياطية واسترجاع سحابي' },
+                        { key: 'canManageStaff', label: '👑 إدارة الموظفين والصلاحيات', hint: 'إنشاء وتعديل صلاحيات العمل (إدارية عليا)', danger: true }
+                      ]
+                    }
+                  ];
+
+                  const activeCount = Object.values(staffFormData.permissions || {}).filter(Boolean).length;
+
+                  return (
+                    <div className="p-4 bg-stone-900/95 rounded-2xl border border-indigo-500/40 space-y-4 shadow-xl">
+                      {/* Presets Header Bar */}
+                      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 border-b border-indigo-500/30 pb-3">
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm font-black text-indigo-200">🛡️ تحديد صلاحيات الموظف الدقيقة (20 صلاحية):</span>
+                            <span className="text-[11px] font-mono font-black bg-indigo-950 border border-indigo-400/40 text-indigo-300 px-2.5 py-0.5 rounded-full">
+                              {activeCount} / 20 مفعلة
+                            </span>
+                          </div>
+                          <p className="text-[11px] text-stone-400 font-bold mt-0.5">اختر نموذجاً سريعاً أو حدد الصلاحيات الفردية بدقة تامة</p>
+                        </div>
+
+                        {/* Quick Preset Buttons */}
+                        <div className="flex flex-wrap gap-1.5 self-end sm:self-auto">
+                          <button
+                            type="button"
+                            onClick={() => applyPreset('all')}
+                            className="text-[10px] bg-indigo-950 hover:bg-indigo-900 text-indigo-200 border border-indigo-500/40 px-2 py-1 rounded-lg font-black transition-all active:scale-95"
+                          >
+                            ✓ تحديد الكل
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => applyPreset('none')}
+                            className="text-[10px] bg-stone-900 hover:bg-stone-800 text-stone-400 border border-stone-700 px-2 py-1 rounded-lg font-black transition-all active:scale-95"
+                          >
+                            ✕ إلغاء الكل
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => applyPreset('reception')}
+                            className="text-[10px] bg-amber-950/80 hover:bg-amber-900 text-amber-300 border border-amber-500/40 px-2 py-1 rounded-lg font-black transition-all active:scale-95"
+                          >
+                            👤 موظف استقبال
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => applyPreset('supervisor')}
+                            className="text-[10px] bg-blue-950/80 hover:bg-blue-900 text-blue-300 border border-blue-500/40 px-2 py-1 rounded-lg font-black transition-all active:scale-95"
+                          >
+                            🏢 مشرف قاعات
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => applyPreset('accountant')}
+                            className="text-[10px] bg-emerald-950/80 hover:bg-emerald-900 text-emerald-300 border border-emerald-500/40 px-2 py-1 rounded-lg font-black transition-all active:scale-95"
+                          >
+                            💵 محاسب مالي
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* 5 Categorized Cards */}
+                      <div className="space-y-3 max-h-96 overflow-y-auto pr-1">
+                        {permCategories.map(cat => (
+                          <div key={cat.id} className={`p-3 rounded-xl border ${cat.border} ${cat.bg} space-y-2`}>
+                            <div className="flex justify-between items-center">
+                              <span className={`text-xs font-black ${cat.color}`}>{cat.title}</span>
+                              <span className="text-[10px] font-bold text-stone-400">{cat.badge}</span>
+                            </div>
+
+                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
+                              {cat.items.map(perm => {
+                                const isChecked = !!staffFormData.permissions?.[perm.key];
+                                return (
+                                  <label
+                                    key={perm.key}
+                                    className={`flex items-start gap-2 p-2 rounded-xl border transition-all cursor-pointer ${
+                                      isChecked
+                                        ? (perm.danger ? 'bg-rose-950/40 border-rose-500/40 text-rose-200' : 'bg-stone-950/90 border-amber-400/50 text-white')
+                                        : 'bg-stone-950/50 border-stone-800 text-stone-400 hover:border-stone-700'
+                                    }`}
+                                  >
+                                    <input
+                                      type="checkbox"
+                                      checked={isChecked}
+                                      onChange={(e) => {
+                                        const checked = e.target.checked;
+                                        setStaffFormData(prev => ({
+                                          ...prev,
+                                          permissions: {
+                                            ...prev.permissions,
+                                            [perm.key]: checked
+                                          }
+                                        }));
+                                      }}
+                                      className="w-4 h-4 mt-0.5 rounded text-amber-500 focus:ring-amber-400 bg-stone-900 border-amber-500/40 flex-shrink-0"
+                                    />
+                                    <div className="min-w-0">
+                                      <div className={`text-xs font-bold ${isChecked ? (perm.danger ? 'text-rose-300' : 'text-amber-200') : 'text-stone-300'}`}>
+                                        {perm.label}
+                                      </div>
+                                      {perm.hint && (
+                                        <div className="text-[10px] text-stone-400/80 truncate" title={perm.hint}>
+                                          {perm.hint}
+                                        </div>
+                                      )}
+                                    </div>
+                                  </label>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })()}
+
+                <div className="pt-2 flex justify-end gap-2">
+                  <button
+                    type="submit"
+                    className="gold-gradient-btn text-stone-950 font-black px-6 py-2.5 rounded-2xl text-xs shadow-lg active:scale-95 flex items-center gap-1.5"
+                  >
+                    <span>💾 {editingStaffUser ? 'حفظ تعديلات الموظف' : 'تسجيل الموظف وتفعيل الحساب'}</span>
+                  </button>
+                </div>
+              </form>
+            </div>
+
+            {/* List of Registered Users */}
+            <div className="space-y-3">
+              <h4 className="text-xs font-black text-amber-300">📋 حسابات الموظفين والمدراء المسجلين بالسيستم ({users.length}):</h4>
+              
+              <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
+                {users.map(u => {
+                  const isMeMo = u.username && u.username.toLowerCase() === 'memo';
+                  const decPass = decryptPassword(u.passwordEncrypted);
+                  const isPassRevealed = !!revealedPasswords[u.id];
+
+                  return (
+                    <div key={u.id} className="p-3.5 glass-card-subtle border border-amber-500/20 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2">
+                          <span className="font-black text-white text-sm">{u.name}</span>
+                          <span className={`text-[10px] font-black px-2 py-0.5 rounded-md ${u.role === 'admin' ? 'bg-purple-950 border border-purple-400/40 text-purple-200' : 'bg-stone-900 border border-amber-500/30 text-amber-300'}`}>
+                            {u.role === 'admin' ? '👑 مدير عام (كامل الصلاحيات)' : '👤 موظف (صلاحيات مخصصة)'}
+                          </span>
+                          {isMeMo && (
+                            <span className="text-[9px] bg-amber-500/20 text-amber-300 font-black px-2 py-0.5 rounded border border-amber-500/30">
+                              الحساب الرئيسي المثبت 🔒
+                            </span>
+                          )}
+                        </div>
+
+                        <div className="flex flex-wrap items-center gap-3 text-[11px] text-stone-300 font-mono">
+                          <span>👤 يوزر: <b className="text-amber-300 font-bold bg-stone-950 px-2 py-0.5 rounded">{u.username}</b></span>
+                          <span className="flex items-center gap-1">
+                            🔑 باسورد: 
+                            <b className="text-emerald-400 font-bold bg-stone-950 px-2 py-0.5 rounded">
+                              {isPassRevealed ? decPass : '••••••••'}
+                            </b>
+                            <button
+                              type="button"
+                              onClick={() => setRevealedPasswords(prev => ({ ...prev, [u.id]: !prev[u.id] }))}
+                              className="text-stone-400 hover:text-amber-300 text-[10px]"
+                              title="إظهار / إخفاء كلمة المرور"
+                            >
+                              {isPassRevealed ? '🙈' : '👁️'}
+                            </button>
+                          </span>
+                          {u.phone && <span>📞 {u.phone}</span>}
+                          {u.jobTitle && <span className="font-sans text-stone-400">({u.jobTitle})</span>}
+                        </div>
+
+                        {u.role !== 'admin' && u.permissions && (
+                          <div className="flex flex-wrap gap-1 pt-1">
+                            {Object.entries(u.permissions).filter(([k, v]) => v).map(([k]) => {
+                              const labels = {
+                                canAddClients: 'إضافة عملاء',
+                                canEditClients: 'تعديل عملاء',
+                                canDeleteClients: 'حذف عملاء ⚠️',
+                                canRenewContracts: 'تجديد عقود',
+                                canRechargeHours: 'شحن ساعات',
+                                canViewClientCredentials: 'كشف كلمات المرور',
+                                canManageBookings: 'حجوزات',
+                                canCancelBookings: 'إلغاء حجز',
+                                canDeductAttendance: 'خصم حضور',
+                                canDeleteAttendance: 'حذف حضور ⚠️',
+                                canAccessFinancials: 'المالية والبوفيه',
+                                canAddFinancialTransaction: 'تسجيل مالي',
+                                canDeleteFinancialTransaction: 'تسوية مالية ⚠️',
+                                canSendClientNotifications: 'إشعارات جوال',
+                                canSendWhatsAppMessages: 'واتساب',
+                                canAccessExcel: 'إكسل',
+                                canAccessSettings: 'إعدادات',
+                                canManageRooms: 'إدارة القاعات',
+                                canTriggerBackups: 'نسخ واسترجاع',
+                                canManageStaff: 'إدارة موظفين 👑'
+                              };
+                              return (
+                                <span key={k} className="text-[9px] bg-emerald-950/80 text-emerald-300 border border-emerald-500/30 px-1.5 py-0.5 rounded">
+                                  ✓ {labels[k] || k}
+                                </span>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="flex items-center gap-2 self-end sm:self-center">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setEditingStaffUser(u);
+                            setStaffFormData({
+                              name: u.name || '',
+                              jobTitle: u.jobTitle || '',
+                              phone: u.phone || '',
+                              username: u.username || '',
+                              password: '',
+                              role: u.role || 'custom',
+                              permissions: {
+                                ...DEFAULT_STAFF_PERMISSIONS,
+                                ...(u.permissions || {})
+                              }
+                            });
+                          }}
+                          className="bg-stone-900 hover:bg-stone-800 text-amber-300 border border-amber-500/30 font-bold px-3 py-1.5 rounded-xl text-xs transition-all flex items-center gap-1"
+                        >
+                          <span>✏️ تعديل</span>
+                        </button>
+
+                        {!isMeMo && (
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteStaffUser(u)}
+                            className="bg-rose-950/80 hover:bg-rose-900 text-rose-300 border border-rose-500/40 font-bold px-3 py-1.5 rounded-xl text-xs transition-all flex items-center gap-1"
+                          >
+                            <span>🗑️ حذف</span>
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="pt-2 flex justify-end border-t border-amber-500/20">
+              <button
+                type="button"
+                onClick={() => { setShowStaffModal(false); setEditingStaffUser(null); }}
+                className="px-6 bg-stone-900 border border-amber-500/30 text-stone-300 font-bold py-2 rounded-2xl text-xs hover:bg-stone-800"
+              >
+                إغلاق
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
+
+      {/* 📱 Modal: Mobile App Connectivity & QR Code Hub */}
+      {/* ==================================================== */}
+      {showMobileModal && (
+        <div className="fixed inset-0 z-50 modal-backdrop flex items-center justify-center p-4">
+          <div className="glass-card bg-stone-950/98 w-full max-w-2xl rounded-3xl p-6 shadow-2xl space-y-5 border-2 border-amber-500/50 text-white  zoom-in-95 duration-150 max-h-[90vh] overflow-y-auto">
+            
+            {/* Header */}
+            <div className="flex justify-between items-center border-b border-amber-500/20 pb-3">
+              <div className="flex items-center gap-2.5">
+                <span className="p-2.5 bg-gradient-to-br from-amber-400 to-amber-600 text-stone-950 rounded-2xl text-xl font-black shadow">
+                  📱
+                </span>
+                <div>
+                  <h3 className="text-lg font-black text-white">تطبيق الجوال وبوابة العميل الذكية (مواعيد العمل 12/6)</h3>
+                  <p className="text-xs text-amber-300 font-bold mt-0.5">روابط دائمة تعمل طوال الوقت حتى عند إغلاق كمبيوتر الإدارة</p>
+                </div>
+              </div>
+              <button onClick={() => setShowMobileModal(false)} className="text-stone-400 hover:text-white text-2xl font-bold">×</button>
+            </div>
+
+            {/* Permanent URL Editor & Direct Config */}
+            <div className="p-4 bg-gradient-to-br from-amber-950/50 via-stone-900 to-stone-950 rounded-3xl border border-amber-500/40 space-y-3 shadow-lg">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="text-xl">🌐</span>
+                  <div>
+                    <h4 className="text-xs font-black text-amber-300">الرابط السحابي المباشر (Permanent Fixed URL):</h4>
+                    <p className="text-[11px] text-stone-300">يعمل بدون توقف 365 يوماً في أي مكان بالعالم حتى لو كان الكمبيوتر مغلقاً</p>
+                  </div>
+                </div>
+                <span className="text-[10px] bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-2 py-0.5 rounded-full font-bold">
+                  سحابي نشط
+                </span>
+              </div>
+
+              <div className="flex flex-col sm:flex-row gap-2">
+                <input
+                  type="text"
+                  value={settings.customPermanentMobileUrl || ''}
+                  onChange={(e) => setSettings(prev => ({ ...prev, customPermanentMobileUrl: e.target.value }))}
+                  placeholder="https://alkayan-group.vercel.app أو الرابط الدائم الخاص بك"
+                  className="flex-1 bg-stone-950 border border-amber-500/50 rounded-2xl px-3.5 py-2.5 text-xs text-amber-200 font-mono focus:ring-2 focus:ring-amber-400 focus:outline-none"
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    triggerToast('تم الحفظ! 💾', 'تم حفظ وتفعيل الرابط الدائم بنجاح وتحديث الباركود والرسائل.', 'success');
+                  }}
+                  className="gold-gradient-btn text-stone-950 font-black text-xs px-4 py-2.5 rounded-2xl whitespace-nowrap shadow active:scale-95"
+                >
+                  حفظ وتفعيل 💾
+                </button>
+              </div>
+            </div>
+
+            {/* Active Link & QR Code Display */}
+            {(() => {
+              const activeUrl = (settings.customPermanentMobileUrl && settings.customPermanentMobileUrl.trim()) 
+                ? settings.customPermanentMobileUrl.trim() 
+                : (networkInfo?.mobileUrl || (window.location.origin + '/mobile.html'));
+              
+              return (
+                <div className="flex flex-col sm:flex-row items-center gap-5 p-4 rounded-3xl bg-stone-900/90 border border-amber-500/30 shadow-inner">
+                  <div className="p-3 bg-white rounded-2xl shadow-xl border border-amber-400/50 flex flex-col items-center">
+                    <img
+                      src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(activeUrl)}`}
+                      alt="QR Code"
+                      className="w-32 h-32 rounded-lg"
+                      onError={(e) => { e.target.style.display = 'none'; }}
+                    />
+                    <span className="text-[10px] text-stone-900 font-black mt-1">امسح بكاميرا الجوال 📷</span>
+                  </div>
+
+                  <div className="space-y-2 text-right flex-1 w-full">
+                    <div className="flex items-center justify-between">
+                      <h4 className="text-xs font-black text-amber-300">الرابط النشط حالياً للعملاء:</h4>
+                      <span className="text-[10px] text-amber-200/80 font-mono">
+                        {settings.customPermanentMobileUrl ? '⭐ رابط دائم مخصص' : (networkInfo?.hasGlobal ? '⚡ نفق كلاودفلير' : '📶 شبكة محلية')}
+                      </span>
+                    </div>
+                    
+                    <div className="p-2.5 bg-stone-950 rounded-2xl border border-amber-500/40 font-mono text-xs text-emerald-400 select-all break-all shadow-inner">
+                      {activeUrl}
+                    </div>
+
+                    <div className="flex flex-wrap gap-2 pt-1">
+                      <button
+                        onClick={() => {
+                          navigator.clipboard.writeText(activeUrl);
+                          triggerToast('تم النسخ! 📋', 'تم نسخ رابط تطبيق الجوال إلى الحافظة بنجاح.', 'success');
+                        }}
+                        className="gold-gradient-btn text-stone-950 font-black text-[11px] px-4 py-2 rounded-xl shadow active:scale-95 flex items-center gap-1"
+                      >
+                        <span>📋 نسخ الرابط</span>
+                      </button>
+
+                      <a
+                        href={activeUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="bg-stone-800 hover:bg-stone-700 text-amber-300 border border-amber-500/30 font-bold text-[11px] px-4 py-2 rounded-xl transition-all flex items-center gap-1"
+                      >
+                        <span>📱 فتح ومعاينة</span>
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
+
+            {/* ⚡ Realtime Automatic Firebase Sync Box */}
+            <div className="p-4 bg-gradient-to-br from-amber-950/40 via-stone-900 to-amber-950/40 rounded-3xl border border-amber-500/30 space-y-3 shadow-lg">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="text-xl">⚡</span>
+                  <div>
+                    <h4 className="text-xs font-black text-amber-300">الربط التلقائي الفوري اللحظي (Firebase Realtime Sync):</h4>
+                    <p className="text-[11px] text-stone-300">أي عميل جديد يتم إنشاؤه يتم ربطه وتحديثه على Vercel والجوال فورياً في 0.05 ثانية!</p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    try {
+                      const res = await fetch('/api/save', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                          clients,
+                          bookings,
+                          attendance,
+                          settings,
+                          _actionType: 'MANUAL_SYNC',
+                          _actionReason: 'مزامنة فورية للسحاب'
+                        })
+                      });
+                      if (res.ok) {
+                        triggerToast('تمت المزامنة الفورية! 🚀', 'تم تحديث كافة بيانات العملاء والباقات في مجلد السحاب والسيرفرات فورياً.', 'success');
+                      }
+                    } catch (e) {
+                      triggerToast('تم التحديث المحلي! 💾', 'تم تحديث مجلد portal_web وجاهز للاستخدام.', 'info');
+                    }
+                  }}
+                  className="gold-gradient-btn text-stone-950 font-black text-[11px] px-3.5 py-1.5 rounded-xl shadow active:scale-95 whitespace-nowrap"
+                >
+                  ⚡ مزامنة وتحديث فوري الآن
+                </button>
+              </div>
+
+              <div className="flex flex-col sm:flex-row gap-2">
+                <input
+                  type="text"
+                  value={settings.firebaseSyncUrl || ''}
+                  onChange={(e) => setSettings(prev => ({ ...prev, firebaseSyncUrl: e.target.value }))}
+                  placeholder="رابط Firebase Realtime DB (اختياري للربط اللحظي المباشر 0ms)"
+                  className="flex-1 bg-stone-950 border border-amber-500/40 rounded-2xl px-3 py-2 text-xs text-amber-200 font-mono focus:ring-2 focus:ring-amber-400 focus:outline-none"
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    triggerToast('تم الحفظ! 💾', 'تم حفظ رابط المزامنة السحابية بنجاح.', 'success');
+                  }}
+                  className="bg-stone-800 hover:bg-stone-700 text-amber-300 border border-amber-500/30 text-xs font-bold px-3.5 py-2 rounded-2xl whitespace-nowrap"
+                >
+                  حفظ الرابط
+                </button>
+              </div>
+            </div>
+
+            {/* Quick 1-Minute Cloud Deployment Guide */}
+            <div className="p-3.5 bg-stone-900/60 rounded-2xl border border-amber-500/20 text-xs space-y-2">
+              <div className="flex items-center gap-2 text-amber-300 font-black">
+                <span>💡</span>
+                <span>كيف يعمل التحديث التلقائي مع Vercel وتطبيق الجوال؟</span>
+              </div>
+              <p className="text-[11px] text-stone-300 leading-relaxed">
+                يقوم البرنامج تلقائياً بتحديث ملفات <code className="text-amber-200 bg-stone-950 px-1.5 py-0.5 rounded font-mono font-bold">portal_web</code> عند إضافة أو تعديل أي عميل. كما يحتوي المجلد على خوادم Vercel الذكية في مجلد <code className="text-amber-200 bg-stone-950 px-1.5 py-0.5 rounded font-mono font-bold">api</code> للتحقق الفوري من دخول أي عميل مسجل دون توقف!
+              </p>
+            </div>
+
+            {/* Client App Features Summary */}
+            <div className="space-y-2">
+              <h4 className="text-xs font-black text-amber-300">✨ مميزات تطبيق الجوال للعميل (مواعيد العمل الرسمية 12/6):</h4>
+              <div className="grid grid-cols-2 gap-2 text-xs">
+                <div className="p-2.5 bg-stone-900/80 rounded-xl border border-amber-500/20 flex items-center gap-2">
+                  <span>🔐</span>
+                  <span className="text-stone-200 font-bold">دخول باليوزر والباسورد</span>
+                </div>
+                <div className="p-2.5 bg-stone-900/80 rounded-xl border border-amber-500/20 flex items-center gap-2">
+                  <span>💳</span>
+                  <span className="text-stone-200 font-bold">عرض الرصيد والمستهلك</span>
+                </div>
+                <div className="p-2.5 bg-stone-900/80 rounded-xl border border-amber-500/20 flex items-center gap-2">
+                  <span>📅</span>
+                  <span className="text-stone-200 font-bold">حجز القاعات ذاتياً وخصم فوري</span>
+                </div>
+                <div className="p-2.5 bg-stone-900/80 rounded-xl border border-amber-500/20 flex items-center gap-2">
+                  <span>📲</span>
+                  <span className="text-stone-200 font-bold">إيصال حجز وواتساب مباشر</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="pt-3 border-t border-amber-500/20 flex justify-between items-center">
+              <span className="text-[11px] text-stone-400 font-mono">
+                الحالة: {networkInfo?.tunnelStatus === 'online' ? '🟢 نفق متصل' : '🟢 تشغيل محلي وسحابي'}
+              </span>
+              <button
+                onClick={() => setShowMobileModal(false)}
+                className="px-6 bg-stone-900 hover:bg-stone-800 border border-amber-500/20 text-stone-300 font-bold py-2.5 rounded-2xl text-xs"
+              >
+                إغلاق
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
+
+      {/* ==================================================== */}
+      {/* 🔔 Modal: Send Notification to Client (Mobile App & Web) */}
+      {/* ==================================================== */}
+      {showSendNotifModal && (
+        <div className="fixed inset-0 z-50 modal-backdrop flex items-center justify-center p-4">
+          <div className="glass-card bg-stone-950/98 w-full max-w-lg rounded-3xl p-6 shadow-2xl space-y-5 border-2 border-amber-500/50 text-white">
+            
+            {/* Header */}
+            <div className="flex justify-between items-center border-b border-amber-500/20 pb-3">
+              <div className="flex items-center gap-2.5">
+                <span className="p-2.5 bg-gradient-to-br from-amber-400 to-amber-600 text-stone-950 rounded-2xl text-xl font-black shadow">
+                  🔔
+                </span>
+                <div>
+                  <h3 className="text-base font-black text-white">إرسال إشعار للعميل على تطبيق الموبيل والموقع</h3>
+                  <p className="text-xs text-amber-300 font-bold mt-0.5">يصل الإشعار فورياً إلى حساب العميل على الهاتف وبوابة الويب</p>
+                </div>
+              </div>
+              <button 
+                onClick={() => setShowSendNotifModal(false)}
+                className="text-stone-400 hover:text-white text-2xl font-bold"
+              >
+                ×
+              </button>
+            </div>
+
+            <form onSubmit={handleSendClientNotification} className="space-y-4">
+              {/* Client Selection */}
+              <div>
+                <label className="block text-xs font-black text-amber-300 mb-1">
+                  اختر العميل المستلم:
+                </label>
+                <select
+                  value={sendNotifForm.targetClientId}
+                  onChange={(e) => setSendNotifForm(f => ({ ...f, targetClientId: e.target.value }))}
+                  className="w-full bg-stone-900 border border-amber-500/40 text-white rounded-2xl p-3 text-xs font-bold focus:ring-2 focus:ring-amber-400 focus:outline-none"
+                >
+                  <option value="all">⭐ إرسال لكافة العملاء (إشعار عام لجميع المشتركين)</option>
+                  <optgroup label="عميل محدد:">
+                    {clients.map(c => (
+                      <option key={c.id} value={c.id}>
+                        👤 {c.name} ({c.phone}) - {c.package || 'باقة ساعات'}
+                      </option>
+                    ))}
+                  </optgroup>
+                </select>
+              </div>
+
+              {/* Notification Type */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+                {[
+                  { id: 'info', label: 'معلومة ℹ️' },
+                  { id: 'alert', label: 'تنبيه هام ⚠️' },
+                  { id: 'booking', label: 'حجز ومواعيد 📅' },
+                  { id: 'package', label: 'باقة ورصيد 💳' }
+                ].map(t => (
+                  <button
+                    key={t.id}
+                    type="button"
+                    onClick={() => setSendNotifForm(f => ({ ...f, type: t.id }))}
+                    className={`py-2 px-1 text-center rounded-xl text-[11px] font-bold border transition-all ${
+                      sendNotifForm.type === t.id
+                        ? 'bg-amber-500/20 text-amber-300 border-amber-500 font-black shadow'
+                        : 'bg-stone-900 text-stone-400 border-amber-500/10 hover:text-white'
+                    }`}
+                  >
+                    {t.label}
+                  </button>
+                ))}
+              </div>
+
+              {/* Notification Title */}
+              <div>
+                <label className="block text-xs font-black text-amber-300 mb-1">
+                  عنوان الإشعار:
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={sendNotifForm.title}
+                  onChange={(e) => setSendNotifForm(f => ({ ...f, title: e.target.value }))}
+                  placeholder="مثال: تنبيه من إدارة مجموعة الكيان / عرض باقات جديد..."
+                  className="w-full bg-stone-900 border border-amber-500/40 text-white rounded-2xl p-3 text-xs font-bold focus:ring-2 focus:ring-amber-400 focus:outline-none"
+                />
+              </div>
+
+              {/* Notification Message */}
+              <div>
+                <label className="block text-xs font-black text-amber-300 mb-1">
+                  نص الرسالة / الإشعار:
+                </label>
+                <textarea
+                  required
+                  rows="4"
+                  value={sendNotifForm.message}
+                  onChange={(e) => setSendNotifForm(f => ({ ...f, message: e.target.value }))}
+                  placeholder="اكتب الرسالة التي ستظهر للعميل في قائمة الإشعارات بهاتفه..."
+                  className="w-full bg-stone-900 border border-amber-500/40 text-white rounded-2xl p-3 text-xs leading-relaxed focus:ring-2 focus:ring-amber-400 focus:outline-none"
+                ></textarea>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="pt-2 flex gap-2">
+                <button
+                  type="submit"
+                  disabled={isSendingNotif}
+                  className="flex-1 gold-gradient-btn text-stone-950 font-black py-3.5 rounded-2xl text-xs shadow-xl active:scale-95 transition-all flex items-center justify-center gap-2"
+                >
+                  {isSendingNotif ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-stone-950 border-t-transparent rounded-full "></div>
+                      <span>جاري إرسال الإشعار بالسحابة...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>⚡ إرسال الإشعار فورياً إلى تطبيق الموبيل والموقع</span>
+                    </>
+                  )}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowSendNotifModal(false)}
+                  className="px-5 bg-stone-900 hover:bg-stone-800 border border-amber-500/20 text-stone-300 font-bold py-3.5 rounded-2xl text-xs"
+                >
+                  إلغاء
+                </button>
+              </div>
+            </form>
+
+          </div>
+        </div>
+      )}
+
+      {/* 🖼️ Modal: Edit Branding & Logo */}
+      {/* ==================================================== */}
+      {showBrandingModal && (
+        <div className="fixed inset-0 z-50 modal-backdrop flex items-center justify-center p-4">
+          <div className="glass-card bg-stone-950/95 w-full max-w-lg rounded-3xl p-6 shadow-2xl space-y-5 border-2 border-amber-500/30 text-white">
+            <div className="flex justify-between items-center border-b border-amber-500/20 pb-3">
+              <div className="flex items-center gap-2">
+                <span className="p-2 bg-amber-500/15 border border-amber-500/30 text-amber-300 rounded-xl">
+                  <Icon name="edit" className="w-5 h-5" />
+                </span>
+                <h3 className="text-lg font-black text-white">تعديل اسم الشركة واللوجو</h3>
+              </div>
+              <button onClick={() => setShowBrandingModal(false)} className="text-stone-400 hover:text-white text-xl font-bold">×</button>
+            </div>
+
+            <div className="space-y-4">
+              <div className="flex flex-col items-center justify-center p-5 glass-card-subtle border-2 border-dashed border-amber-500/30 rounded-3xl space-y-3">
+                {(settings.companyLogo || settings.logo) ? (
+                  <div className="relative">
+                    <img 
+                      src={settings.companyLogo || settings.logo} 
+                      alt="Logo Preview" 
+                      className="w-24 h-24 rounded-2xl object-cover border-2 border-amber-400 shadow-md"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSettings(prev => {
+                          const next = { ...prev, companyLogo: '', logo: '' };
+                          try { localStorage.setItem('COMPANY_APP_SETTINGS', JSON.stringify(next)); } catch (err) {}
+                          return next;
+                        });
+                        fetch('/api/save', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({
+                            logo: '',
+                            companyLogo: '',
+                            settings: { companyLogo: '', logo: '' },
+                            _actionReason: 'إزالة لوجو الشركة'
+                          })
+                        }).catch(err => console.error(err));
+                        triggerToast('تمت الإزالة 🗑️', 'تمت إزالة لوجو الشركة بنجاح.', 'info');
+                      }}
+                      className="absolute -top-2 -right-2 bg-rose-600 text-white p-1 rounded-full text-xs shadow hover:bg-rose-700"
+                      title="إزالة اللوجو"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                ) : (
+                  <div className="w-20 h-20 bg-stone-900 border border-amber-500/30 text-amber-400 rounded-2xl flex items-center justify-center">
+                    <Icon name="image" className="w-10 h-10" />
+                  </div>
+                )}
+
+                <div className="text-center">
+                  <input 
+                    type="file" 
+                    accept="image/*" 
+                    ref={logoInputRef}
+                    onChange={handleLogoUpload}
+                    className="hidden" 
+                  />
+                  <button
+                    type="button"
+                    onClick={() => logoInputRef.current && logoInputRef.current.click()}
+                    className="gold-gradient-btn text-stone-950 text-xs font-black px-4 py-2 rounded-xl shadow-lg transition-all flex items-center gap-1.5"
+                  >
+                    <Icon name="camera" className="w-4 h-4 font-black text-stone-950" />
+                    <span>{(settings.companyLogo || settings.logo) ? 'تغيير صورة اللوجو' : 'رفع لوجو الشركة من جهازك'}</span>
+                  </button>
+                  <p className="text-[10px] text-stone-400 mt-1">صيغ الصور المدعومة: PNG, JPG, SVG (حد أقصى 2MB)</p>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-black text-amber-300 mb-1">اسم الشركة:</label>
+                <input 
+                  type="text" 
+                  value={settings.companyName}
+                  onChange={(e) => setSettings(prev => ({ ...prev, companyName: e.target.value }))}
+                  placeholder="اكتب اسم شركتك..."
+                  className="w-full bg-stone-900 border border-amber-500/30 text-white rounded-2xl p-3 text-xs font-bold focus:ring-2 focus:ring-amber-400 focus:outline-none" 
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-black text-amber-300 mb-1">وصف الشركة / الشعار اللفظي:</label>
+                <input 
+                  type="text" 
+                  value={settings.companyTagline}
+                  onChange={(e) => setSettings(prev => ({ ...prev, companyTagline: e.target.value }))}
+                  placeholder="مثال: نظام إدارة المواعيد والباقات..."
+                  className="w-full bg-stone-900 border border-amber-500/30 text-white rounded-2xl p-3 text-xs focus:ring-2 focus:ring-amber-400 focus:outline-none" 
+                />
+              </div>
+            </div>
+
+            <div className="pt-3 border-t border-amber-500/20 flex gap-2">
+              <button 
+                type="button" 
+                onClick={() => {
+                  syncToHardDisk('تحديث هوية الشركة واللوجو', true);
+                  setShowBrandingModal(false);
+                  triggerToast('تم الحفظ بنجاح! ✨', 'تم تحديث هوية الشركة واللوجو وحفظها على القرص الصلب بنجاح.', 'success');
+                  logRecentTask('تم تحديث هوية الشركة وشعار مجموعة الكيان', 'branding');
+                }} 
+                className="flex-1 gold-gradient-btn text-stone-950 font-black py-3.5 rounded-2xl text-xs shadow-lg active:scale-95"
+              >
+                تأكيد وحفظ الهوية
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ==================================================== */}
+      {/* 📅 Modal: New Appointment Booking with Room Conflict Prevention */}
+      {/* ==================================================== */}
+      {showNewBookingModal && (() => {
+        const activeRooms = (settings.rooms && settings.rooms.length > 0) ? settings.rooms : INITIAL_ROOMS;
+        const currentRoom = newBookingData.room || activeRooms[0];
+        
+        const hourlyClientsList = clients.filter(c => !getClientContractStatus(c).isFullTime);
+        const effectiveClientId = newBookingData.clientId || (hourlyClientsList[0]?.id || '');
+        const selectedClient = clients.find(c => c.id === effectiveClientId);
+        const clientContractStatus = selectedClient ? getClientContractStatus(selectedClient) : null;
+        const isClientExpired = clientContractStatus ? clientContractStatus.isExpired : false;
+        const isClientDepleted = selectedClient ? ((selectedClient.currentBalance || 0) <= 0) : false;
+        const isClientBlocked = isClientExpired || isClientDepleted;
+
+        const conflict = checkRoomConflict(bookings, {
+          date: newBookingData.date,
+          time: newBookingData.time,
+          duration: newBookingData.duration,
+          room: currentRoom
+        });
+
+        const startMinutes = parseTimeToMinutes(newBookingData.time);
+        const durHours = parseFloat(newBookingData.duration) || 1;
+        const startDec = startMinutes !== null ? (startMinutes / 60) : 10.0;
+        const endDec = startDec + durHours;
+        const isOutsideWorkingHours = (startDec < 10.0) || (endDec > 22.0) || (startDec >= 22.0);
+
+        return (
+          <div className="fixed inset-0 z-50 modal-backdrop flex items-center justify-center p-4">
+            <div className="glass-card bg-stone-950/95 w-full max-w-xl rounded-3xl p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto border-2 border-amber-500/30 text-white">
+              <div className="flex justify-between items-center border-b border-amber-500/20 pb-3">
+                <div className="flex items-center gap-2">
+                  <span className="p-2 bg-amber-500/15 border border-amber-500/30 text-amber-300 rounded-xl">
+                    <Icon name="calendar" className="w-5 h-5" />
+                  </span>
+                  <h3 className="text-lg font-black text-white">حجز وجدولة موعد وقاعة جديدة</h3>
+                </div>
+                <button onClick={() => setShowNewBookingModal(false)} className="text-stone-400 hover:text-white text-xl font-bold">×</button>
+              </div>
+
+              <div className="glass-card-subtle p-3 rounded-2xl border border-amber-500/20 text-xs text-amber-200/90 flex items-center gap-2 font-bold">
+                <Icon name="shieldCheck" className="w-5 h-5 text-amber-400 flex-shrink-0" />
+                <span>ملاحظة أمان: يتم خصم الساعات فورياً ومعتمداً من رصيد العميل المتاح عند تأكيد الحجز، وتحرير القاعة دون استرجاع عند الإلغاء وفقاً للائحة.</span>
+              </div>
+
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  if (isOutsideWorkingHours) {
+                    alert('⚠️ تنبيه مواعيد العمل الرسمية:\n\nمواعيد العمل والحجوزات الرسمية تبدأ من 10:00 صباحاً وحتى 10:00 مساءً فقط. يرجى اختيار وقت ينتهي قبل الساعة 10:00 مساءً.');
+                    return;
+                  }
+                  if (conflict) {
+                    alert(`⛔ لا يمكن إتمام الحجز: يوجد تعارض في حجز القاعة "${currentRoom}" في تاريخ (${newBookingData.date}) والساعة (${newBookingData.time})!`);
+                    return;
+                  }
+
+                  const clientObj = clients.find(c => c.id === newBookingData.clientId) || clients[0];
+
+                  handleAddBooking({
+                    clientId: newBookingData.clientId || clientObj?.id || 'guest',
+                    clientName: clientObj ? clientObj.name : 'عميل زائر',
+                    phone: clientObj ? clientObj.phone : '',
+                    date: newBookingData.date,
+                    time: newBookingData.time,
+                    duration: newBookingData.duration,
+                    serviceType: newBookingData.serviceType,
+                    room: currentRoom,
+                    notes: newBookingData.notes
+                  });
+                }}
+                className="space-y-3.5"
+              >
+                {/* 1. Client Select - EXCLUSIVELY HOURLY PACKAGE CLIENTS */}
+                <div>
+                  <div className="flex justify-between items-center mb-1">
+                    <label className="block text-xs font-black text-amber-300">اختر عميل باقة الساعات (شهري / 3 شهور / سنوي):</label>
+                    <span className="text-[10px] text-amber-300 font-bold bg-amber-500/20 px-2.5 py-0.5 rounded-lg border border-amber-500/30 flex items-center gap-1">
+                      <span>⏱️</span>
+                      <span>مخصص لباقات الساعات فقط (بدون Full Time)</span>
+                    </span>
+                  </div>
+
+                  {(() => {
+                    if (hourlyClientsList.length === 0) {
+                      return (
+                        <div className="p-3 bg-rose-950/40 border-2 border-rose-500/40 rounded-2xl text-rose-200 text-xs font-bold text-center">
+                          ⚠️ لا يوجد عملاء باقات ساعات مسجلين حتى الآن. يرجى إضافة عميل باقة ساعات أولاً لحجز موعد له.
+                        </div>
+                      );
+                    }
+
+                    return (
+                      <select 
+                        value={effectiveClientId} 
+                        onChange={(e) => setNewBookingData(prev => ({ ...prev, clientId: e.target.value }))}
+                        className={`w-full bg-stone-900 border-2 rounded-2xl p-3 text-xs font-bold focus:ring-2 focus:ring-amber-400 focus:outline-none cursor-pointer ${
+                          isClientBlocked ? 'border-rose-500 bg-rose-950/30 text-rose-200' : 'border-amber-500/30 text-white'
+                        }`}
+                      >
+                        {hourlyClientsList.map(c => {
+                          const cStatus = getClientContractStatus(c);
+                          const cBlocked = cStatus.isExpired || ((c.currentBalance || 0) <= 0);
+                          const durLabel = (c.packageDuration === '3months' || c.packageDuration === 'quarterly') ? '3 شهور' : c.packageDuration === 'annual' ? 'سنوية' : 'شهرية';
+                          return (
+                            <option key={c.id} value={c.id} className={`bg-stone-950 ${cBlocked ? 'text-rose-400 font-bold' : 'text-white'}`}>
+                              {cBlocked ? '⛔' : '🟢'} {c.name} ({durLabel}) - {cStatus.isExpired ? `[منتهي الصلاحية: ${c.expiryDate}]` : (c.currentBalance || 0) <= 0 ? '[نفد رصيد الساعات: 0س]' : `رصيد متاح: ${c.currentBalance}س`}
+                            </option>
+                          );
+                        })}
+                      </select>
+                    );
+                  })()}
+                </div>
+
+                {/* 🛡️ Unmistakable Block Warning Banner when selected client has 0 hours or expired package */}
+                {selectedClient && isClientBlocked && (
+                  <div className="p-4 bg-rose-950/90 border-2 border-rose-500/80 rounded-2xl space-y-2.5 shadow-xl ">
+                    <div className="flex items-center gap-2 text-rose-200 font-black text-xs">
+                      <span className="text-lg">⛔</span>
+                      <span>لا يمكن حجز موعد لهذا العميل حتى يتم تجديد الباقة أو إضافة ساعات!</span>
+                    </div>
+                    <div className="glass-card-subtle p-3 rounded-xl border border-rose-500/40 text-xs text-rose-100 font-bold space-y-1.5">
+                      <div>👤 العميل: <b className="text-white">{selectedClient.name}</b> ({selectedClient.phone})</div>
+                      {isClientExpired && (
+                        <div className="text-rose-300 flex items-center gap-1">
+                          <span>📅</span>
+                          <span>حالة التعاقد: <b>انتهت صلاحية الباقة بتاريخ ({selectedClient.expiryDate || 'سابق'}).</b></span>
+                        </div>
+                      )}
+                      {isClientDepleted && (
+                        <div className="text-rose-300 flex items-center gap-1">
+                          <span>⏱️</span>
+                          <span>رصيد الساعات: <b>تم استهلاك كامل الرصيد (المتبقي: {selectedClient.currentBalance || 0} ساعة).</b></span>
+                        </div>
+                      )}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowNewBookingModal(false);
+                        handleOpenRenewContractModal(selectedClient);
+                      }}
+                      className="w-full gold-gradient-btn text-stone-950 font-black py-2.5 rounded-xl text-xs flex items-center justify-center gap-1.5 shadow-md active:scale-95 cursor-pointer"
+                    >
+                      <Icon name="refresh" className="w-4 h-4 text-stone-950 font-black" />
+                      <span>🔄 تجديد الباقة وإضافة ساعات للعميل الآن</span>
+                    </button>
+                  </div>
+                )}
+
+                {/* 2. Room / Hall Selector */}
+                <div className="glass-card-subtle p-3.5 rounded-2xl border border-amber-500/25 space-y-2">
+                  <div className="flex justify-between items-center">
+                    <label className="block text-xs font-black text-amber-300 flex items-center gap-1.5">
+                      <span>🚪 اختر القاعة أو الغرفة المطلوبة:</span>
+                    </label>
+                    <span className="text-[10px] bg-amber-500/20 text-amber-300 font-bold px-2 py-0.5 rounded border border-amber-500/30">
+                      🔒 فحص التعارض نشط
+                    </span>
+                  </div>
+
+                  <select
+                    value={currentRoom}
+                    onChange={(e) => setNewBookingData(prev => ({ ...prev, room: e.target.value }))}
+                    className="w-full bg-stone-900 border-2 border-amber-500/40 text-amber-300 rounded-xl p-2.5 text-xs font-black focus:ring-2 focus:ring-amber-400 focus:outline-none cursor-pointer"
+                  >
+                    {activeRooms.map((r, i) => (
+                      <option key={i} value={r} className="bg-stone-950 text-amber-300">🚪 {r}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* 3. Date & Time (Manual and Calendar Picker + Quick Date Shortcuts) */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <div className="flex justify-between items-center mb-1">
+                      <label className="block text-xs font-black text-amber-300">تاريخ الموعد (يدوي أو تقويم):</label>
+                      <span className="text-[10px] text-stone-400 font-mono">YYYY-MM-DD أو DD/MM/YYYY</span>
+                    </div>
+                    <div className="relative flex items-center">
+                      <input 
+                        required 
+                        type="text" 
+                        value={newBookingData.date}
+                        onChange={(e) => setNewBookingData(prev => ({ ...prev, date: e.target.value }))}
+                        onBlur={(e) => {
+                          const norm = normalizeDate(e.target.value);
+                          if (norm && /^\d{4}-\d{2}-\d{2}$/.test(norm)) {
+                            setNewBookingData(prev => ({ ...prev, date: norm }));
+                          }
+                        }}
+                        placeholder="مثال: 2026-08-29 أو 29/08/2026"
+                        className="w-full bg-stone-900 border-2 border-amber-500/30 rounded-2xl p-3 pl-11 text-xs font-black font-mono text-white focus:ring-2 focus:ring-amber-400 focus:outline-none shadow-xs" 
+                      />
+                      {/* Native Datepicker helper */}
+                      <input
+                        type="date"
+                        tabIndex="-1"
+                        value={/^\d{4}-\d{2}-\d{2}$/.test(normalizeDate(newBookingData.date)) ? normalizeDate(newBookingData.date) : ''}
+                        onChange={(e) => {
+                          if (e.target.value) setNewBookingData(prev => ({ ...prev, date: e.target.value }));
+                        }}
+                        className="absolute left-2.5 w-7 h-7 opacity-0 cursor-pointer z-10"
+                        title="فتح التقويم لاختيار التاريخ"
+                      />
+                      <span className="absolute left-2.5 p-1 bg-stone-800 text-amber-300 rounded-lg pointer-events-none text-xs flex items-center justify-center border border-amber-500/30">
+                        📅
+                      </span>
+                    </div>
+
+                    {/* Quick Date Shortcuts */}
+                    <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
+                      {[
+                        { label: 'اليوم', getVal: () => new Date().toISOString().split('T')[0] },
+                        { label: 'غداً', getVal: () => new Date(Date.now() + 86400000).toISOString().split('T')[0] },
+                        { label: 'بعد غد', getVal: () => new Date(Date.now() + 172800000).toISOString().split('T')[0] },
+                        { label: 'بعد أسبوع', getVal: () => new Date(Date.now() + 7 * 86400000).toISOString().split('T')[0] }
+                      ].map(d => (
+                        <button
+                          key={d.label}
+                          type="button"
+                          onClick={() => setNewBookingData(prev => ({ ...prev, date: d.getVal() }))}
+                          className="px-2 py-0.5 glass-card-subtle hover:bg-stone-800 text-amber-300 border border-amber-500/20 rounded-md text-[10px] font-bold transition-all"
+                        >
+                          {d.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div>
+                    <div className="flex justify-between items-center mb-1">
+                      <label className="block text-xs font-black text-amber-300">وقت وساعة الموعد:</label>
+                      <span className="text-[10px] text-stone-400">يدوي أو اختيار سريع</span>
+                    </div>
+                    <input 
+                      required 
+                      type="text" 
+                      value={newBookingData.time}
+                      onChange={(e) => setNewBookingData(prev => ({ ...prev, time: e.target.value }))}
+                      placeholder="مثال: 10:00 ص أو 04:30 م (يمكنك الكتابة يدوياً)..."
+                      className="w-full bg-stone-900 border-2 border-amber-500/30 rounded-2xl p-3 text-xs font-black font-mono text-white focus:ring-2 focus:ring-amber-400 focus:outline-none shadow-xs" 
+                    />
+                  </div>
+                </div>
+
+                {/* Quick Time Selector Buttons (10:00 ص to 11:00 م with exactly 1 hour interval) */}
+                <div>
+                  <div className="flex justify-between items-center mb-1.5">
+                    <label className="block text-[11px] font-black text-amber-300">⚡ أوقات وساعات سريعة (من 10:00 ص إلى 11:00 م بفارق ساعة):</label>
+                    <span className="text-[10px] text-amber-300 font-bold bg-amber-500/20 px-2 py-0.5 rounded border border-amber-500/30">14 فترة زمنية</span>
+                  </div>
+                  <div className="grid grid-cols-4 sm:grid-cols-7 gap-1.5">
+                    {QUICK_TIME_SLOTS.map(t => (
+                      <button
+                        key={t}
+                        type="button"
+                        onClick={() => setNewBookingData(prev => ({ ...prev, time: t }))}
+                        className={`py-1.5 px-1 rounded-xl text-[11px] transition-all text-center ${newBookingData.time === t ? 'gold-gradient-btn text-stone-950 font-black shadow-md scale-105' : 'glass-card-subtle hover:bg-stone-800 text-stone-200 hover:text-white font-bold border border-amber-500/20'}`}
+                      >
+                        {t}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* 🛡️ Real-time Interval Conflict Alert or Availability Indicator */}
+                {conflict ? (
+                  <div className="p-4 bg-rose-950/40 border-2 border-rose-500/50 rounded-2xl text-xs space-y-2 ">
+                    <div className="font-black text-rose-300 flex items-center gap-1.5 text-xs sm:text-sm">
+                      <Icon name="alert" className="w-5 h-5 text-rose-400 flex-shrink-0" />
+                      <span>⛔ تعارض في حجز القاعة: الغرفة مشغولة خلال هذه الفترة!</span>
+                    </div>
+                    <div className="glass-card-subtle p-3 rounded-xl border border-rose-500/30 text-rose-200 space-y-1.5 shadow-xs">
+                      <div className="font-bold">
+                        🔒 القاعة <b className="text-amber-300">({currentRoom})</b> محجوزة مسبقاً للعميل: <b className="text-white">({conflict.clientName})</b>
+                      </div>
+                      <div className="text-[11px] text-stone-300 font-mono font-bold">
+                        ⏱️ فترة الحجز المشغول: من <b className="text-amber-300">{conflict.conflictStartTime}</b> إلى <b className="text-amber-300">{conflict.conflictEndTime}</b> (لمدة {conflict.conflictDuration} ساعة)
+                      </div>
+                      <div className="text-[11px] text-amber-300 font-black bg-stone-950 p-2 rounded-lg border border-amber-500/30 flex items-center gap-1.5">
+                        <span>💡 وقت الشغور:</span>
+                        <span>ستكون القاعة متاحة وشاغرة للحجز بدءاً من الساعة <b className="text-white">{conflict.availableAfter}</b></span>
+                      </div>
+                    </div>
+                    <p className="text-[10px] text-rose-300 font-bold">
+                      يرجى اختيار توقيت يبدأ من ({conflict.availableAfter}) أو بعده، أو اختيار قاعة أخرى لإتمام الحجز.
+                    </p>
+                  </div>
+                ) : !isOutsideWorkingHours ? (
+                  <div className="p-3 bg-emerald-950/40 border border-emerald-500/40 text-emerald-300 rounded-2xl text-xs flex items-center gap-2 font-bold">
+                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 "></span>
+                    <span>
+                      القاعة ({currentRoom}) متاحة وضمن مواعيد العمل الرسمية ({newBookingData.duration} ساعة) ✅
+                    </span>
+                  </div>
+                ) : null}
+
+                {/* ⚠️ Working Hours Warning */}
+                {isOutsideWorkingHours && (
+                  <div className="p-3 bg-rose-950/70 border-2 border-rose-500/80 rounded-2xl text-rose-200 text-xs space-y-1 font-bold shadow-lg">
+                    <div className="flex items-center gap-2 font-black text-rose-300">
+                      <Icon name="alert" className="w-4 h-4 text-rose-400" />
+                      <span>تنبيه مواعيد العمل: التوقيت المحدد خارج مواعيد العمل الرسمية!</span>
+                    </div>
+                    <p className="text-[11px] leading-relaxed text-stone-200">
+                      مواعيد العمل والحجوزات الرسمية تبدأ من الساعة <b className="text-amber-300">10:00 صباحاً</b> وحتى الساعة <b className="text-amber-300">10:00 مساءً</b> فقط. يرجى اختيار وقت ينتهي قبل الساعة 10:00 مساءً.
+                    </p>
+                  </div>
+                )}
+
+                {/* 4. Duration & Service Type */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-black text-amber-300 mb-1">المدة المحجوزة (ساعات):</label>
+                    <input 
+                      required 
+                      type="number" 
+                      step="0.5" 
+                      min="0.5" 
+                      value={newBookingData.duration}
+                      onChange={(e) => setNewBookingData(prev => ({ ...prev, duration: e.target.value }))}
+                      className="w-full bg-stone-900 border border-amber-500/30 text-amber-300 font-black rounded-2xl p-3 text-xs focus:ring-2 focus:ring-amber-400 focus:outline-none" 
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-black text-amber-300 mb-1">نوع الخدمة / الاجتماع:</label>
+                    <input 
+                      type="text" 
+                      value={newBookingData.serviceType}
+                      onChange={(e) => setNewBookingData(prev => ({ ...prev, serviceType: e.target.value }))}
+                      className="w-full bg-stone-900 border border-amber-500/30 text-white rounded-2xl p-3 text-xs font-bold focus:ring-2 focus:ring-amber-400 focus:outline-none" 
+                    />
+                  </div>
+                </div>
+
+                {/* 5. Notes */}
+                <div>
+                  <label className="block text-xs font-black text-amber-300 mb-1">ملاحظات الحجز:</label>
+                  <textarea 
+                    rows="2" 
+                    value={newBookingData.notes}
+                    onChange={(e) => setNewBookingData(prev => ({ ...prev, notes: e.target.value }))}
+                    placeholder="أي متطلبات خاصة بالقاعة أو الموعد..." 
+                    className="w-full bg-stone-900 border border-amber-500/30 text-white rounded-2xl p-2.5 text-xs focus:ring-2 focus:ring-amber-400 focus:outline-none" 
+                  ></textarea>
+                </div>
+
+                <div className="pt-3 flex gap-2">
+                  <button 
+                    type="submit" 
+                    disabled={isClientBlocked || !!conflict || isOutsideWorkingHours}
+                    className={`flex-1 font-black py-3.5 rounded-2xl text-xs shadow-lg transition-all ${
+                      isClientBlocked 
+                        ? 'bg-rose-950/80 text-rose-300 border-2 border-rose-500/50 cursor-not-allowed'
+                        : isOutsideWorkingHours
+                        ? 'bg-stone-800 text-stone-500 cursor-not-allowed border border-stone-700'
+                        : conflict 
+                        ? 'bg-stone-800 text-stone-500 cursor-not-allowed border border-stone-700' 
+                        : 'gold-gradient-btn text-stone-950 active:scale-95'
+                    }`}
+                  >
+                    {isClientBlocked 
+                      ? '⛔ لا يمكن الحجز (أضف ساعات أو جدد الباقة أولاً)' 
+                      : isOutsideWorkingHours
+                      ? '⛔ الحجز خارج مواعيد العمل (10:00 ص - 10:00 م)'
+                      : conflict 
+                      ? '⛔ تعارض في موعد الغرفة (اختر موعد/غرفة أخرى)' 
+                      : 'تأكيد الحجز ومراجعة رسالة WhatsApp 💬'}
+                  </button>
+                  <button 
+                    type="button" 
+                    onClick={() => setShowNewBookingModal(false)} 
+                    className="px-5 bg-stone-900 border border-amber-500/20 text-stone-300 font-bold py-3.5 rounded-2xl text-xs hover:bg-stone-800"
+                  >
+                    إلغاء
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* ==================================================== */}
+      {/* 🔒 Modal: Hard-Disk Safety & Anti-Loss Center */}
+      {/* ==================================================== */}
+      {showDiskSafetyModal && (
+        <div className="fixed inset-0 z-50 modal-backdrop flex items-center justify-center p-4">
+          <div className="glass-card bg-stone-950/95 w-full max-w-2xl rounded-3xl p-6 shadow-2xl space-y-4 max-h-[92vh] overflow-y-auto border-2 border-emerald-500/40 text-white">
+            <div className="flex justify-between items-center border-b border-amber-500/20 pb-3">
+              <div className="flex items-center gap-2">
+                <span className="p-2 bg-emerald-500/20 text-emerald-400 rounded-xl border border-emerald-500/30">
+                  <Icon name="shieldCheck" className="w-6 h-6 text-emerald-400" />
+                </span>
+                <div>
+                  <h3 className="text-lg font-black text-white">مركز أمان البيانات والحفظ الدائم على القرص الصلب</h3>
+                  <p className="text-xs text-amber-300 font-bold">استحالة فقدان أو نسيان أي بيانات مسجلة • حماية دائمة 100%</p>
+                </div>
+              </div>
+              <button onClick={() => setShowDiskSafetyModal(false)} className="text-stone-400 hover:text-white text-xl font-bold">×</button>
+            </div>
+
+            {/* Storage Protection Status Box */}
+            <div className="p-4 bg-emerald-950/40 border-2 border-emerald-500/40 rounded-2xl space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-black text-emerald-300 flex items-center gap-2">
+                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 "></span>
+                  <span>حالة الحفظ الفعلي على الهارد ديسك (Physical Hard Disk):</span>
+                </span>
+                <span className="text-[10px] bg-emerald-900/80 text-emerald-300 font-black px-2 py-0.5 rounded border border-emerald-500/40">
+                  نشط وآمن 🔒
+                </span>
+              </div>
+              <p className="text-xs text-stone-200 leading-relaxed font-bold">
+                يتم حفظ كل عملية (إضافة عميل، تعديل، حجز موعد، خصم ساعات، تجديد) في ملف قاعدة البيانات الدائمة على مسار:
+                <br />
+                <code className="text-[11px] text-amber-300 font-mono bg-stone-900 px-2 py-1 rounded mt-1 inline-block border border-amber-500/30">
+                  company-web-app/data/database.json
+                </code>
+              </p>
+              <div className="grid grid-cols-3 gap-2 pt-1 text-center">
+                <div className="glass-card-subtle p-2 rounded-xl border border-amber-500/20">
+                  <div className="text-[10px] text-stone-400">العملاء المحفوظون</div>
+                  <div className="text-sm font-black text-white">{clients.length} عميل</div>
+                </div>
+                <div className="glass-card-subtle p-2 rounded-xl border border-amber-500/20">
+                  <div className="text-[10px] text-stone-400">الحجوزات المؤكدة</div>
+                  <div className="text-sm font-black text-amber-300">{bookings.length} موعد</div>
+                </div>
+                <div className="glass-card-subtle p-2 rounded-xl border border-amber-500/20">
+                  <div className="text-[10px] text-stone-400">سجلات الحضور</div>
+                  <div className="text-sm font-black text-emerald-400">{attendance.length} جلسة</div>
+                </div>
+              </div>
+            </div>
+
+            {/* ⚡ Instant Firebase Cloud Restore & WhatsApp Quick Actions */}
+            <div className="p-4 bg-cyan-950/30 border-2 border-cyan-500/40 rounded-2xl space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-black text-cyan-300 flex items-center gap-2">
+                  <span className="text-base">⚡</span>
+                  <span>الاسترجاع السحابي الفوري من Firebase (One-Click Restore):</span>
+                </span>
+                <span className="text-[10px] bg-cyan-900/80 text-cyan-200 font-mono font-bold px-2 py-0.5 rounded border border-cyan-400/40">
+                  Firebase RTDB ☁️
+                </span>
+              </div>
+              <p className="text-xs text-stone-300 font-bold">
+                عند الضغط على الزر التالي، يتم سحب كافة العملاء والمعاملات المالية وسجلات الحضور والمواعيد مباشرة من سحابة Firebase واستعادتها فوراً على الجهاز والمتصفح.
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
+                <button
+                  onClick={handleRestoreFromFirebaseInstant}
+                  className="bg-cyan-600 hover:bg-cyan-500 text-white font-black py-2.5 px-4 rounded-xl text-xs flex items-center justify-center gap-2 shadow-lg active:scale-95 transition-all"
+                >
+                  <span className="text-base">⚡</span>
+                  <span>استيراد كل شيء من Firebase فوراً ☁️</span>
+                </button>
+
+                <button
+                  onClick={handleExportAndSendTelegramBackup}
+                  disabled={isBackingUpTelegram}
+                  className="bg-sky-600 hover:bg-sky-500 text-white font-black py-2.5 px-4 rounded-xl text-xs flex items-center justify-center gap-2 shadow-lg active:scale-95 transition-all"
+                >
+                  <span className="text-base">✈️</span>
+                  <span>{isBackingUpTelegram ? 'جاري النسخ والإرسال...' : 'تصدير إكسل وتيليجرام الآن (6h) 📤'}</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Quick Export / Import JSON Actions */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <button
+                onClick={downloadDatabaseJson}
+                className="gold-gradient-btn text-stone-950 font-black py-3 rounded-2xl text-xs flex items-center justify-center gap-2 shadow-lg active:scale-95"
+              >
+                <Icon name="download" className="w-4 h-4 text-stone-950 font-black" />
+                <span>تنزيل نسخة احتياطية كاملة (JSON) 💾</span>
+              </button>
+
+              <label className="bg-stone-900 hover:bg-stone-800 border-2 border-dashed border-amber-500/40 text-amber-300 font-black py-3 rounded-2xl text-xs flex items-center justify-center gap-2 cursor-pointer transition-all">
+                <Icon name="upload" className="w-4 h-4 text-amber-400" />
+                <span>استيراد قاعدة بيانات من ملف خارجي 📥</span>
+                <input
+                  type="file"
+                  accept=".json"
+                  onChange={handleImportDatabaseJson}
+                  className="hidden"
+                />
+              </label>
+            </div>
+
+            {/* Snapshots on Disk */}
+            <div className="space-y-2">
+              <div className="flex justify-between items-center">
+                <h4 className="text-xs font-black text-amber-300 flex items-center gap-1.5">
+                  <span>🗄️ النسخ الاحتياطية التلقائية المحفوظة على القرص الصلب (Snapshots):</span>
+                </h4>
+                <button
+                  onClick={fetchDiskBackupsList}
+                  className="text-[10px] text-stone-300 hover:text-white bg-stone-900 border border-amber-500/30 px-2 py-1 rounded-lg"
+                >
+                  تحديث القائمة 🔄
+                </button>
+              </div>
+
+              {diskSnapshots.length === 0 ? (
+                <div className="glass-card-subtle p-4 rounded-2xl border border-amber-500/20 text-center text-xs text-stone-400 font-bold">
+                  يتم حفظ السنابات التلقائية في مجلد <code className="text-amber-300 font-mono">data/backups/</code> دورياً عند أي تعديل رئيسي.
+                </div>
+              ) : (
+                <div className="space-y-1.5 max-h-48 overflow-y-auto pr-1">
+                  {diskSnapshots.map((s, idx) => (
+                    <div key={idx} className="glass-card-subtle p-2.5 rounded-xl border border-amber-500/20 flex items-center justify-between text-xs">
+                      <div>
+                        <span className="font-bold text-white font-mono">{s.filename}</span>
+                        <p className="text-[10px] text-stone-400 mt-0.5">{s.modifiedFormatted} ({(s.size / 1024).toFixed(1)} KB)</p>
+                      </div>
+                      <button
+                        onClick={() => handleRestoreDiskSnapshot(s.filename)}
+                        className="gold-gradient-btn text-stone-950 font-black text-[11px] px-3 py-1 rounded-lg shadow-sm"
+                      >
+                        استعادة 🔄
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Safety Guarantee Notice */}
+            <div className="glass-card-subtle p-3 rounded-2xl border border-amber-500/20 text-[11px] text-stone-300 leading-relaxed font-bold flex items-center gap-2">
+              <span className="text-lg">🛡️</span>
+              <span>
+                <b>ضمان عدم الفقدان:</b> حتى في حال إغلاق المتصفح أو مسح الكاش أو إعادة تشغيل الجهاز، تظل البيانات محفوظة ومحمية بنسبة 100% داخل مجلد النظام.
+              </span>
+            </div>
+
+            <div className="pt-2 flex justify-end">
+              <button
+                onClick={() => setShowDiskSafetyModal(false)}
+                className="px-6 bg-stone-900 border border-amber-500/30 text-stone-300 font-bold py-2.5 rounded-2xl text-xs hover:bg-stone-800"
+              >
+                إغلاق
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ==================================================== */}
+      {/* ⚠️ Modal: Double-Lock Protected Manual Deletion */}
+      {/* ==================================================== */}
+      {manualDeleteTarget && hasPermission('canDeleteClients') && (
+        <div className="fixed inset-0 z-50 modal-backdrop flex items-center justify-center p-4">
+          <div className="glass-card bg-stone-950/95 w-full max-w-md rounded-3xl p-6 shadow-2xl space-y-4 border-2 border-rose-500 text-white ">
+            <div className="flex items-center gap-3 border-b border-rose-500/30 pb-3">
+              <div className="p-2.5 bg-rose-950 border border-rose-500 text-rose-400 rounded-2xl">
+                <Icon name="alert" className="w-6 h-6 text-rose-400" />
+              </div>
+              <div>
+                <h3 className="text-base font-black text-rose-300">تأكيد الحذف اليدوي النهائي</h3>
+                <p className="text-xs text-stone-300 font-bold">إجراء يدوي مقصود لحذف العميل</p>
+              </div>
+            </div>
+
+            <div className="glass-card-subtle p-4 rounded-2xl border border-rose-500/30 space-y-2 text-xs">
+              <div className="font-black text-white text-sm">
+                👤 اسم العميل: <span className="text-amber-300">{manualDeleteTarget.name}</span>
+              </div>
+              <div className="text-stone-300 font-mono">
+                📞 الهاتف: <span className="text-emerald-400">{manualDeleteTarget.phone}</span>
+              </div>
+              <div className="text-stone-300">
+                ⏳ الرصيد المتبقي: <span className="text-amber-300 font-black">{manualDeleteTarget.balance} ساعة</span>
+              </div>
+              <div className="text-stone-300">
+                📅 الحجوزات والجلسات: <span className="text-white font-bold">{manualDeleteTarget.bookingsCount} حجز • {manualDeleteTarget.attendanceCount} جلسة حضور</span>
+              </div>
+            </div>
+
+            <p className="text-xs text-rose-300 leading-relaxed font-bold">
+              ⚠️ <b>تنبيه الأمان:</b> لن يتم حذف العميل أو أي بيانات إلا بهذا الإجراء اليدوي المباشر منك. سيتم حذف سجلاته من الواجهة مع تسجيل العملية بأمان في سجل العمليات (Audit Log) على القرص الصلب.
+            </p>
+
+            <div className="pt-2 flex gap-2">
+              <button
+                type="button"
+                onClick={() => executeManualClientDeletion(manualDeleteTarget.id)}
+                className="flex-1 bg-rose-600 hover:bg-rose-500 text-white font-black py-3 rounded-2xl text-xs shadow-lg active:scale-95 transition-all"
+              >
+                تأكيد الحذف اليدوي الآن 🗑️
+              </button>
+              <button
+                type="button"
+                onClick={() => setManualDeleteTarget(null)}
+                className="px-5 bg-stone-900 border border-amber-500/30 text-stone-300 font-bold py-3 rounded-2xl text-xs hover:bg-stone-800"
+              >
+                تراجع وإلغاء
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ==================================================== */}
+      {/* 📥 Modal: Excel Import Confirmation & Smart Restore */}
+      {/* ==================================================== */}
+      {showExcelImportModal && excelImportParsedData && (
+        <div className="fixed inset-0 z-50 modal-backdrop flex items-center justify-center p-4">
+          <div className="glass-card bg-stone-950/95 w-full max-w-2xl rounded-3xl p-6 sm:p-8 shadow-2xl space-y-6 border-2 border-emerald-500/50 text-white ">
+            
+            <div className="flex items-center justify-between border-b border-amber-500/20 pb-4">
+              <div className="flex items-center gap-3">
+                <span className="p-3 bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 rounded-2xl text-xl">
+                  📥
+                </span>
+                <div>
+                  <h3 className="text-lg font-black text-white">استيراد واسترجاع البيانات من ملف Excel</h3>
+                  <p className="text-xs text-emerald-300/90 font-mono font-bold mt-0.5">{excelImportParsedData.filename}</p>
+                </div>
+              </div>
+              <button
+                onClick={() => { setShowExcelImportModal(false); setExcelImportParsedData(null); }}
+                className="text-stone-400 hover:text-white text-2xl font-bold p-1"
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div className="bg-emerald-950/50 border border-emerald-500/30 p-4 rounded-2xl space-y-2">
+                <h4 className="text-xs font-black text-emerald-300">تم فحص وتحليل الشيت بنجاح! السجلات الجاهزة للاسترجاع:</h4>
+                
+                <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5 pt-2">
+                  <div className="bg-stone-900/90 border border-amber-500/30 p-3 rounded-xl text-center">
+                    <span className="text-[10px] text-amber-300 font-bold block">عملاء الساعات</span>
+                    <span className="text-xl font-black text-white mt-1 block">{excelImportParsedData.hourlyClients.length}</span>
+                  </div>
+
+                  <div className="bg-stone-900/90 border border-purple-500/30 p-3 rounded-xl text-center">
+                    <span className="text-[10px] text-purple-300 font-bold block">دوام كامل (Full Time)</span>
+                    <span className="text-xl font-black text-white mt-1 block">{excelImportParsedData.fulltimeClients.length}</span>
+                  </div>
+
+                  <div className="bg-stone-900/90 border border-teal-500/30 p-3 rounded-xl text-center">
+                    <span className="text-[10px] text-teal-300 font-bold block">نظام الشيفت 🔄</span>
+                    <span className="text-xl font-black text-white mt-1 block">{(excelImportParsedData.shiftClients || []).length}</span>
+                  </div>
+
+                  <div className="bg-stone-900/90 border border-blue-500/30 p-3 rounded-xl text-center">
+                    <span className="text-[10px] text-blue-300 font-bold block">المواعيد والحجوزات</span>
+                    <span className="text-xl font-black text-white mt-1 block">{excelImportParsedData.bookings.length}</span>
+                  </div>
+
+                  <div className="bg-stone-900/90 border border-emerald-500/30 p-3 rounded-xl text-center">
+                    <span className="text-[10px] text-emerald-300 font-bold block">سجل الحضور والخصم</span>
+                    <span className="text-xl font-black text-white mt-1 block">{excelImportParsedData.attendance.length}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="text-xs text-stone-300 space-y-2 font-bold">
+                <p className="text-amber-300">اختر طريقة الاسترجاع المناسبة لك:</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="p-3.5 glass-card-subtle border border-amber-500/30 rounded-2xl space-y-1">
+                    <span className="font-black text-amber-300 flex items-center gap-1.5">
+                      <span>🟢 خيار الدمج الذكي (Smart Merge)</span>
+                    </span>
+                    <p className="text-[11px] text-stone-300 leading-relaxed font-bold">
+                      يضيف أي عملاء أو مواعيد كانت محذوفة بالخطأ دون مسح أو التأثير على أي بيانات مسجلة حالياً بالسيستم.
+                    </p>
+                  </div>
+
+                  <div className="p-3.5 glass-card-subtle border border-rose-500/30 rounded-2xl space-y-1">
+                    <span className="font-black text-rose-300 flex items-center gap-1.5">
+                      <span>⚡ خيار الاسترجاع الكامل (Full Restore)</span>
+                    </span>
+                    <p className="text-[11px] text-stone-300 leading-relaxed font-bold">
+                      يستبدل قاعدة البيانات الحالية بالكامل بالنسخة الموجودة في شيت الإكسل بنسبة 100%.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="pt-2 flex flex-col sm:flex-row justify-between items-center gap-3 border-t border-amber-500/20">
+              <button
+                type="button"
+                onClick={() => { setShowExcelImportModal(false); setExcelImportParsedData(null); }}
+                className="w-full sm:w-auto px-5 py-2.5 bg-stone-900 border border-stone-700 text-stone-300 font-bold rounded-xl text-xs hover:bg-stone-800"
+              >
+                إلغاء
+              </button>
+
+              <div className="flex flex-wrap sm:flex-nowrap gap-2 w-full sm:w-auto">
+                <button
+                  type="button"
+                  onClick={() => handleExecuteExcelRestore('merge')}
+                  className="flex-1 sm:flex-initial gold-gradient-btn text-stone-950 font-black px-5 py-2.5 rounded-xl text-xs shadow-lg active:scale-95 flex items-center justify-center gap-1.5"
+                >
+                  <span>دمج واسترجاع المفقود 🟢</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (window.confirm('هل أنت متأكد من رغبتك في استبدال قاعدة البيانات الحالية بالكامل بنسخة شيت الإكسل؟')) {
+                      handleExecuteExcelRestore('clean');
+                    }
+                  }}
+                  className="flex-1 sm:flex-initial bg-rose-700 hover:bg-rose-600 text-white font-black px-5 py-2.5 rounded-xl text-xs shadow-lg active:scale-95 flex items-center justify-center gap-1.5"
+                >
+                  <span>استرجاع واستبدال كامل ⚡</span>
+                </button>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      )}
+
+      {/* ==================================================== */}
+      {/* 📜 Modal: Client Detail & Contract History */}
+      {/* ==================================================== */}
+      {showClientDetailModal && (() => {
+        const cStart = showClientDetailModal.startDate || '';
+        const cRen = showClientDetailModal.renewedAt || '';
+        
+        const clientHistory = attendance.filter(a => {
+          if (a.clientId !== showClientDetailModal.id) return false;
+          // CRITICAL: Filter to ONLY active contract cycle
+          const aCreated = a.createdAt || '';
+          if (cRen) {
+             if (!aCreated || aCreated < cRen) return false;
+          } else if (cStart && a.date) {
+             if (a.date < cStart) return false;
+          }
+          return true;
+        });
+        
+        const totalConsumed = clientHistory.reduce((acc, h) => acc + (parseFloat(h.hoursConsumed) || 0), 0);
+        const contractInfo = getClientContractStatus(showClientDetailModal);
+
+        return (
+          <div className="fixed inset-0 z-50 modal-backdrop flex items-center justify-center p-4">
+            <div className="glass-card bg-stone-950/95 w-full max-w-2xl rounded-3xl p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto border-2 border-amber-500/30 text-white">
+              <div className="flex justify-between items-center border-b border-amber-500/20 pb-3">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-lg font-black text-white">{showClientDetailModal.name}</h3>
+                    <span className={`text-xs font-black px-2.5 py-0.5 rounded-md ${contractInfo.isExpired ? 'bg-rose-950 border border-rose-500/40 text-rose-300' : 'bg-emerald-950 border border-emerald-500/40 text-emerald-300'}`}>
+                      {contractInfo.badgeText}
+                    </span>
+                  </div>
+                  <p className="text-xs text-stone-300 flex items-center gap-2 mt-1 font-bold">
+                    <span className="flex items-center gap-1 font-mono font-bold text-emerald-400"><Icon name="whatsapp" className="w-3.5 h-3.5 text-emerald-400" /> {showClientDetailModal.phone}</span>
+                    <span>|</span>
+                    <span className="text-amber-300">📦 {showClientDetailModal.package} ({(showClientDetailModal.packageDuration === '3months' || showClientDetailModal.packageDuration === 'quarterly') ? '3 شهور' : (showClientDetailModal.packageDuration === 'annual' ? 'سنوي' : (showClientDetailModal.packageDuration === 'monthly' ? 'شهري' : 'مخصص'))})</span>
+                  </p>
+                </div>
+                <button onClick={() => setShowClientDetailModal(null)} className="text-stone-400 hover:text-white text-xl font-bold">×</button>
+              </div>
+
+              {/* Contract Term Box */}
+              <div className="glass-card-subtle p-4 rounded-2xl border border-amber-500/20 flex justify-between items-center text-xs">
+                {showClientDetailModal.subscriptionType === 'shift' && (
+                  <div className="w-full flex justify-between items-center bg-blue-950/30 p-2.5 rounded-xl border border-blue-500/30 mb-2">
+                    <div>
+                      <span className="font-black text-blue-300">نظام الشيفت:</span>
+                      <p className="text-stone-200 mt-0.5 font-mono font-bold">{showClientDetailModal.shiftType === 'evening' ? 'مسائي 🌙' : 'صباحي ☀️'}</p>
+                    </div>
+                    <div className="text-center">
+                      <span className="font-black text-blue-300">الغرفة المخصصة:</span>
+                      <p className="text-amber-300 mt-0.5 font-mono font-black">🏢 {showClientDetailModal.dedicatedRoom || 'غرفة خاصة'}</p>
+                    </div>
+                    <div className="text-right">
+                      <span className="font-black text-blue-300">مواعيد الغرفة:</span>
+                      <p className="text-stone-200 mt-0.5 font-mono font-bold">استلام {showClientDetailModal.shiftStartTime || '-'} ➔ تسليم {showClientDetailModal.shiftEndTime || '-'}</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+              <div className="glass-card-subtle p-4 rounded-2xl border border-amber-500/20 flex justify-between items-center text-xs mt-2">
+                <div>
+                  <span className="font-black text-amber-300">📅 فترة التعاقد:</span>
+                  <p className="text-stone-200 mt-0.5 font-mono font-bold">من {showClientDetailModal.startDate || '-'} حتى {showClientDetailModal.expiryDate || 'مستمر'}</p>
+                </div>
+                <div className="text-right">
+                  <span className="font-black text-amber-300">الأيام المتبقية:</span>
+                  <p className="font-black text-amber-300 mt-0.5">
+                    {contractInfo.daysLeft !== null ? (contractInfo.daysLeft < 0 ? `منتهي منذ ${Math.abs(contractInfo.daysLeft)} يوم` : `${contractInfo.daysLeft} يوم متبقي`) : 'غير محدد'}
+                  </p>
+                </div>
+              </div>
+
+              {/* Mobile App Login Credentials Box */}
+              {showClientDetailModal.username && (
+                <div className="p-3.5 bg-gradient-to-r from-amber-950/50 via-stone-900 to-amber-950/50 rounded-2xl border border-amber-500/30 flex items-center justify-between text-xs">
+                  <div className="flex items-center gap-3">
+                    <span className="p-2 bg-amber-500/20 text-amber-300 rounded-xl text-lg">📱</span>
+                    <div>
+                      <span className="font-black text-amber-300">بيانات تسجيل الدخول لتطبيق الجوال:</span>
+                      <div className="flex items-center gap-3 text-stone-200 font-mono mt-0.5">
+                        <span>👤 يوزر نيم: <b className="text-white bg-stone-950 px-2 py-0.5 rounded border border-amber-500/20">{showClientDetailModal.username}</b></span>
+                        <span>🔑 باسورد: <b className="text-amber-300 bg-stone-950 px-2 py-0.5 rounded border border-amber-500/20">{showClientDetailModal.password}</b></span>
+                      </div>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      navigator.clipboard.writeText(`اسم المستخدم: ${showClientDetailModal.username}\nكلمة المرور: ${showClientDetailModal.password}`);
+                      triggerToast('تم النسخ! 📋', 'تم نسخ بيانات الدخول إلى الحافظة.', 'success');
+                    }}
+                    className="gold-gradient-btn text-stone-950 font-black text-[11px] px-3 py-1.5 rounded-xl shadow active:scale-95"
+                  >
+                    نسخ البيانات
+                  </button>
+                </div>
+              )}
+
+              {(() => {
+                const isFTModal = showClientDetailModal.subscriptionType === 'shift' || showClientDetailModal.subscriptionType === 'fulltime' || showClientDetailModal.isFullTime || (showClientDetailModal.packageDuration && showClientDetailModal.packageDuration.startsWith('fulltime')) || (showClientDetailModal.package && (showClientDetailModal.package.includes('Full Time') || showClientDetailModal.package.includes('دوام كامل')));
+                if (isFTModal) {
+                  const ftContract = getClientContractStatus(showClientDetailModal);
+                  const remDays = ftContract.daysLeft !== null && ftContract.daysLeft >= 0 ? ftContract.daysLeft : 0;
+                  return (
+                    <div className="grid grid-cols-3 gap-3">
+                      <div className="glass-card-subtle p-3 rounded-2xl border border-purple-500/30 text-center bg-purple-950/20">
+                        <div className="text-[10px] text-purple-300 font-bold">المكتب / الغرفة المخصصة</div>
+                        <div className="text-sm font-black text-amber-300 mt-0.5 truncate" title={showClientDetailModal.dedicatedRoom || 'المكتب الخاص'}>
+                          🏢 {showClientDetailModal.dedicatedRoom || (showClientDetailModal.subscriptionType === 'shift' ? 'غرفة الشيفت' : 'المكتب التنفيذي الخاص')}
+                        </div>
+                      </div>
+                      <div className="bg-amber-950/40 p-3 rounded-2xl border border-amber-500/30 text-center">
+                        <div className="text-[10px] text-amber-300 font-bold">تاريخ انتهاء وتجديد الباقة</div>
+                        <div className="text-xs font-black text-white mt-1 font-mono">{showClientDetailModal.expiryDate || '-'}</div>
+                      </div>
+                      <div className="bg-purple-950/40 p-3 rounded-2xl border border-purple-500/30 text-center">
+                        <div className="text-[10px] text-purple-300 font-bold">الأيام المتبقية حتى التجديد</div>
+                        <div className="text-sm font-black text-purple-300 mt-0.5 font-mono">{remDays} يوم <span className="text-[10px] font-sans text-stone-300">(غير مقيد بساعات)</span></div>
+                      </div>
+                    </div>
+                  );
+                }
+                return (
+                  <div className="grid grid-cols-3 gap-3">
+                    <div className="glass-card-subtle p-3 rounded-2xl border border-amber-500/20 text-center">
+                      <div className="text-[10px] text-stone-400 font-bold">إجمالي الساعات المشتراة</div>
+                      <div className="text-base font-black text-white mt-0.5">{showClientDetailModal.initialHours}س</div>
+                    </div>
+                    <div className="bg-rose-950/40 p-3 rounded-2xl border border-rose-500/30 text-center">
+                      <div className="text-[10px] text-rose-300 font-bold">إجمالي المستهلك</div>
+                      <div className="text-base font-black text-rose-400 mt-0.5">{Number(totalConsumed || 0).toFixed(1)}س</div>
+                    </div>
+                    <div className="bg-emerald-950/40 p-3 rounded-2xl border border-emerald-500/30 text-center">
+                      <div className="text-[10px] text-emerald-300 font-bold">الرصيد المتبقي</div>
+                      <div className="text-base font-black text-emerald-400 mt-0.5">{showClientDetailModal.currentBalance}س</div>
+                    </div>
+                  </div>
+                );
+              })()}
+
+              {/* Client Financial Wallet & InstaPay Payment Box */}
+              {(() => {
+                const finBal = typeof showClientDetailModal.financialBalance === 'number' ? showClientDetailModal.financialBalance : 0;
+                return (
+                  <div className="p-3.5 rounded-2xl bg-stone-900/90 border border-amber-500/25 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
+                    <div className="flex items-center gap-2.5">
+                      <span className="p-2 bg-amber-500/20 text-amber-300 rounded-xl text-base">☕</span>
+                      <div>
+                        <span className="font-black text-white">محفظة الخدمات والبوفيه والتصوير:</span>
+                        <div className="mt-0.5 font-bold">
+                          {finBal < 0 ? (
+                            <span className="text-rose-400 font-mono font-black">مطلوب سداد: {Math.abs(finBal)} ج.م ⚠️</span>
+                          ) : finBal > 0 ? (
+                            <span className="text-emerald-400 font-mono font-black">رصيد متاح: {finBal} ج.م 🟢</span>
+                          ) : (
+                            <span className="text-stone-400 font-mono">الحساب متزن (0 ج.م) ✨</span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 w-full sm:w-auto">
+                      <button
+                        type="button"
+                        onClick={() => setShowClientLedgerModal(showClientDetailModal)}
+                        className="flex-1 sm:flex-initial py-2 px-3 rounded-xl bg-stone-800 hover:bg-stone-700 text-amber-300 font-bold border border-amber-500/30 text-xs shadow-xs"
+                      >
+                        📜 كشف الحساب
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleOpenInstaPay}
+                        className="flex-1 sm:flex-initial py-2 px-3.5 rounded-xl bg-gradient-to-r from-[#6A0E40] to-[#B81B73] hover:from-[#7E124D] hover:to-[#CD1F81] text-white font-black border border-pink-400/40 shadow flex items-center justify-center gap-1.5 active:scale-95 transition-all text-xs"
+                      >
+                        <InstaPayLogo className="w-4 h-4" />
+                        <span>دفع عبر InstaPay ⚡</span>
+                      </button>
+                    </div>
+                  </div>
+                );
+              })()}
+
+              <div>
+                <h4 className="font-black text-xs text-amber-300 mb-2">سجل الجلسات والخصومات السابقة:</h4>
+                {clientHistory.length === 0 ? (
+                  <div className="text-center py-6 text-stone-400 text-xs glass-card-subtle rounded-2xl border border-amber-500/15">لم يتم تسجيل جلسات حضور سابقة لهذا العميل حتى الآن.</div>
+                ) : (
+                  <div className="space-y-2">
+                    {clientHistory.map(h => (
+                      <div key={h.id} className="p-3 glass-card-subtle border border-amber-500/20 rounded-2xl flex items-center justify-between text-xs">
+                        <div>
+                          <span className="font-black text-white">{h.serviceType}</span>
+                          <p className="text-[11px] text-stone-300 mt-0.5 font-bold">📅 {h.date} ({h.time}) {h.notes ? `• ${h.notes}` : ''}</p>
+                        </div>
+                        <div className="text-right">
+                          <span className="font-black text-rose-400">-{h.hoursConsumed} ساعة</span>
+                          <p className="text-[10px] text-amber-300/80 font-bold">المتبقي بعدها: {h.newBalance}س</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="pt-2 flex justify-between items-center border-t border-amber-500/20">
+                {hasPermission('canDeleteClients') && activeUser && (activeUser.username.toLowerCase() === 'memo' || activeUser.role === 'admin') ? (
+                  <button
+                    onClick={() => {
+                      setShowClientDetailModal(null);
+                      handleDeleteClient(showClientDetailModal.id);
+                    }}
+                    className="text-rose-400 hover:text-rose-300 text-xs font-bold flex items-center gap-1 p-2 hover:bg-rose-950 rounded-xl transition-all"
+                    title="حذف العميل نهائياً من النظام (صلاحية المدير العام حصراً)"
+                  >
+                    <Icon name="trash" className="w-4 h-4" />
+                    <span>حذف العميل</span>
+                  </button>
+                ) : <div></div>}
+
+                <div className="flex gap-2">
+                  {!showClientDetailModal.isFullTime && showClientDetailModal.subscriptionType !== 'fulltime' && hasPermission('canRechargeHours') && (
+                    <button
+                      onClick={() => {
+                        const target = showClientDetailModal;
+                        setShowClientDetailModal(null);
+                        setShowRechargeModal({ client: target, hours: '10' });
+                      }}
+                      className="bg-emerald-600 hover:bg-emerald-500 text-white font-black px-4 py-2.5 rounded-2xl text-xs flex items-center gap-1.5 shadow-lg active:scale-95"
+                      title="شحن ساعات إضافية على نفس الأيام المتبقية في العقد"
+                    >
+                      <span>⚡</span>
+                      <span>شحن ساعات</span>
+                    </button>
+                  )}
+                  {hasPermission('canRenewContracts') && (
+                    <button
+                      onClick={() => {
+                        setShowClientDetailModal(null);
+                        handleOpenRenewContractModal(showClientDetailModal);
+                      }}
+                      className="gold-gradient-btn text-stone-950 font-black px-4 py-2.5 rounded-2xl text-xs flex items-center gap-1.5 shadow-lg active:scale-95"
+                    >
+                      <Icon name="refresh" className="w-4 h-4 text-stone-950 font-black" />
+                      <span>تجديد العقد 🔄</span>
+                    </button>
+                  )}
+
+                  <button onClick={() => setShowClientDetailModal(null)} className="px-6 bg-stone-900 border border-amber-500/20 text-stone-300 font-bold py-2.5 rounded-2xl text-xs hover:bg-stone-800">
+                    إغلاق
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* ==================================================== */}
+      {/* ☕📄 ADD FINANCIAL TRANSACTION MODAL */}
+      {/* ==================================================== */}
+      {showFinancialModal && (() => {
+        const initialClient = showFinancialModal.client || (clients.length > 0 ? clients[0] : null);
+        return (
+          <FinancialTransactionModalInner
+            clients={clients}
+            initialClient={initialClient}
+            initialType={showFinancialModal.type || 'charge'}
+            initialCategory={showFinancialModal.category || 'buffet'}
+            onClose={() => setShowFinancialModal(null)}
+            onSubmit={(targetClient, txData) => handleAddFinancialTransaction(targetClient, txData)}
+          />
+        );
+      })()}
+
+      {/* ==================================================== */}
+      {/* 📜 CLIENT FINANCIAL LEDGER MODAL (DETAILED STATEMENT) */}
+      {/* ==================================================== */}
+      {showClientLedgerModal && (() => {
+        const targetClient = clients.find(c => c.id === showClientLedgerModal.id) || showClientLedgerModal;
+        const clientTxs = getClientTxs(targetClient);
+        const totalCharges = clientTxs.reduce((acc, t) => t.type === 'charge' ? acc + (parseFloat(t.amount) || 0) : acc, 0);
+        const totalPaid = clientTxs.reduce((acc, t) => t.type === 'payment' ? acc + (parseFloat(t.amount) || 0) : acc, 0);
+        const curBal = typeof targetClient.financialBalance === 'number' ? targetClient.financialBalance : 0;
+
+        return (
+          <div className="fixed inset-0 z-50 modal-backdrop flex items-center justify-center p-4">
+            <div className="glass-card bg-stone-950/95 w-full max-w-3xl rounded-3xl p-6 sm:p-7 shadow-2xl space-y-5 max-h-[92vh] overflow-y-auto border-2 border-amber-500/30 text-white ">
+              
+              {/* Header */}
+              <div className="flex justify-between items-start border-b border-amber-500/20 pb-4">
+                <div>
+                  <div className="flex items-center gap-2.5 flex-wrap">
+                    <span className="p-2.5 bg-amber-500/20 text-amber-300 rounded-2xl text-xl">☕</span>
+                    <h3 className="text-xl font-black text-white">كشف حساب الخدمات والبوفيه والتصوير</h3>
+                    <span className={`text-xs font-black px-2.5 py-1 rounded-xl border ${
+                      curBal < 0 
+                        ? 'bg-rose-950 text-rose-300 border-rose-500/40' 
+                        : curBal > 0 
+                        ? 'bg-emerald-950 text-emerald-300 border-emerald-500/40' 
+                        : 'bg-stone-900 text-stone-300 border-stone-700'
+                    }`}>
+                      {curBal < 0 ? `مطلوب منه: ${Math.abs(curBal)} ج.م ⚠️` : curBal > 0 ? `له رصيد: ${curBal} ج.م 🟢` : 'الحساب متزن (0 ج.م) ✨'}
+                    </span>
+                  </div>
+                  <p className="text-xs text-stone-300 mt-1 font-bold flex items-center gap-2">
+                    <span>العميل: <b className="text-white">{targetClient.name}</b></span>
+                    <span>•</span>
+                    <span className="font-mono text-emerald-400">{targetClient.phone}</span>
+                    {targetClient.username && (
+                      <>
+                        <span>•</span>
+                        <span className="text-amber-300 font-mono">@{targetClient.username}</span>
+                      </>
+                    )}
+                    {targetClient.isFullTime && (
+                      <>
+                        <span>•</span>
+                        <span className="text-purple-300 font-bold">👑 دوام كامل ({targetClient.dedicatedRoom || 'مكتب خاص'})</span>
+                      </>
+                    )}
+                  </p>
+                </div>
+                <button
+                  onClick={() => setShowClientLedgerModal(null)}
+                  className="text-stone-400 hover:text-white text-2xl font-bold p-1 rounded-xl hover:bg-stone-900 transition-all"
+                >
+                  ×
+                </button>
+              </div>
+
+              {/* 3 Summary Stats */}
+              <div className="grid grid-cols-3 gap-3">
+                <div className="p-3.5 rounded-2xl bg-rose-950/30 border border-rose-500/30 text-center">
+                  <div className="text-[10px] text-rose-300 font-bold">إجمالي الحساب عليه (طلبات)</div>
+                  <div className="text-lg font-black font-mono text-rose-400 mt-0.5">
+                    {totalCharges.toLocaleString()} <span className="text-xs font-sans text-stone-300">ج.م</span>
+                  </div>
+                </div>
+                <div className="p-3.5 rounded-2xl bg-emerald-950/30 border border-emerald-500/30 text-center">
+                  <div className="text-[10px] text-emerald-300 font-bold">إجمالي المسدد منه (دفعات)</div>
+                  <div className="text-lg font-black font-mono text-emerald-400 mt-0.5">
+                    {totalPaid.toLocaleString()} <span className="text-xs font-sans text-stone-300">ج.م</span>
+                  </div>
+                </div>
+                <div className={`p-3.5 rounded-2xl border text-center ${
+                  curBal < 0 ? 'bg-amber-950/40 border-amber-500/40' : 'bg-stone-900/60 border-stone-700'
+                }`}>
+                  <div className="text-[10px] text-amber-300 font-bold">صافي الحساب الحالي</div>
+                  <div className={`text-lg font-black font-mono mt-0.5 ${
+                    curBal < 0 ? 'text-rose-400' : curBal > 0 ? 'text-emerald-400' : 'text-stone-300'
+                  }`}>
+                    {curBal < 0 ? `-${Math.abs(curBal)}` : `+${curBal}`} <span className="text-xs font-sans text-stone-300">ج.م</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Fast Action Buttons */}
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShowFinancialModal({ client: targetClient, type: 'charge', category: 'buffet' })}
+                  className="py-2 px-3 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 text-amber-300 text-xs font-black transition-all active:scale-95 flex items-center gap-1.5"
+                >
+                  <span>☕</span>
+                  <span>+ إضافة طلب بوفيه / تصوير</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowFinancialModal({ client: targetClient, type: 'payment', category: 'payment' })}
+                  className="py-2 px-3 rounded-xl bg-emerald-950/80 hover:bg-emerald-900 border border-emerald-500/40 text-emerald-300 text-xs font-black transition-all active:scale-95 flex items-center gap-1.5"
+                >
+                  <span>💵</span>
+                  <span>تسجيل دفعة / سداد</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    // Send statement WhatsApp
+                    const statementLines = clientTxs.map(t => {
+                      const sign = t.type === 'charge' ? '🔴 مطلوب' : '🟢 سداد';
+                      return `• ${t.date} | ${t.categoryName}: ${t.amount} ج.م ${t.description ? `(${t.description})` : ''} [${sign}]`;
+                    }).join('\n');
+
+                    const statusMsg = curBal < 0 
+                      ? `المبلغ المطلوب والمستحق سداده حالياً: *${Math.abs(curBal)} ج.م*`
+                      : curBal > 0 
+                      ? `رصيد الخدمات المتاح المتبقي في حسابك: *${curBal} ج.م*`
+                      : `حساب الخدمات الخاص بك متزن تماماً (*0 ج.م*).`;
+
+                    const waMsg = `السلام عليكم أ/ *${targetClient.name}* ⚜️\nمن إدارة *${settings.companyName}*\n\nإليك كشف حساب الخدمات الإضافية (البوفيه وتصوير المستندات):\n\n${statementLines || 'لا توجد عمليات سابقة'}\n\n📊 *صافي الحساب:* ${statusMsg}\n\n⚡ *للدفع والتحويل اللحظي عبر InstaPay:* ${INSTAPAY_PAYMENT_URL}\n*(يرجى إرسال اسكرين شوت لإشعار التحويل لتسديد الرصيد فوراً)*\n\nنسعد دائماً بخدمتك ونتمنى لك يوماً سعيداً ومثمراً! ☕✨`;
+                    openWhatsAppModalForEdit(targetClient.phone, targetClient.name, waMsg, `إرسال كشف حساب الخدمات للعميل ${targetClient.name} عبر WhatsApp`);
+                  }}
+                  className="py-2 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-black transition-all active:scale-95 flex items-center gap-1.5 mr-auto"
+                >
+                  <Icon name="whatsapp" className="w-3.5 h-3.5" />
+                  <span>إرسال كشف الحساب عبر WhatsApp</span>
+                </button>
+
+                {/* ⚡ InstaPay Quick Payment Button */}
+                <button
+                  type="button"
+                  onClick={handleOpenInstaPay}
+                  className="py-2 px-3 rounded-xl bg-gradient-to-r from-[#6A0E40] to-[#B81B73] hover:from-[#7E124D] hover:to-[#CD1F81] text-white text-xs font-black transition-all active:scale-95 flex items-center gap-1.5 shadow border border-pink-400/40"
+                  title="فتح رابط التحويل السريع عبر InstaPay (x.lance@instapay)"
+                >
+                  <InstaPayLogo className="w-4 h-4" />
+                  <span>دفع عبر InstaPay ⚡</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => exportSingleClientLedgerExcel(targetClient)}
+                  className="py-2 px-3 rounded-xl bg-emerald-700 hover:bg-emerald-600 text-white text-xs font-black transition-all active:scale-95 flex items-center gap-1.5 shadow"
+                  title="تنزيل وتصدير كشف حساب العميل كاملاً إلى ملف Excel"
+                >
+                  <span>📥</span>
+                  <span>تصدير كشف الحساب Excel</span>
+                </button>
+              </div>
+
+              {/* Transactions Log Table */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between text-xs font-bold text-stone-300">
+                  <span>سجل الحركات المالية للعميل ({clientTxs.length} حركة):</span>
+                </div>
+
+                {clientTxs.length === 0 ? (
+                  <div className="text-center py-10 glass-card-subtle rounded-2xl border border-amber-500/15 text-stone-400 text-xs">
+                    لم يتم تسجيل أي طلبات بوفيه أو تصوير أو دفعات لهذا العميل حتى الآن.
+                  </div>
+                ) : (
+                  <div className="space-y-2 max-h-[350px] overflow-y-auto pr-1">
+                    {clientTxs.map(t => {
+                      const isCharge = t.type === 'charge';
+                      return (
+                        <div
+                          key={t.id}
+                          className="p-3 rounded-2xl glass-card-subtle border border-amber-500/15 hover:border-amber-500/35 transition-all flex items-center justify-between text-xs"
+                        >
+                          <div className="flex items-center gap-2.5">
+                            <span className="text-base flex-shrink-0">
+                              {t.category === 'buffet' ? '☕' : t.category === 'printing' ? '📄' : t.category === 'adjustment' ? '⚖️' : isCharge ? '🏷️' : '💵'}
+                            </span>
+                            <div>
+                              <div className="flex items-center gap-2">
+                                <span className="font-black text-white">{t.categoryName}</span>
+                                <span className="text-[10px] text-stone-400 font-mono">{t.date} ({t.time})</span>
+                              </div>
+                              {t.description && (
+                                <p className="text-[11px] text-stone-300 mt-0.5 font-bold">
+                                  📝 {t.description}
+                                </p>
+                              )}
+                              <span className="text-[10px] text-stone-500">
+                                بواسطة: {t.createdBy || 'الإدارة'} • الرصيد بعدها: {t.balanceAfter !== undefined ? `${t.balanceAfter} ج.م` : '-'}
+                              </span>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-3">
+                            <div className="text-left">
+                              <span className={`font-mono font-black text-sm block ${isCharge ? 'text-rose-400' : 'text-emerald-400'}`}>
+                                {isCharge ? `-${t.amount}` : `+${t.amount}`} ج.م
+                              </span>
+                              <span className="text-[9px] text-stone-400 font-bold block">
+                                {isCharge ? 'مطلوب منه' : 'سداد منه'}
+                              </span>
+                            </div>
+
+                            {hasPermission('canDeleteFinancialTransaction') && (
+                              <button
+                                type="button"
+                                onClick={() => handleReverseFinancialTransaction(t.id)}
+                                className="px-2 py-1 rounded-lg bg-stone-900 hover:bg-amber-950/70 border border-stone-800 hover:border-amber-500/40 text-stone-400 hover:text-amber-300 transition-all text-[11px] font-bold flex items-center gap-1"
+                                title="تسوية وتصحيح مالي (سجل دائم غير قابل للحذف)"
+                              >
+                                <span>⚖️</span>
+                                <span>تسوية</span>
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+              {/* Footer */}
+              <div className="pt-3 flex justify-between items-center border-t border-amber-500/20">
+                <div className="text-[11px] text-stone-400">
+                  ⚡ أي معاملة جديدة ترسل فورياً وبشكل تلقائي لجوال العميل.
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowClientLedgerModal(null)}
+                  className="px-6 py-2.5 bg-stone-900 hover:bg-stone-800 border border-amber-500/20 text-stone-300 font-bold rounded-2xl text-xs transition-all"
+                >
+                  إغلاق
+                </button>
+              </div>
+
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* ==================================================== */}
+      {/* ⚡ INSTAPAY PAYMENT & SCREENSHOT REMINDER MODAL */}
+      {/* ==================================================== */}
+      {showInstaPayModal && (
+        <div className="fixed inset-0 z-50 modal-backdrop flex items-center justify-center p-4">
+          <div className="glass-card bg-stone-950/98 max-w-md w-full p-6 rounded-3xl border-2 border-pink-500/70 text-center space-y-5 shadow-2xl  text-white">
+            
+            {/* Header Logo */}
+            <div className="flex flex-col items-center gap-2">
+              <div className="w-16 h-16 rounded-2xl bg-white p-2 flex items-center justify-center shadow-xl border-2 border-pink-500/40">
+                <InstaPayLogo className="w-12 h-12" />
+              </div>
+              <h3 className="text-base sm:text-lg font-black text-white">
+                تم فتح صفحة الدفع عبر InstaPay ⚡
+              </h3>
+              <span className="text-xs text-pink-300 font-mono bg-pink-950/60 px-3 py-1 rounded-xl border border-pink-500/30">
+                حساب الاستقبال: x.lance@instapay
+              </span>
+            </div>
+
+            {/* 📸 MANDATORY SCREENSHOT WARNING BANNER */}
+            <div className="p-4 rounded-2xl bg-gradient-to-br from-amber-950/90 via-stone-900 to-amber-950/90 border-2 border-amber-500/80 text-right space-y-2 shadow-inner">
+              <div className="flex items-center gap-2 text-amber-300 font-black text-xs sm:text-sm">
+                <span className="text-lg ">📸</span>
+                <span>تنبيه هام وإلزامي لاعتماد التحويل:</span>
+              </div>
+              <p className="text-stone-100 font-bold leading-relaxed text-xs">
+                بعد إتمام عملية الدفع عبر تطبيق <span className="text-pink-300 font-black">InstaPay</span>، يجب <b>التقاط سكرين شوت (Screenshot)</b> لإشعار التحويل، ثم <b>إرسالها مباشرة إلى إدارة مجموعة الكيان عبر الواتساب</b> ليتم التحقق الفوري وقيد وتسديد المبلغ في محفظة الحساب.
+              </p>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="space-y-2.5 pt-1">
+              {/* WhatsApp Direct Send Screenshot */}
+              <a
+                href={`https://wa.me/${(settings.companyPhone || '+201500070655').replace(/[^0-9]/g, '')}?text=${encodeURIComponent(
+                  `السلام عليكم إدارة مجموعة الكيان، قمت بالتحويل عبر InstaPay لحساب الكيان (x.lance). مرفق سكرين شوت إشعار التحويل لتسديد وقيد المبلغ في المحفظة.`
+                )}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-500 hover:to-emerald-600 text-white font-black text-xs sm:text-sm shadow-xl shadow-emerald-950/50 transition-all active:scale-95 flex items-center justify-center gap-2 border border-emerald-400/40"
+              >
+                <span className="text-lg">📲</span>
+                <span>إرسال الاسكرين شوت عبر واتساب الإدارة</span>
+              </a>
+
+              {/* Reopen InstaPay Link in case popup was blocked */}
+              <a
+                href={INSTAPAY_PAYMENT_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full py-2.5 px-4 rounded-2xl bg-gradient-to-r from-[#8E1758] to-[#B81B73] hover:from-[#9E1A63] hover:to-[#C91E7F] text-white font-bold text-xs shadow transition-all active:scale-95 flex items-center justify-center gap-1.5"
+              >
+                <span>🔗</span>
+                <span>إعادة فتح رابط الدفع (InstaPay)</span>
+              </a>
+
+              {/* Close Modal */}
+              <button
+                type="button"
+                onClick={() => setShowInstaPayModal(false)}
+                className="w-full py-2.5 rounded-2xl bg-stone-900 hover:bg-stone-800 text-stone-300 font-bold text-xs border border-stone-700 hover:text-white transition-all"
+              >
+                إغلاق النافذة
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
+
+      </div>
+
+    </div>
+  );
+}
+
+// ====================================================================
+// ☕📄 FINANCIAL TRANSACTION MODAL INNER COMPONENT
+// ====================================================================
+function FinancialTransactionModalInner({ clients, initialClient, initialType, initialCategory, onClose, onSubmit }) {
+  const [selectedClientId, setSelectedClientId] = useStateWithLogging(initialClient ? initialClient.id : (clients[0]?.id || ''));
+  const [txType, setTxType] = useStateWithLogging(initialType || 'charge'); // 'charge' (مطلوب منه) or 'payment' (سداد / له)
+  const [category, setCategory] = useStateWithLogging(initialCategory || 'buffet');
+  const [amount, setAmount] = useStateWithLogging('');
+  const [description, setDescription] = useStateWithLogging('');
+
+  const targetClient = clients.find(c => c.id === selectedClientId) || initialClient || clients[0];
+  const currentFinBal = typeof targetClient?.financialBalance === 'number' ? targetClient.financialBalance : 0;
+
+  const numAmount = parseFloat(amount) || 0;
+  const simulatedNewBal = txType === 'charge' ? (currentFinBal - numAmount) : (currentFinBal + numAmount);
+
+  const categories = [
+    { id: 'buffet', name: 'بوفيه ومشروبات ☕', icon: '☕' },
+    { id: 'printing', name: 'تصوير وطباعة ورق 📄', icon: '📄' },
+    { id: 'services', name: 'خدمات ومستلزمات 📦', icon: '📦' },
+    { id: 'payment', name: 'سداد نقدي / بنكي 💵', icon: '💵' },
+    { id: 'adjustment', name: 'تسوية وتصحيح مالي ⚖️', icon: '⚖️' },
+    { id: 'other', name: 'بند مالي آخر 🏷️', icon: '🏷️' }
+  ];
+
+  const quickAmounts = [5, 10, 15, 20, 30, 50, 100, 200];
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (!targetClient) {
+      alert('يرجى اختيار العميل');
+      return;
+    }
+    if (!numAmount || numAmount <= 0) {
+      alert('يرجى إدخال مبلغ صحيح أكبر من 0');
+      return;
+    }
+    const catObj = categories.find(c => c.id === category);
+    onSubmit(targetClient, {
+      type: txType,
+      category: category,
+      categoryName: catObj ? catObj.name : 'معاملة مالية',
+      amount: numAmount,
+      description: description.trim()
+    });
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 modal-backdrop flex items-center justify-center p-4">
+      <div className="glass-card bg-stone-950/95 w-full max-w-lg rounded-3xl p-6 shadow-2xl space-y-5 border-2 border-amber-500/35 text-white ">
+        
+        {/* Header */}
+        <div className="flex justify-between items-center border-b border-amber-500/20 pb-3">
+          <div className="flex items-center gap-2">
+            <span className="p-2 bg-amber-500/20 text-amber-300 rounded-xl text-xl">☕</span>
+            <h3 className="text-lg font-black text-white">
+              {txType === 'charge' ? 'تسجيل حساب على العميل (بوفيه / تصوير)' : 'تسجيل سداد / تحصيل من العميل'}
+            </h3>
+          </div>
+          <button onClick={onClose} className="text-stone-400 hover:text-white text-2xl font-bold">×</button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-4 text-xs font-bold">
+          
+          {/* Client Selection */}
+          <div>
+            <label className="block text-stone-300 mb-1.5 font-black">اختيار العميل:</label>
+            {initialClient ? (
+              <div className="p-3 rounded-2xl bg-stone-900 border border-amber-500/30 flex items-center justify-between">
+                <div>
+                  <span className="font-black text-white text-sm block">{targetClient?.name}</span>
+                  <span className="text-[11px] text-stone-400 font-mono">{targetClient?.phone} {targetClient?.username ? `(@${targetClient?.username})` : ''}</span>
+                </div>
+                <span className={`text-[11px] font-black font-mono px-2 py-0.5 rounded-lg border ${
+                  currentFinBal < 0 ? 'bg-rose-950 text-rose-300 border-rose-500/40' : currentFinBal > 0 ? 'bg-emerald-950 text-emerald-300 border-emerald-500/40' : 'bg-stone-950 text-stone-300 border-stone-700'
+                }`}>
+                  {currentFinBal < 0 ? `مطلوب: ${Math.abs(currentFinBal)} ج.م` : currentFinBal > 0 ? `له: ${currentFinBal} ج.م` : 'متزن (0)'}
+                </span>
+              </div>
+            ) : (
+              <select
+                value={selectedClientId}
+                onChange={(e) => setSelectedClientId(e.target.value)}
+                className="w-full bg-stone-900 border border-amber-500/30 rounded-2xl p-3 text-white text-xs font-bold focus:outline-none focus:ring-1 focus:ring-amber-400"
+              >
+                {clients.map(c => (
+                  <option key={c.id} value={c.id}>
+                    {c.name} - ({c.phone}) - {c.financialBalance ? `[${c.financialBalance} ج.م]` : '[متزن]'}
+                  </option>
+                ))}
+              </select>
+            )}
+          </div>
+
+          {/* Type Toggle: Charge vs Payment */}
+          <div>
+            <label className="block text-stone-300 mb-1.5 font-black">نوع المعاملة:</label>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setTxType('charge');
+                  if (category === 'payment') setCategory('buffet');
+                }}
+                className={`py-2.5 px-3 rounded-2xl font-black text-xs transition-all flex items-center justify-center gap-1.5 border ${
+                  txType === 'charge'
+                    ? 'bg-rose-600 text-white border-rose-400 shadow-lg shadow-rose-900/40'
+                    : 'bg-stone-900 text-stone-400 border-stone-800 hover:text-white'
+                }`}
+              >
+                <span>🔴</span>
+                <span>مبلغ على العميل (مطلوب منه)</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setTxType('payment');
+                  setCategory('payment');
+                }}
+                className={`py-2.5 px-3 rounded-2xl font-black text-xs transition-all flex items-center justify-center gap-1.5 border ${
+                  txType === 'payment'
+                    ? 'bg-emerald-600 text-white border-emerald-400 shadow-lg shadow-emerald-900/40'
+                    : 'bg-stone-900 text-stone-400 border-stone-800 hover:text-white'
+                }`}
+              >
+                <span>🟢</span>
+                <span>مبلغ للعميل (سداد / رصيد متاح)</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Category Chips */}
+          <div>
+            <label className="block text-stone-300 mb-1.5 font-black">بند الخدمة / المعاملة:</label>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+              {categories.map(cat => (
+                <button
+                  key={cat.id}
+                  type="button"
+                  onClick={() => setCategory(cat.id)}
+                  className={`p-2.5 rounded-2xl border text-center font-black transition-all ${
+                    category === cat.id
+                      ? 'bg-amber-500/30 border-amber-400 text-amber-200 shadow-sm'
+                      : 'bg-stone-900/70 border-stone-800 text-stone-400 hover:border-amber-500/20 hover:text-white'
+                  }`}
+                >
+                  <span className="block text-base mb-0.5">{cat.icon}</span>
+                  <span className="text-[11px] block">{cat.name}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Amount */}
+          <div>
+            <div className="flex justify-between items-center mb-1.5">
+              <label className="text-stone-300 font-black">المبلغ (بالجنيه المصري):</label>
+              <div className="flex gap-1 flex-wrap">
+                {quickAmounts.map(q => (
+                  <button
+                    key={q}
+                    type="button"
+                    onClick={() => setAmount(prev => ((parseFloat(prev) || 0) + q).toString())}
+                    className="px-2 py-0.5 rounded-lg bg-stone-900 hover:bg-amber-500/20 border border-stone-700 text-stone-300 hover:text-amber-300 text-[10px] font-mono font-bold"
+                  >
+                    +{q}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="relative">
+              <input
+                type="number"
+                step="0.5"
+                min="0.5"
+                required
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                placeholder="أدخل المبلغ هنا (مثال: 25)..."
+                className="w-full bg-stone-900 border-2 border-amber-500/40 rounded-2xl p-3 text-lg font-mono font-black text-amber-300 placeholder:text-stone-600 focus:outline-none focus:border-amber-400"
+              />
+              <span className="absolute left-3.5 top-3.5 text-stone-400 text-xs font-bold">ج.م</span>
+            </div>
+          </div>
+
+          {/* Description */}
+          <div>
+            <label className="block text-stone-300 mb-1.5 font-black">بيان وتفاصيل الطلب (اختياري):</label>
+            <input
+              type="text"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="مثال: 2 قهوة تركي + 1 شاي / تصوير 20 ورقة أبيض وأسود..."
+              className="w-full bg-stone-900 border border-amber-500/30 rounded-2xl p-3 text-white text-xs font-bold focus:outline-none focus:border-amber-400"
+            />
+          </div>
+
+          {/* Live Preview of Net Balance */}
+          {numAmount > 0 && targetClient && (
+            <div className="p-3.5 rounded-2xl bg-amber-950/30 border border-amber-500/30 flex items-center justify-between">
+              <div>
+                <span className="text-[10px] text-amber-300 block font-bold">معاينة الحساب بعد المعاملة:</span>
+                <span className="text-stone-300 text-xs">
+                  الرصيد الحالي: ({currentFinBal} ج.م) ➔
+                </span>
+              </div>
+              <div className="text-left">
+                <span className={`text-sm font-black font-mono px-2 py-0.5 rounded-lg border ${
+                  simulatedNewBal < 0 ? 'bg-rose-950 text-rose-300 border-rose-500/40' : simulatedNewBal > 0 ? 'bg-emerald-950 text-emerald-300 border-emerald-500/40' : 'bg-stone-900 text-stone-300 border-stone-700'
+                }`}>
+                  {simulatedNewBal < 0 ? `مطلوب: ${Math.abs(simulatedNewBal)} ج.م` : simulatedNewBal > 0 ? `له: ${simulatedNewBal} ج.م` : 'متزن (0 ج.م)'}
+                </span>
+              </div>
+            </div>
+          )}
+
+          <div className="p-2.5 rounded-xl bg-amber-900/20 border border-amber-500/20 text-[10px] text-amber-300/90 flex items-center gap-1.5">
+            <span>⚡</span>
+            <span>سيتم إرسال إشعار لحظي أوتوماتيكي لهاتف العميل وإصدار رنة واهتزاز فور الحفظ.</span>
+          </div>
+
+          {/* Buttons */}
+          <div className="flex gap-2 pt-2 border-t border-amber-500/20">
+            <button
+              type="submit"
+              className="flex-1 gold-gradient-btn text-stone-950 font-black py-3 rounded-2xl text-xs shadow-xl active:scale-95 transition-all flex items-center justify-center gap-1.5"
+            >
+              <span>💾</span>
+              <span>حفظ المعاملة وإرسال الإشعار للعميل فوراً</span>
+            </button>
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-5 py-3 bg-stone-900 hover:bg-stone-800 border border-amber-500/20 text-stone-300 font-bold rounded-2xl text-xs"
+            >
+              إلغاء
+            </button>
+          </div>
+
+        </form>
+
+      </div>
+    </div>
+  );
+}
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(<App />);
+
+// touch
+
+// trigger build

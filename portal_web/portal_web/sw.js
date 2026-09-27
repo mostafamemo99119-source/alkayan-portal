@@ -1,6 +1,6 @@
 // 🚀 AL KAYAN GROUP - 24/7 Live Auto-Updating Service Worker with Background Push & Audio Alerts
 const CACHE_NAME = 'alkayan-pwa-cache-v9';
-const FIREBASE_BASE_URL = 'https://alkayan-group-default-rtdb.europe-west1.firebasedatabase.app';
+const FIREBASE_BASE_URL = 'https://alkayan-groub-v2-default-rtdb.europe-west1.firebasedatabase.app';
 
 const ASSETS_TO_CACHE = [
   './mobile.html',

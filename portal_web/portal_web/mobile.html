@@ -287,7 +287,9 @@
   <!-- Immediate Keep-Alive Heartbeat -->
   <script>
     function sendMobileHeartbeat() {
-      fetch('/api/heartbeat').catch(function() {});
+        var isLocal = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
+        if (!isLocal) return;
+      /* fetch('/api/heartbeat') disabled on Vercel */
     }
     sendMobileHeartbeat();
     setInterval(sendMobileHeartbeat, 2500);
@@ -353,7 +355,7 @@
   <!-- ⚡ ULTRA-FAST CLOUD LIVE CODE ENGINE & AUTO-BOOTSTRAPPER -->
   <script>
     (function bootstrapLiveMobileApp() {
-      var FIREBASE_CODE_URL = 'https://alkayan-group-default-rtdb.europe-west1.firebasedatabase.app/alkayan_db/live_app_code.json';
+      var FIREBASE_CODE_URL = 'https://alkayan-groub-v2-default-rtdb.europe-west1.firebasedatabase.app/alkayan_db/live_app_code.json';
       var LOCAL_CODE_KEY = 'ALKAYAN_DYNAMIC_APP_CODE_V6';
       var LOCAL_VERSION_KEY = 'ALKAYAN_DYNAMIC_APP_VERSION_V6';
       var appBooted = false;
