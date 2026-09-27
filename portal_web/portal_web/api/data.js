@@ -13,12 +13,49 @@ export default async function handler(req, res) {
 
   const { clientId, username } = req.query || {};
 
-  // FIX: Use live synced data (from /api/sync POST) instead of stale static JSON
-  const currentData = getServerlessData();
+  let currentData = null;
+  try {
+    const fbRes = await fetch('https://alkayan-groub-v2-default-rtdb.europe-west1.firebasedatabase.app/alkayan_db.json', { cache: 'no-store' });
+    if (fbRes.ok) {
+      const fbJson = await fbRes.json();
+      if (fbJson && fbJson.clients) {
+        const fbClients = Array.isArray(fbJson.clients) ? fbJson.clients : Object.values(fbJson.clients);
+        currentData = { 
+          ...fbJson, 
+          clients: fbClients,
+          deleted_clients: fbJson.deleted_clients || []
+        };
+        updateServerlessData(currentData);
+      }
+    }
+  } catch (fbErr) {}
+
+  if (!currentData) {
+    currentData = getServerlessData();
+  }
+
   const clients = currentData.clients || [];
   const bookings = currentData.bookings || [];
   const attendance = currentData.attendance || [];
   const settings = currentData.settings || {};
+
+  // 🚫 Check deleted_clients blacklist
+  const delClients = currentData.deleted_clients || [];
+  const delList = Array.isArray(delClients) ? delClients : Object.values(delClients);
+  const checkId = clientId ? clientId.toString().trim().toLowerCase() : '';
+  const checkUser = username ? username.toString().trim().toLowerCase() : '';
+  for (const dc of delList) {
+    if (!dc) continue;
+    const dcId = (dc.id || '').toString().trim().toLowerCase();
+    const dcUser = (dc.username || '').toString().trim().toLowerCase();
+    if ((checkId && dcId && dcId === checkId) || (checkUser && dcUser && dcUser === checkUser)) {
+      return res.status(401).json({
+        success: false,
+        code: 'CLIENT_PURGED_PERMANENTLY',
+        message: 'تم حذف هذا الحساب نهائياً من قبل الإدارة العامة للمجموعة.'
+      });
+    }
+  }
 
   let targetClient = null;
   if (clientId) {
@@ -29,10 +66,23 @@ export default async function handler(req, res) {
   }
 
   if (!targetClient) {
-    return res.status(404).json({ success: false, message: 'العميل غير مسجل' });
+    return res.status(401).json({ 
+      success: false, 
+      code: 'CLIENT_DELETED_OR_NOT_FOUND',
+      message: 'العميل غير مسجل بالنظام أو تم حذفه نهائياً' 
+    });
   }
 
-  const myBookings = bookings.filter(b => b.clientId === targetClient.id);
+  const rawBookings = bookings.filter(b => b.clientId === targetClient.id);
+  const seenB = new Set();
+  const myBookings = [];
+  for (const b of rawBookings) {
+    if (!b) continue;
+    const bid = String(b.id || b.booking_id || '').trim();
+    if (!bid || seenB.has(bid)) continue;
+    seenB.add(bid);
+    myBookings.push(b);
+  }
   const myAttendance = attendance.filter(a => a.clientId === targetClient.id);
 
   return res.status(200).json({

@@ -1,5 +1,5 @@
 // 🗑️ Vercel Serverless Booking Cancellation API - Instant Room Release & Cloud Synchronization
-const FIREBASE_BASE_URL = "https://alkayan-group-default-rtdb.europe-west1.firebasedatabase.app";
+const FIREBASE_BASE_URL = "https://alkayan-groub-v2-default-rtdb.europe-west1.firebasedatabase.app";
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
