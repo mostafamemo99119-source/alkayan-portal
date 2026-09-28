@@ -1,28 +1,38 @@
 // ==== AUTO CACHE-BUSTING & SW UNREGISTER ====
 (function() {
-  if (typeof window !== 'undefined') {
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.getRegistrations().then(function(registrations) {
-        for (let registration of registrations) {
-          registration.unregister();
-        }
-      }).catch(function(err) {
-        console.warn('SW Unregister failed: ', err);
-      });
-    }
-    if ('caches' in window) {
-      caches.keys().then(function(names) {
-        for (let name of names) {
-          caches.delete(name);
-        }
-      }).catch(function(err) {
-        console.warn('Cache clear failed: ', err);
+  if (typeof window !== 'undefined' && typeof sessionStorage !== 'undefined') {
+    if (!sessionStorage.getItem('cacheCleared')) {
+      sessionStorage.setItem('cacheCleared', 'true');
+      var p1 = Promise.resolve();
+      var p2 = Promise.resolve();
+      
+      if ('serviceWorker' in navigator) {
+        p1 = navigator.serviceWorker.getRegistrations().then(function(registrations) {
+          var arr = [];
+          for (var i = 0; i < registrations.length; i++) {
+            arr.push(registrations[i].unregister());
+          }
+          return Promise.all(arr);
+        }).catch(function(err){});
+      }
+      
+      if ('caches' in window) {
+        p2 = caches.keys().then(function(names) {
+          var arr = [];
+          for (var i = 0; i < names.length; i++) {
+            arr.push(caches.delete(names[i]));
+          }
+          return Promise.all(arr);
+        }).catch(function(err){});
+      }
+      
+      Promise.all([p1, p2]).then(function() {
+        window.location.reload(true);
       });
     }
   }
 })();
 // ============================================
-
 const{useState,useEffect,useMemo,useRef}=React;const FIREBASE_BASE_URL="https://alkayan-groub-v2-default-rtdb.europe-west1.firebasedatabase.app";// ==========================================
 // 🎨 Helper Icons (Inline SVG for 100% Reliability)
 // ==========================================
