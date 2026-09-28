@@ -1,3 +1,28 @@
+// ==== AUTO CACHE-BUSTING & SW UNREGISTER ====
+(function() {
+  if (typeof window !== 'undefined') {
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then(function(registrations) {
+        for (let registration of registrations) {
+          registration.unregister();
+        }
+      }).catch(function(err) {
+        console.warn('SW Unregister failed: ', err);
+      });
+    }
+    if ('caches' in window) {
+      caches.keys().then(function(names) {
+        for (let name of names) {
+          caches.delete(name);
+        }
+      }).catch(function(err) {
+        console.warn('Cache clear failed: ', err);
+      });
+    }
+  }
+})();
+// ============================================
+
 const{useState,useEffect,useMemo,useRef}=React;const FIREBASE_BASE_URL="https://alkayan-groub-v2-default-rtdb.europe-west1.firebasedatabase.app";// ==========================================
 // 🎨 Helper Icons (Inline SVG for 100% Reliability)
 // ==========================================
