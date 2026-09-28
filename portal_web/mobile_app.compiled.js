@@ -1,3 +1,28 @@
+// ==== AUTO CACHE-BUSTING & SW UNREGISTER ====
+(function() {
+  if (typeof window !== 'undefined') {
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then(function(registrations) {
+        for (let registration of registrations) {
+          registration.unregister();
+        }
+      }).catch(function(err) {
+        console.warn('SW Unregister failed: ', err);
+      });
+    }
+    if ('caches' in window) {
+      caches.keys().then(function(names) {
+        for (let name of names) {
+          caches.delete(name);
+        }
+      }).catch(function(err) {
+        console.warn('Cache clear failed: ', err);
+      });
+    }
+  }
+})();
+// ============================================
+
 const {
   useState,
   useEffect,
@@ -2495,21 +2520,12 @@ function MobileApp() {
       if (!updateClientRes.ok) throw new Error('فشل في تحديث الرصيد السحابي.');
 
       // Setup booking details
-      let h = parseInt(bookingForm.time.split(':')[0], 10);
+      const h = parseInt(bookingForm.time.split(':')[0], 10);
       const m = parseInt(bookingForm.time.split(':')[1], 10);
-      const rawLower = String(bookingForm.time).toLowerCase();
-      if (rawLower.includes('م') || rawLower.includes('pm')) {
-        if (h < 12) h += 12;
-      } else if (rawLower.includes('ص') || rawLower.includes('am')) {
-        if (h === 12) h = 0;
-      }
       const endH = (h + Math.floor(durVal)) % 24;
       const endM = m;
       const to12h = (hour, minute) => {
-        let period = 'ص';
-        if (hour >= 12) {
-          period = 'م';
-        }
+        const period = hour >= 12 ? 'م' : 'ص';
         const h12 = hour % 12 === 0 ? 12 : hour % 12;
         const minStr = String(minute).padStart(2, '0');
         const hStr = String(h12).padStart(2, '0');
@@ -2521,7 +2537,6 @@ function MobileApp() {
       const durStr = String(Math.floor(durVal));
       const bookingId = `b-mob-${Date.now()}`;
       const targetRoom = bookingForm.room || settings.rooms && settings.rooms[0] || 'Master VIP Room';
-      const time24h = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
       const fullBookingObj = {
         id: bookingId,
         clientId: updatedClient.id,
@@ -2529,7 +2544,7 @@ function MobileApp() {
         clientPhone: updatedClient.phone,
         username: updatedClient.username,
         date: bookingForm.date,
-        time: time24h,
+        time: bookingForm.time,
         startTime: start12h,
         endTime: end12h,
         timeRange: timeRangeStr,
@@ -2562,7 +2577,7 @@ function MobileApp() {
         clientName: updatedClient.name,
         clientPhone: updatedClient.phone,
         date: bookingForm.date,
-        time: time24h,
+        time: bookingForm.time,
         startTime: start12h,
         endTime: end12h,
         timeRange: timeRangeStr,
@@ -3457,7 +3472,7 @@ function MobileApp() {
     className: "font-black text-white truncate"
   }, nextBooking.room), /*#__PURE__*/React.createElement("p", {
     className: "text-stone-300 font-mono text-[11px] mt-0.5 font-bold"
-  }, "\uD83D\uDCC5 ", nextBooking.date, " \u2022 \u23F0 ", decimalToTimeStr(parseArabicTimeToDecimal(nextBooking.time || nextBooking.startTime)), " (", nextBooking.duration, "\u0633)")), /*#__PURE__*/React.createElement("div", {
+  }, "\uD83D\uDCC5 ", nextBooking.date, " \u2022 \u23F0 ", nextBooking.time, " (", nextBooking.duration, "\u0633)")), /*#__PURE__*/React.createElement("div", {
     className: "flex items-center gap-1.5 flex-shrink-0"
   }, /*#__PURE__*/React.createElement("button", {
     onClick: () => handleCancelBooking(nextBooking.id),
@@ -3779,7 +3794,7 @@ function MobileApp() {
     className: "font-black text-white"
   }, att.serviceType || 'جلسة عمل'), /*#__PURE__*/React.createElement("p", {
     className: "text-[11px] text-stone-400 font-mono mt-0.5 font-bold"
-  }, "\uD83D\uDCC5 ", att.date, " (", att.time ? decimalToTimeStr(parseArabicTimeToDecimal(att.time)) : '', ") ", att.notes ? `• ${att.notes}` : '')), /*#__PURE__*/React.createElement("div", {
+  }, "\uD83D\uDCC5 ", att.date, " (", att.time, ") ", att.notes ? `• ${att.notes}` : '')), /*#__PURE__*/React.createElement("div", {
     className: "text-right"
   }, /*#__PURE__*/React.createElement("span", {
     className: "font-black text-rose-400 text-sm"
