@@ -31,7 +31,14 @@ export default async function handler(req, res) {
   }
 
   try {
-    const body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
+    let body = req.body;
+    if (typeof req.body === 'string') {
+      try {
+        body = JSON.parse(req.body);
+      } catch (parseErr) {
+        return res.status(400).json({ success: false, message: 'Invalid JSON body' });
+      }
+    }
     const { clientId, date, time, duration, room, serviceType, notes } = body || {};
 
     if (!clientId || !date || !time || !duration) {
@@ -168,40 +175,16 @@ export default async function handler(req, res) {
           body: JSON.stringify(attRecord)
         });
       }
-      // Update client balance
-      await fetch(`${FIREBASE_BASE_URL}/alkayan_db/clients.json`, {
-        method: 'GET',
-        headers: { 'cache': 'no-store' }
-      }).then(res => res.json()).then(async rawClients => {
-        if (rawClients) {
-          let updated = false;
-          if (Array.isArray(rawClients)) {
-            for (let i=0; i<rawClients.length; i++) {
-              if (rawClients[i] && rawClients[i].id === targetClient.id) {
-                rawClients[i] = updatedClient;
-                updated = true;
-                break;
-              }
-            }
-          } else {
-            for (let key in rawClients) {
-              if (rawClients[key] && rawClients[key].id === targetClient.id) {
-                rawClients[key] = updatedClient;
-                updated = true;
-                break;
-              }
-            }
-          }
-          if (updated) {
-            await fetch(`${FIREBASE_BASE_URL}/alkayan_db/clients.json`, {
-              method: 'PUT',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(rawClients)
-            });
-          }
-        }
-      });
-      
+      // Update client balance directly using local array index
+      const clientIndex = clients.findIndex(c => c && c.id === targetClient.id);
+      if (clientIndex !== -1) {
+        await fetch(`${FIREBASE_BASE_URL}/alkayan_db/clients/${clientIndex}.json`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(updatedClient)
+        });
+      }
+
       // Notify Admin
       await fetch(`${FIREBASE_BASE_URL}/alkayan_db/latest_booking_update.json`, {
         method: 'PUT',
