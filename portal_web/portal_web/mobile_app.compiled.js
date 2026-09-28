@@ -15,7 +15,7 @@
           return Promise.all(arr);
         }).catch(function(err){});
       }
-      
+      س
       if ('caches' in window) {
         p2 = caches.keys().then(function(names) {
           var arr = [];
