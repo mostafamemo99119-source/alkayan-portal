@@ -1,6 +1,8 @@
 // 📅 Vercel Serverless Booking API - Immediate Hour Deduction & Cloud Synchronization
 import { getServerlessData, recordCloudBooking } from './login.js';
 
+const FIREBASE_BASE_URL = "https://alkayan-groub-v2-default-rtdb.europe-west1.firebasedatabase.app";
+
 function cleanDigits(str) {
   if (!str) return '';
   const arabicNumbers = ['٠','١','٢','٣','٤','٥','٦','٧','٨','٩'];
@@ -13,20 +15,6 @@ function to12h(hour, minute) {
   const minStr = String(minute).padStart(2, '0');
   const hStr = String(h12).padStart(2, '0');
   return `${hStr}:${minStr} ${period}`;
-}
-
-// Unified: parse any time string (12h or 24h, with or without م/ص) to full 24h integer hours+minutes
-function parseTimeStr(timeStr) {
-  const str = cleanDigits(String(timeStr || '12:00')).trim();
-  const isPM = timeStr.includes('م') || timeStr.toLowerCase().includes('مساء') || timeStr.toLowerCase().includes('pm');
-  const isAM = timeStr.includes('ص') || timeStr.toLowerCase().includes('صباح') || timeStr.toLowerCase().includes('am');
-  const clean = str.replace(/[^0-9:]/g, '');
-  const parts = clean.split(':');
-  let h = parseInt(parts[0]) || 0;
-  const m = parseInt(parts[1] || '0') || 0;
-  if (isPM && h < 12) h += 12;
-  if (isAM && h === 12) h = 0;
-  return { h, m };
 }
 
 export default async function handler(req, res) {
@@ -52,10 +40,30 @@ export default async function handler(req, res) {
 
     const currentData = getServerlessData();
     const clients = currentData.clients || [];
+    // 🚫 Check deleted_clients blacklist
+    const delClients = currentData.deleted_clients || [];
+    const delList = Array.isArray(delClients) ? delClients : Object.values(delClients);
+    const checkId = clientId ? clientId.toString().trim().toLowerCase() : '';
+    for (const dc of delList) {
+      if (!dc) continue;
+      const dcId = (dc.id || '').toString().trim().toLowerCase();
+      if (checkId && dcId && dcId === checkId) {
+        return res.status(401).json({
+          success: false,
+          code: 'CLIENT_PURGED_PERMANENTLY',
+          message: 'تم حذف هذا الحساب نهائياً، لا يمكن إتمام الحجز.'
+        });
+      }
+    }
+
     const targetClient = clients.find(c => c.id === clientId);
 
     if (!targetClient) {
-      return res.status(404).json({ success: false, message: 'العميل غير مسجل بالنظام' });
+      return res.status(401).json({ 
+        success: false, 
+        code: 'CLIENT_DELETED_OR_NOT_FOUND',
+        message: 'العميل غير مسجل بالنظام أو تم حذفه نهائياً' 
+      });
     }
 
     const durVal = parseFloat(cleanDigits(duration));
@@ -74,15 +82,15 @@ export default async function handler(req, res) {
       });
     }
 
-    // ✅ UNIFIED TIME PARSING: Single source of truth for all time fields
-    // Supports both 24h ("14:00") and 12h with Arabic AM/PM ("02:00 م")
-    const { h, m } = parseTimeStr(time);
+    // Calculate time range
+    const parts = (time || '12:00').split(':');
+    const h = parseInt(cleanDigits(parts[0])) || 12;
+    const m = parseInt(cleanDigits(parts[1] || '0')) || 0;
     const endH = (h + Math.floor(durVal)) % 24;
     const endM = m;
 
-    // All string fields built from the same 24h h/m values — no inconsistency possible
     const start12h = to12h(h, m);
-    const end12h   = to12h(endH, endM);
+    const end12h = to12h(endH, endM);
     const timeRangeStr = `من ${start12h} إلى ${end12h}`;
     const durStr = String(Math.floor(durVal));
 
@@ -105,9 +113,9 @@ export default async function handler(req, res) {
       clientName: targetClient.name,
       clientPhone: targetClient.phone,
       date,
-      time: start12h,       // Normalized 12h display string with correct م/ص
-      startTime: start12h,  // Same source — always correct
-      endTime: end12h,      // Same source — always correct
+      time,
+      startTime: start12h,
+      endTime: end12h,
       timeRange: timeRangeStr,
       duration: durStr,
       durationHours: durStr,
@@ -128,7 +136,7 @@ export default async function handler(req, res) {
       clientName: targetClient.name,
       clientPhone: targetClient.phone,
       date,
-      time: start12h,
+      time,
       startTime: start12h,
       endTime: end12h,
       timeRange: timeRangeStr,
@@ -143,6 +151,74 @@ export default async function handler(req, res) {
 
     // Register in serverless memory queue
     recordCloudBooking(fullBookingObj, updatedClient, attRecord);
+    
+    // Direct Cloud Push to Firebase V2
+    try {
+      // Push booking
+      await fetch(`${FIREBASE_BASE_URL}/alkayan_db/bookings/${bookingId}.json`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(fullBookingObj)
+      });
+      // Push attendance
+      if (attRecord) {
+        await fetch(`${FIREBASE_BASE_URL}/alkayan_db/attendance/${attRecord.id}.json`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(attRecord)
+        });
+      }
+      // Update client balance
+      await fetch(`${FIREBASE_BASE_URL}/alkayan_db/clients.json`, {
+        method: 'GET',
+        headers: { 'cache': 'no-store' }
+      }).then(res => res.json()).then(async rawClients => {
+        if (rawClients) {
+          let updated = false;
+          if (Array.isArray(rawClients)) {
+            for (let i=0; i<rawClients.length; i++) {
+              if (rawClients[i] && rawClients[i].id === targetClient.id) {
+                rawClients[i] = updatedClient;
+                updated = true;
+                break;
+              }
+            }
+          } else {
+            for (let key in rawClients) {
+              if (rawClients[key] && rawClients[key].id === targetClient.id) {
+                rawClients[key] = updatedClient;
+                updated = true;
+                break;
+              }
+            }
+          }
+          if (updated) {
+            await fetch(`${FIREBASE_BASE_URL}/alkayan_db/clients.json`, {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(rawClients)
+            });
+          }
+        }
+      });
+      
+      // Notify Admin
+      await fetch(`${FIREBASE_BASE_URL}/alkayan_db/latest_booking_update.json`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            action: 'book',
+            bookingId: bookingId,
+            room: targetRoom,
+            date: date,
+            clientId: targetClient.id,
+            timestamp: Date.now()
+        })
+      });
+    } catch (fbErr) {
+      console.warn("Firebase direct push failed in API:", fbErr);
+    }
+
 
     return res.status(200).json({
       success: true,
